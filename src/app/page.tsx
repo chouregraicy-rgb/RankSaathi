@@ -65,7 +65,8 @@ export default function LandingPage() {
           .single();
 
         const userRole = profile?.role ?? role;
-        router.push(`/${userRole}/dashboard`);
+        const base = typeof window !== "undefined" ? window.location.origin : "";
+        window.location.href = `${base}/${userRole}/dashboard`;
       }
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
