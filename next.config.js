@@ -26,8 +26,6 @@ const nextConfig = {
       },
     ],
   },
-  // Required for Render deployment
-  output: "standalone",
 };
 
 module.exports = withPWA(nextConfig);
