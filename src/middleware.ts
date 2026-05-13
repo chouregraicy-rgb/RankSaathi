@@ -9,10 +9,8 @@ export async function middleware(request: NextRequest) {
 
   // ✅ Use x-forwarded-host (set by Render's proxy) to get the real public URL
   const forwardedHost = request.headers.get("x-forwarded-host");
-  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
-  const appUrl = forwardedHost
-    ? `${forwardedProto}://${forwardedHost}`
-    : process.env.NEXT_PUBLIC_APP_URL || "https://ranksaathi.onrender.com";
+  const appUrl = "https://ranksaathi.onrender.com";
+     process.env.NEXT_PUBLIC_APP_URL || "https://ranksaathi.onrender.com";
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
