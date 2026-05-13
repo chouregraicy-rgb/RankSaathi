@@ -32,7 +32,8 @@ export async function middleware(request: NextRequest) {
 
   if (isApiRoute || isStatic || isAuthRoute || isLinkPage) return response;
 
-  if (!user && !isLanding) return NextResponse.redirect(new URL("/", request.url));
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${request.headers.get("host")}`;
+  if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
 
   if (user) {
     const metaRole = user.user_metadata?.role;
@@ -49,10 +50,12 @@ export async function middleware(request: NextRequest) {
     const role = dbRole ?? metaRole ?? "student";
     console.log("Final role:", role);
 
-    if (isLanding) return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
-    if (pathname.startsWith("/student/") && role !== "student") return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
-    if (pathname.startsWith("/parent/") && role !== "parent" && !isLinkPage) return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
-    if (pathname.startsWith("/admin/") && role !== "admin") return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${request.headers.get("host")}`;
+
+    if (isLanding) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
+    if (pathname.startsWith("/student/") && role !== "student") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
+    if (pathname.startsWith("/parent/") && role !== "parent" && !isLinkPage) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
+    if (pathname.startsWith("/admin/") && role !== "admin") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
   }
 
   return response;
