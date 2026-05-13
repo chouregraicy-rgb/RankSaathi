@@ -111,7 +111,7 @@ export default function StudentDashboard() {
 
   // ✅ Uses realUserId instead of MOCK_STUDENT_ID
   const shareLocation = useCallback(async (auto = false) => {
-    if (!navigator.geolocation || !student?.id) { setLocationStatus("error"); return; }
+    if (!navigator.geolocation) { setLocationStatus("error"); return; }
     if (!auto) setIsSharing(true);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
@@ -121,7 +121,7 @@ export default function StudentDashboard() {
         await fetch("/api/student/location", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            studentId: student?.id,   // ✅ real ID, no more mock
+            studentId: realUserId,  // auth user ID — matches student_locations FK
             latitude,
             longitude,
             accuracy: Math.round(accuracy),
@@ -133,7 +133,7 @@ export default function StudentDashboard() {
       } catch { setLocationStatus("error"); }
       finally { setIsSharing(false); }
     }, () => { setLocationStatus("error"); setIsSharing(false); }, { enableHighAccuracy: true, timeout: 10000 });
-  }, [realUserId, student]);
+  }, [realUserId]);
 
   useEffect(() => {
     if (locationStatus === "success") {
