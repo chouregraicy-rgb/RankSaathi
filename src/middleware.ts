@@ -7,6 +7,13 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
+  // ✅ Use x-forwarded-host (set by Render's proxy) to get the real public URL
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+  const appUrl = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : process.env.NEXT_PUBLIC_APP_URL || "https://ranksaathi.onrender.com";
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,7 +39,6 @@ export async function middleware(request: NextRequest) {
 
   if (isApiRoute || isStatic || isAuthRoute || isLinkPage) return response;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${request.headers.get("host")}`;
   if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
 
   if (user) {
@@ -43,14 +49,13 @@ export async function middleware(request: NextRequest) {
 
     console.log("=== MIDDLEWARE DEBUG ===");
     console.log("User ID:", user.id);
+    console.log("appUrl:", appUrl);
     console.log("Meta role:", metaRole);
     console.log("DB role:", dbRole);
     console.log("DB error:", profileError?.message);
 
     const role = dbRole ?? metaRole ?? "student";
     console.log("Final role:", role);
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${request.headers.get("host")}`;
 
     if (isLanding) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
     if (pathname.startsWith("/student/") && role !== "student") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
