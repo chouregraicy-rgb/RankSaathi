@@ -1,0 +1,25 @@
+# render.yaml — Render deployment configuration for RankSaathi
+# Deploy at: https://dashboard.render.com → New Web Service → Connect your GitHub repo
+
+services:
+  - type: web
+    name: rank-saathi
+    env: node
+    plan: starter        # Upgrade to standard/pro for production
+    region: singapore    # Closest region for India
+    buildCommand: npm install && npm run build
+    startCommand: node .next/standalone/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false       # Set manually in Render dashboard
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false       # Set to your Render URL e.g. https://rank-saathi.onrender.com
