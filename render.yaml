@@ -8,7 +8,7 @@ services:
     plan: starter        # Upgrade to standard/pro for production
     region: singapore    # Closest region for India
     buildCommand: npm install && npm run build
-    startCommand: node .next/standalone/server.js
+    startCommand: npm start
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
