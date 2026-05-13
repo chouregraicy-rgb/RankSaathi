@@ -34,7 +34,7 @@ export default function LandingPage() {
           .eq("id", data.session.user.id)
           .single();
         const r = profile?.role ?? "student";
-        router.replace(`/${r}/dashboard`);
+        window.location.href = `https://ranksaathi.onrender.com/${r}/dashboard`;
       }
     };
     check();
@@ -65,8 +65,7 @@ export default function LandingPage() {
           .single();
 
         const userRole = profile?.role ?? role;
-        const base = typeof window !== "undefined" ? window.location.origin : "";
-        window.location.href = `${base}/${userRole}/dashboard`;
+        window.location.href = `https://ranksaathi.onrender.com/${userRole}/dashboard`;
       }
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
