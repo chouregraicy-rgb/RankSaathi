@@ -100,7 +100,7 @@ export default function LandingPage() {
       ];
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex relative pb-10">
 
       {/* ── LEFT PANEL — Branding ── */}
       <div className="hidden lg:flex flex-col justify-between w-[55%] bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 p-12 relative overflow-hidden">
@@ -277,7 +277,14 @@ export default function LandingPage() {
               After login, link your child using their 8-char invite code from their Settings page.
             </p>
           )}
-        </div>
+        </div><div className="absolute bottom-0 left-0 right-0 border-t border-border py-3 px-6 bg-background/80 backdrop-blur-sm">
+  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
+    <span>© 2026 GlobalWebSaaS</span>
+    <a href="/privacy" className="hover:text-foreground transition-colors hover:underline">Privacy Policy</a>
+    <a href="/contact" className="hover:text-foreground transition-colors hover:underline">Contact</a>
+    <a href="mailto:contact@globalwebsaas.org" className="hover:text-foreground transition-colors hover:underline">contact@globalwebsaas.org</a>
+  </div>
+</div>
       </div>
     </div>
   );
