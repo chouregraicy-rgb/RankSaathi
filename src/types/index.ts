@@ -47,6 +47,7 @@ export interface Student {
   class_level: 11 | 12 | "dropper";
   invite_code: string;
   current_streak: number;
+  longest_streak: number;
   total_study_hours: number;
   rank_estimate: number | null;
   city: string | null;
