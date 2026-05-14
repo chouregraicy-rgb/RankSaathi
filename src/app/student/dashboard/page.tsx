@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Clock, Target, BookOpen, TrendingUp, Zap, ArrowRight,
   CheckCircle2, AlertCircle, Play, MapPin, Navigation, Loader2, Shield,
+  Battery, BatteryLow, BatteryMedium, BatteryFull,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
@@ -36,23 +37,47 @@ const TODAY_TARGETS = [
   { label: "Mock Test — Chemistry Full", done: false, duration: "1h"   },
 ];
 
+function BatteryIcon({ level }: { level: number | null }) {
+  if (level === null) return null;
+  const Icon = level > 70 ? BatteryFull : level > 30 ? BatteryMedium : BatteryLow;
+  const color = level > 70 ? "text-green-500" : level > 30 ? "text-amber-500" : "text-red-500";
+  return (
+    <span className={cn("flex items-center gap-1 text-xs font-medium", color)}>
+      <Icon className="h-3.5 w-3.5" /> {level}%
+    </span>
+  );
+}
+
 export default function StudentDashboard() {
   const supabase = createClient();
   const { user } = useAuthStore();
 
-  // Real user state — fetched from Supabase auth + users table
-  const [realUserId, setRealUserId] = useState<string | null>(null);
-  const [realName, setRealName] = useState<string>("Student");
+  const [realUserId, setRealUserId]   = useState<string | null>(null);
+  const [realName, setRealName]       = useState<string>("Student");
+  const [student, setStudent]         = useState<Student | null>(null);
+  const [moodLog, setMoodLog]         = useState<MoodLog | null>(null);
 
-  const [student, setStudent]   = useState<Student | null>(null);
-  const [moodLog, setMoodLog]   = useState<MoodLog | null>(null);
+  // ✅ KEY FIX: track students.id separately from auth user id
+  const [studentRecordId, setStudentRecordId] = useState<string | null>(null);
+
   const [locationStatus, setLocationStatus] = useState<"idle"|"sharing"|"error"|"success">("idle");
   const [locationLabel, setLocationLabel]   = useState("");
   const [lastShared, setLastShared]         = useState<string|null>(null);
   const [isSharing, setIsSharing]           = useState(false);
+  const [batteryLevel, setBatteryLevel]     = useState<number | null>(null);
   const autoShareRef = useRef<NodeJS.Timeout|null>(null);
 
-  // ✅ Fetch real user ID and full_name from Supabase
+  // Get battery level
+  useEffect(() => {
+    if ("getBattery" in navigator) {
+      (navigator as any).getBattery().then((battery: any) => {
+        setBatteryLevel(Math.round(battery.level * 100));
+        battery.onlevelchange = () => setBatteryLevel(Math.round(battery.level * 100));
+      });
+    }
+  }, []);
+
+  // ✅ Fetch real user ID and full_name
   useEffect(() => {
     const fetchRealUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -68,18 +93,16 @@ export default function StudentDashboard() {
       if (profile?.full_name) {
         setRealName(profile.full_name);
       } else {
-        // Fallback: try user_metadata (Google OAuth)
         const metaName =
           authUser.user_metadata?.full_name ||
-          authUser.user_metadata?.name ||
-          "";
+          authUser.user_metadata?.name || "";
         if (metaName) setRealName(metaName);
       }
     };
     fetchRealUser();
   }, []);
 
-  // Load student profile and mood
+  // ✅ Load student profile — also saves students.id (NOT auth user id)
   useEffect(() => {
     async function loadData() {
       if (!realUserId) return;
@@ -88,7 +111,10 @@ export default function StudentDashboard() {
         .select("*")
         .eq("user_id", realUserId)
         .single();
-      if (data) setStudent(data as Student);
+      if (data) {
+        setStudent(data as Student);
+        setStudentRecordId(data.id); // ✅ This is students.id — used for location FK
+      }
       const mood = await getLatestMood(realUserId);
       if (mood) setMoodLog(mood);
     }
@@ -97,9 +123,11 @@ export default function StudentDashboard() {
 
   async function getLocationLabel(lat: number, lng: number): Promise<string> {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=17&addressdetails=1`);
-      const d   = await res.json();
-      const a   = d.address ?? {};
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=17&addressdetails=1`
+      );
+      const d = await res.json();
+      const a = d.address ?? {};
       return (
         a.amenity       ?? a.shop         ?? a.building     ??
         a.road          ?? a.neighbourhood ?? a.suburb       ??
@@ -109,31 +137,56 @@ export default function StudentDashboard() {
     } catch { return "Unknown Area"; }
   }
 
-  // ✅ Uses realUserId instead of MOCK_STUDENT_ID
+  // ✅ KEY FIX: uses studentRecordId (students.id) NOT realUserId (auth user id)
   const shareLocation = useCallback(async (auto = false) => {
     if (!navigator.geolocation) { setLocationStatus("error"); return; }
+    if (!studentRecordId) {
+      console.error("Student record ID not loaded yet");
+      setLocationStatus("error");
+      return;
+    }
     if (!auto) setIsSharing(true);
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      const label = await getLocationLabel(latitude, longitude);
-      setLocationLabel(label);
-      try {
-        await fetch("/api/student/location", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId: realUserId,  // auth user ID — matches student_locations FK
-            latitude,
-            longitude,
-            accuracy: Math.round(accuracy),
-            locationLabel: label,
-          }),
-        });
-        setLocationStatus("success");
-        setLastShared(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
-      } catch { setLocationStatus("error"); }
-      finally { setIsSharing(false); }
-    }, () => { setLocationStatus("error"); setIsSharing(false); }, { enableHighAccuracy: true, timeout: 10000 });
-  }, [realUserId]);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude, accuracy, speed } = pos.coords;
+        const label = await getLocationLabel(latitude, longitude);
+        setLocationLabel(label);
+        try {
+          const res = await fetch("/api/student/location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              studentId:     studentRecordId, // ✅ students.id — matches student_locations FK
+              latitude,
+              longitude,
+              accuracy:      Math.round(accuracy),
+              locationLabel: label,
+              batteryLevel:  batteryLevel,   // ✅ battery level included
+              speed:         speed ?? null,
+            }),
+          });
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error);
+          setLocationStatus("success");
+          setLastShared(
+            new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+          );
+        } catch (err) {
+          console.error("Share location error:", err);
+          setLocationStatus("error");
+        } finally {
+          setIsSharing(false);
+        }
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setLocationStatus("error");
+        setIsSharing(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [realUserId, studentRecordId, batteryLevel]);
 
   useEffect(() => {
     if (locationStatus === "success") {
@@ -155,11 +208,14 @@ export default function StudentDashboard() {
           </div>
           <div className="relative">
             <p className="text-brand-100 text-sm font-medium">Good morning 👋</p>
-            {/* ✅ Shows real name from DB, not hardcoded "Student" */}
             <h2 className="font-display font-bold text-2xl mt-0.5">{realName.split(" ")[0]}</h2>
             {student?.exam_type && (
               <div className="flex flex-wrap gap-2 mt-2">
-                {student.exam_type.map(e => <span key={e} className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{EXAM_LABELS[e]}</span>)}
+                {student.exam_type.map(e => (
+                  <span key={e} className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                    {EXAM_LABELS[e]}
+                  </span>
+                ))}
               </div>
             )}
             <p className="text-brand-100 text-sm mt-3">Every hour counts. Keep going!</p>
@@ -172,28 +228,50 @@ export default function StudentDashboard() {
           locationStatus === "error"   ? "border-red-500/30   bg-red-500/5"   : "border-border")}>
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-3">
-              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                locationStatus === "success" ? "bg-green-500/15" : locationStatus === "error" ? "bg-red-500/15" : "bg-primary/10")}>
-                {locationStatus === "success" ? <Shield className="h-5 w-5 text-green-500" /> : <MapPin className="h-5 w-5 text-primary" />}
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                locationStatus === "success" ? "bg-green-500/15" :
+                locationStatus === "error"   ? "bg-red-500/15"   : "bg-primary/10")}>
+                {locationStatus === "success"
+                  ? <Shield  className="h-5 w-5 text-green-500" />
+                  : <MapPin  className="h-5 w-5 text-primary" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">
-                  {locationStatus === "success" ? `📍 ${locationLabel}` : locationStatus === "error" ? "Location Error" : "Share Your Location"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold">
+                    {locationStatus === "success" ? `📍 ${locationLabel}` :
+                     locationStatus === "error"   ? "Location Error" :
+                     "Share Your Location"}
+                  </p>
+                  {/* ✅ Battery level shown inline */}
+                  <BatteryIcon level={batteryLevel} />
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {locationStatus === "success" ? `Last updated ${lastShared} · Auto-updates every 15 min` :
-                   locationStatus === "error"   ? "Could not access location. Check browser permissions." :
-                   "Let your parents know you're safe — auto-updates every 15 min"}
+                  {locationStatus === "success"
+                    ? `Last updated ${lastShared} · Auto-updates every 15 min`
+                    : locationStatus === "error"
+                    ? "Could not access location. Check browser permissions."
+                    : "Let your parents know you're safe — auto-updates every 15 min"}
                 </p>
               </div>
-              <button type="button" onClick={() => shareLocation(false)} disabled={isSharing}
-                className={cn("flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-shrink-0",
-                  locationStatus === "success" ? "bg-green-500/15 text-green-600 hover:bg-green-500/25 border border-green-500/30" :
-                  locationStatus === "error"   ? "bg-red-500/15   text-red-600   hover:bg-red-500/25   border border-red-500/30"   :
-                  "bg-primary text-primary-foreground hover:bg-primary/90")}>
-                {isSharing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Getting…</> :
-                 locationStatus === "success" ? <><Navigation className="h-3.5 w-3.5" /> Update</> :
-                 <><Navigation className="h-3.5 w-3.5" /> Share</>}
+              <button
+                type="button"
+                onClick={() => shareLocation(false)}
+                disabled={isSharing || !studentRecordId}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-shrink-0",
+                  locationStatus === "success"
+                    ? "bg-green-500/15 text-green-600 hover:bg-green-500/25 border border-green-500/30"
+                    : locationStatus === "error"
+                    ? "bg-red-500/15   text-red-600   hover:bg-red-500/25   border border-red-500/30"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90",
+                  (!studentRecordId) && "opacity-50 cursor-not-allowed"
+                )}>
+                {isSharing
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Getting…</>
+                  : locationStatus === "success"
+                  ? <><Navigation className="h-3.5 w-3.5" /> Update</>
+                  : <><Navigation className="h-3.5 w-3.5" /> Share</>}
               </button>
             </div>
           </CardContent>
@@ -251,7 +329,7 @@ export default function StudentDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-display">Today&apos;s Targets</CardTitle>
+              <CardTitle className="text-base font-display">Today's Targets</CardTitle>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{completedTargets}/{TODAY_TARGETS.length}</span>
                 <Badge variant={targetProgress >= 80 ? "success" : targetProgress >= 50 ? "warning" : "secondary"}>{targetProgress}%</Badge>
@@ -262,7 +340,9 @@ export default function StudentDashboard() {
           <CardContent className="space-y-2">
             {TODAY_TARGETS.map((t, i) => (
               <div key={i} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
-                {t.done ? <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0"/> : <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0"/>}
+                {t.done
+                  ? <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0"/>
+                  : <AlertCircle  className="h-5 w-5 text-muted-foreground flex-shrink-0"/>}
                 <span className={`text-sm flex-1 ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.label}</span>
                 <span className="text-xs text-muted-foreground">{t.duration}</span>
               </div>
@@ -279,8 +359,10 @@ export default function StudentDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { subject: "Physics", accuracy: 72, questions: 120 }, { subject: "Chemistry", accuracy: 85, questions: 98 },
-              { subject: "Biology", accuracy: 68, questions: 145 }, { subject: "Mathematics", accuracy: 61, questions: 87 },
+              { subject: "Physics",     accuracy: 72, questions: 120 },
+              { subject: "Chemistry",   accuracy: 85, questions: 98  },
+              { subject: "Biology",     accuracy: 68, questions: 145 },
+              { subject: "Mathematics", accuracy: 61, questions: 87  },
             ].map(item => (
               <div key={item.subject}>
                 <div className="flex items-center justify-between mb-1">

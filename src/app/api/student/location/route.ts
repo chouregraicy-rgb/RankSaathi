@@ -7,9 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// POST — save a new location ping
 export async function POST(request: Request) {
-  const { studentId, latitude, longitude, accuracy, locationLabel } = await request.json();
+  const { studentId, latitude, longitude, accuracy, locationLabel, batteryLevel, speed } =
+    await request.json();
+
   if (!studentId || !latitude || !longitude) {
     return NextResponse.json({ error: "studentId, latitude, longitude required" }, { status: 400 });
   }
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
     longitude,
     accuracy:       accuracy ?? null,
     location_label: locationLabel ?? null,
+    battery_level:  batteryLevel ?? null,
+    speed:          speed ?? null,
     timestamp:      new Date().toISOString(),
   });
 
@@ -27,23 +30,21 @@ export async function POST(request: Request) {
   return NextResponse.json({ success: true });
 }
 
-// GET — fetch today's locations for a student
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const studentId = searchParams.get("studentId");
-  if (!studentId) return NextResponse.json({ error: "studentId required" }, { status: 400 });
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  if (!studentId) {
+    return NextResponse.json({ error: "studentId is required" }, { status: 400 });
+  }
 
-  const { data, error } = await supabase
+  const { data: locations, error } = await supabase
     .from("student_locations")
-    .select("*")
+    .select("id, student_id, latitude, longitude, accuracy, location_label, timestamp, battery_level, speed")
     .eq("student_id", studentId)
-    .gte("timestamp", todayStart.toISOString())
     .order("timestamp", { ascending: false })
-    .limit(50);
+    .limit(20);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ locations: data ?? [] });
+  return NextResponse.json({ locations: locations ?? [] });
 }
