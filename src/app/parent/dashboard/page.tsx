@@ -2,33 +2,15 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { StatCard } from "@/components/shared/StatCard";
-import { MoodIndicator } from "@/components/shared/MoodIndicator";
 import { LocationMap } from "@/components/shared/LocationMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
-  Clock, MapPin, CheckCircle2, AlertTriangle, Bell, Target,
-  TrendingUp, BookOpen, Phone, MessageCircle, Calendar,
-  RefreshCw, Loader2, Navigation,
+  Clock, MapPin, Target, TrendingUp, BookOpen,
+  RefreshCw, Loader2, Navigation, Phone, MessageCircle,
 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { createClient } from "@/lib/supabase/client";
-
-const STUDY_TREND = [
-  { day: "Mon", hours: 7 }, { day: "Tue", hours: 5 }, { day: "Wed", hours: 8 },
-  { day: "Thu", hours: 6 }, { day: "Fri", hours: 4 }, { day: "Sat", hours: 9 },
-  { day: "Sun", hours: 7 },
-];
-
-const RECENT_ALERTS = [
-  { type: "warning", message: "Student left safe zone at 4:15 PM", time: "2h ago" },
-  { type: "info",    message: "New test result: Physics 72%",       time: "5h ago" },
-  { type: "success", message: "7-day study streak maintained!",     time: "1 day ago" },
-  { type: "warning", message: "Burnout risk detected — low focus",  time: "2 days ago" },
-];
 
 interface LocationPoint {
   id:             string;
@@ -40,13 +22,37 @@ interface LocationPoint {
   timestamp:      string;
 }
 
+// ── Empty State ───────────────────────────────────────────
+function EmptyCard({ title, icon: Icon }: { title: string; icon: React.ElementType }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-display flex items-center gap-2">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-10 h-10 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+            <Icon className="h-5 w-5 text-muted-foreground/50" />
+          </div>
+          <p className="text-sm text-muted-foreground font-medium">No data yet</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">Data will appear here once available</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ParentDashboard() {
   const supabase = createClient();
 
-  // ✅ Real IDs from DB
+  // ✅ All working state — untouched from fixed version
   const [parentUserId, setParentUserId]   = useState<string | null>(null);
   const [studentId, setStudentId]         = useState<string | null>(null);
   const [studentName, setStudentName]     = useState<string>("Student");
+  const [studentData, setStudentData]     = useState<any>(null);
   const [locations, setLocations]         = useState<LocationPoint[]>([]);
   const [loadingInit, setLoadingInit]     = useState(true);
   const [loadingMap, setLoadingMap]       = useState(false);
@@ -59,12 +65,10 @@ export default function ParentDashboard() {
     const init = async () => {
       setLoadingInit(true);
       try {
-        // Get logged-in parent
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         setParentUserId(user.id);
 
-        // Find linked student from parents table
         const { data: parentRecord } = await supabase
           .from("parents")
           .select("student_id")
@@ -77,10 +81,10 @@ export default function ParentDashboard() {
           return;
         }
 
-        // Get student's user_id and name
+        // ✅ Get student record — use user_id for location lookup
         const { data: studentRecord } = await supabase
           .from("students")
-          .select("id, user_id")
+          .select("id, user_id, current_streak, longest_streak, total_study_hours, rank_estimate, exam_type, target_year")
           .eq("id", parentRecord.student_id)
           .single();
 
@@ -90,9 +94,10 @@ export default function ParentDashboard() {
           return;
         }
 
-        setStudentId(studentRecord.user_id);
+        setStudentId(studentRecord.user_id); // ✅ auth user ID — matches student_locations FK
+        setStudentData(studentRecord);
 
-        // Get student name
+        // ✅ Get student name
         const { data: studentUser } = await supabase
           .from("users")
           .select("full_name")
@@ -120,7 +125,9 @@ export default function ParentDashboard() {
       const data = await res.json();
       if (data.locations) {
         setLocations(data.locations);
-        setLastFetched(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
+        setLastFetched(
+          new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+        );
       }
     } catch { setMapError(true); }
     finally  { setLoadingMap(false); }
@@ -134,13 +141,12 @@ export default function ParentDashboard() {
   }, [studentId, fetchLocations]);
 
   const latestLocation = locations[0] ?? null;
-
   const timeline = locations.slice(0, 8).map((loc) => ({
     label: loc.location_label ?? "Unknown Area",
     time:  new Date(loc.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
   }));
 
-  // Show loading while fetching parent/student info
+  // Loading
   if (loadingInit) {
     return (
       <DashboardLayout role="parent" title="Parent Dashboard">
@@ -151,7 +157,7 @@ export default function ParentDashboard() {
     );
   }
 
-  // Show "not linked" state
+  // Not linked
   if (notLinked) {
     return (
       <DashboardLayout role="parent" title="Parent Dashboard">
@@ -173,37 +179,78 @@ export default function ParentDashboard() {
     <DashboardLayout role="parent" title="Parent Dashboard">
       <div className="space-y-5 max-w-4xl">
 
-        {/* Student info banner */}
+        {/* ✅ Student info banner with real name */}
         <div className="flex items-center gap-4 bg-card rounded-2xl border p-5">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-display font-bold text-xl">
-            {studentName[0]}
+            {studentName[0]?.toUpperCase()}
           </div>
-          <div className="flex-1">
-            <h2 className="font-display font-bold text-xl">{studentName}</h2>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-display font-bold text-xl truncate">{studentName}</h2>
             <div className="flex flex-wrap gap-2 mt-1">
-              <Badge variant="outline">NEET UG 2026</Badge>
-              <Badge variant="outline">JEE Main 2026</Badge>
-              <Badge variant="success">Active Today</Badge>
+              {studentData?.exam_type?.map((e: string) => (
+                <Badge key={e} variant="secondary" className="text-xs">{e}</Badge>
+              ))}
+              {studentData?.target_year && (
+                <Badge variant="outline" className="text-xs">{studentData.target_year}</Badge>
+              )}
+              <Badge variant="success" className="text-xs">Active Today</Badge>
             </div>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" className="gap-1"><Phone className="h-3.5 w-3.5" /> Call</Button>
-            <Button variant="outline" size="sm" className="gap-1"><MessageCircle className="h-3.5 w-3.5" /> Message</Button>
+            <Button variant="outline" size="sm" className="gap-1">
+              <Phone className="h-3.5 w-3.5" /> Call
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1">
+              <MessageCircle className="h-3.5 w-3.5" /> Message
+            </Button>
           </div>
         </div>
 
-        {/* Stats row */}
+        {/* ✅ Real stats from students table */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Study Hours Today"    value="7.5h"    icon={Clock}      color="blue"   subtitle="Target: 8h" />
-          <StatCard title="Weekly Avg"           value="6.8h"    icon={TrendingUp} color="green"  subtitle="Per day"    />
-          <StatCard title="Attendance Streak"    value="12 days" icon={Calendar}   color="purple" />
-          <StatCard title="Test Avg (This Week)" value="74%"     icon={Target}     color="orange" />
+          {[
+            {
+              title: "Study Streak",
+              value: studentData?.current_streak != null ? `${studentData.current_streak} days` : null,
+              icon: Target,
+            },
+            {
+              title: "Total Study Hours",
+              value: studentData?.total_study_hours != null
+                ? `${Number(studentData.total_study_hours).toFixed(1)}h` : null,
+              icon: Clock,
+            },
+            {
+              title: "Rank Estimate",
+              value: studentData?.rank_estimate ? `#${studentData.rank_estimate.toLocaleString()}` : null,
+              icon: TrendingUp,
+            },
+            {
+              title: "Longest Streak",
+              value: studentData?.longest_streak != null ? `${studentData.longest_streak} days` : null,
+              icon: BookOpen,
+            },
+          ].map((stat) => (
+            <Card key={stat.title}>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <stat.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">{stat.title}</p>
+                    {stat.value !== null
+                      ? <p className="text-xl font-display font-bold mt-0.5">{stat.value}</p>
+                      : <p className="text-sm text-muted-foreground mt-1 italic">No data yet</p>
+                    }
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* Mood */}
-        <MoodIndicator mood="focused" focusScore={78} burnoutRisk={15} size="md" />
-
-        {/* Live Location Map */}
+        {/* ✅ Live Location Map — fully working, untouched */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -282,86 +329,15 @@ export default function ParentDashboard() {
           </CardContent>
         </Card>
 
-        {/* Study hours chart */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base font-display">Study Hours — Last 7 Days</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={160}>
-              <AreaChart data={STUDY_TREND} margin={{ left: -25, right: 5 }}>
-                <defs>
-                  <linearGradient id="parentHoursGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#2b7fff" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#2b7fff" stopOpacity={0}   />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                  formatter={val => [`${val}h`, "Study Hours"]}
-                />
-                <Area type="monotone" dataKey="hours" stroke="#2b7fff" strokeWidth={2} fill="url(#parentHoursGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        {/* Empty state cards for future features */}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <EmptyCard title="Study Hours — Last 7 Days" icon={Clock} />
+          <EmptyCard title="Test Performance" icon={Target} />
+        </div>
 
-        {/* Recent alerts */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-amber-500" />
-                <CardTitle className="text-base font-display">Recent Alerts</CardTitle>
-              </div>
-              <Button variant="ghost" size="sm" className="text-xs">View All</Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {RECENT_ALERTS.map((alert, i) => (
-              <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${
-                alert.type === "warning" ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900" :
-                alert.type === "success" ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900" :
-                "bg-muted/40 border-border"}`}>
-                {alert.type === "warning"
-                  ? <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                  : alert.type === "success"
-                  ? <CheckCircle2  className="h-4 w-4 text-green-500  flex-shrink-0 mt-0.5" />
-                  : <Bell          className="h-4 w-4 text-blue-500   flex-shrink-0 mt-0.5" />}
-                <div className="flex-1">
-                  <p className="text-sm">{alert.message}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{alert.time}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <EmptyCard title="Recent Alerts" icon={Target} />
+        <EmptyCard title="Subject-wise Progress" icon={BookOpen} />
 
-        {/* Subject performance */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base font-display">Subject-wise Progress</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { subject: "Physics",     pct: 72, tests: 8,  trend: "+5%" },
-              { subject: "Chemistry",   pct: 85, tests: 6,  trend: "+8%" },
-              { subject: "Biology",     pct: 68, tests: 10, trend: "-2%" },
-              { subject: "Mathematics", pct: 61, tests: 5,  trend: "+3%" },
-            ].map(item => (
-              <div key={item.subject}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">{item.subject}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{item.tests} tests</span>
-                    <Badge variant={item.trend.startsWith("+") ? "success" : "destructive"} className="text-xs">{item.trend}</Badge>
-                    <span className="text-sm font-bold">{item.pct}%</span>
-                  </div>
-                </div>
-                <Progress value={item.pct} className="h-1.5" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );
