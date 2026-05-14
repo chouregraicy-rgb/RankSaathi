@@ -90,7 +90,7 @@ export default function ParentDashboard() {
           return;
         }
 
-        setStudentId(studentRecord.id);
+        setStudentId(studentRecord.user_id);
 
         // Get student name
         const { data: studentUser } = await supabase
