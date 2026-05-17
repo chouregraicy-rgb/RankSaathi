@@ -34,7 +34,7 @@ export default function LandingPage() {
           .eq("id", data.session.user.id)
           .single();
         const r = profile?.role ?? "student";
-        window.location.href = `https://VidyaSaathi.onrender.com/${r}/dashboard`;
+        window.location.href = `https://vidhyasaathi.online/${r}/dashboard`;
       }
     };
     check();
