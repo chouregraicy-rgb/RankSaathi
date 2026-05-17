@@ -91,7 +91,7 @@ export function Sidebar({ role }: SidebarProps) {
         </div>
         {!collapsed && (
           <div>
-            <span className="font-display font-bold text-lg leading-tight">RankSaathi</span>
+            <span className="font-display font-bold text-lg leading-tight">VidyaSaathi</span>
             <p className="text-[10px] text-muted-foreground capitalize">{role} Portal</p>
           </div>
         )}

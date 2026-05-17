@@ -1,4 +1,4 @@
-# RankSaathi — Setup Guide
+# VidyaSaathi — Setup Guide
 
 AI-powered NEET & JEE preparation platform built with Next.js 15, Supabase, and OpenRouter.
 
@@ -25,7 +25,7 @@ AI-powered NEET & JEE preparation platform built with Next.js 15, Supabase, and 
 
 ```bash
 git clone <your-repo-url>
-cd rankSaathi
+cd VidyaSaathi
 npm install
 ```
 
@@ -190,3 +190,4 @@ Supabase Pro at $25/mo for production scale.
 ## License
 
 Private project — do not redistribute.
+

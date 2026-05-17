@@ -157,7 +157,7 @@ function LinkStudentContent() {
           </div>
           <h1 className="text-2xl font-bold font-display">Link Your Child</h1>
           <p className="text-sm text-muted-foreground">
-            Enter the 8-character invite code from your child&apos;s RankSaathi settings to start monitoring their progress.
+            Enter the 8-character invite code from your child&apos;s VidyaSaathi settings to start monitoring their progress.
           </p>
         </div>
 

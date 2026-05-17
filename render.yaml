@@ -1,4 +1,4 @@
-# render.yaml — Render deployment configuration for RankSaathi
+# render.yaml — Render deployment configuration for VidyaSaathi
 # Deploy at: https://dashboard.render.com → New Web Service → Connect your GitHub repo
 
 services:
@@ -23,3 +23,4 @@ services:
         sync: false
       - key: NEXT_PUBLIC_APP_URL
         sync: false       # Set to your Render URL e.g. https://rank-saathi.onrender.com
+

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
         "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-        "X-Title": "RankSaathi",
+        "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
         model: "google/gemini-3.1-flash-lite",

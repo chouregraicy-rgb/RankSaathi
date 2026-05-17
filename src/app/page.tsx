@@ -34,7 +34,7 @@ export default function LandingPage() {
           .eq("id", data.session.user.id)
           .single();
         const r = profile?.role ?? "student";
-        window.location.href = `https://ranksaathi.onrender.com/${r}/dashboard`;
+        window.location.href = `https://VidyaSaathi.onrender.com/${r}/dashboard`;
       }
     };
     check();
@@ -65,7 +65,7 @@ export default function LandingPage() {
           .single();
 
         const userRole = profile?.role ?? role;
-        window.location.href = `https://ranksaathi.onrender.com/${userRole}/dashboard`;
+        window.location.href = `https://VidyaSaathi.onrender.com/${userRole}/dashboard`;
       }
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
@@ -115,7 +115,7 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <span className="text-white font-display font-bold text-2xl">RankSaathi</span>
+            <span className="text-white font-display font-bold text-2xl">VidyaSaathi</span>
           </div>
 
           <h1 className="text-5xl font-display font-bold text-white leading-tight mb-4">
@@ -164,7 +164,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-xl">RankSaathi</span>
+            <span className="font-display font-bold text-xl">VidyaSaathi</span>
           </div>
 
           {/* Role toggle */}
@@ -278,14 +278,15 @@ export default function LandingPage() {
             </p>
           )}
         </div><div className="absolute bottom-0 left-0 right-0 border-t border-border py-3 px-6 bg-background/80 backdrop-blur-sm">
-  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
     <span>© 2026 GlobalWebSaaS</span>
     <a href="/privacy" className="hover:text-foreground transition-colors hover:underline">Privacy Policy</a>
     <a href="/contact" className="hover:text-foreground transition-colors hover:underline">Contact</a>
     <a href="mailto:contact@globalwebsaas.org" className="hover:text-foreground transition-colors hover:underline">contact@globalwebsaas.org</a>
-  </div>
-</div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+

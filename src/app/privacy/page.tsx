@@ -12,7 +12,7 @@ export default function PrivacyPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <GraduationCap className="h-4 w-4 text-white" />
             </div>
-            <span className="font-display font-bold text-lg">RankSaathi</span>
+            <span className="font-display font-bold text-lg">VidyaSaathi</span>
           </Link>
           <Link href="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-display font-bold mb-3">1. Introduction</h2>
           <p className="text-muted-foreground leading-relaxed">
-            RankSaathi ("we", "our", or "us") is operated by GlobalWebSaaS and is committed to protecting the privacy of students, parents, and institutions who use our platform. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.
+            VidyaSaathi ("we", "our", or "us") is operated by GlobalWebSaaS and is committed to protecting the privacy of students, parents, and institutions who use our platform. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.
           </p>
         </section>
 
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-display font-bold mb-3">3. How We Use Your Information</h2>
           <ul className="space-y-2 text-muted-foreground">
             {[
-              "To provide and improve the RankSaathi platform and its features",
+              "To provide and improve the VidyaSaathi platform and its features",
               "To generate AI-powered study recommendations and doubt solutions",
               "To enable parents to monitor their child's academic progress and location",
               "To send important notifications about test results, alerts, and platform updates",
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-display font-bold mb-3">5. Location Data & Minor Protection</h2>
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5">
             <p className="text-muted-foreground leading-relaxed">
-              RankSaathi takes the safety of minors very seriously. Location data is:
+              VidyaSaathi takes the safety of minors very seriously. Location data is:
             </p>
             <ul className="mt-3 space-y-1.5 text-muted-foreground text-sm">
               <li>• Only collected when explicitly enabled by the student</li>
@@ -155,14 +155,14 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-display font-bold mb-3">8. Cookies</h2>
           <p className="text-muted-foreground leading-relaxed">
-            RankSaathi uses essential cookies for authentication and session management. We do not use advertising or tracking cookies. You can disable cookies in your browser settings, but this may affect platform functionality.
+            VidyaSaathi uses essential cookies for authentication and session management. We do not use advertising or tracking cookies. You can disable cookies in your browser settings, but this may affect platform functionality.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-display font-bold mb-3">9. Changes to This Policy</h2>
           <p className="text-muted-foreground leading-relaxed">
-            We may update this Privacy Policy from time to time. When we do, we will notify registered users via email and update the "Last updated" date at the top of this page. Continued use of RankSaathi after changes constitutes acceptance of the updated policy.
+            We may update this Privacy Policy from time to time. When we do, we will notify registered users via email and update the "Last updated" date at the top of this page. Continued use of VidyaSaathi after changes constitutes acceptance of the updated policy.
           </p>
         </section>
 
@@ -177,7 +177,7 @@ export default function PrivacyPage() {
                 <a href="mailto:contact@globalwebsaas.org" className="text-brand-600 hover:underline">contact@globalwebsaas.org</a>
               </p>
               <p><span className="font-medium">Company:</span> GlobalWebSaaS</p>
-              <p><span className="font-medium">Platform:</span> RankSaathi — NEET & JEE Preparation</p>
+              <p><span className="font-medium">Platform:</span> VidyaSaathi — NEET & JEE Preparation</p>
             </div>
           </div>
         </section>
@@ -191,7 +191,7 @@ export default function PrivacyPage() {
             <div className="w-6 h-6 rounded bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <GraduationCap className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-display font-bold text-sm">RankSaathi</span>
+            <span className="font-display font-bold text-sm">VidyaSaathi</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground transition-colors font-medium text-foreground">Privacy Policy</Link>
@@ -204,3 +204,4 @@ export default function PrivacyPage() {
     </div>
   );
 }
+

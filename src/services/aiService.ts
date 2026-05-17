@@ -43,7 +43,7 @@ async function callOpenRouter(
         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
         "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-        "X-Title": "RankSaathi",
+        "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify(body),
     });
@@ -73,7 +73,7 @@ export async function solveDoubt(
   relatedConcepts: string[];
   similarQuestions: string[];
 }> {
-  const systemPrompt = `You are RankSaathi's expert AI tutor specialising in NEET UG, JEE Main and JEE Advanced.
+  const systemPrompt = `You are VidyaSaathi's expert AI tutor specialising in NEET UG, JEE Main and JEE Advanced.
 When a student asks a question:
 1. Solve it step-by-step clearly
 2. Give a simplified plain-language explanation
@@ -219,3 +219,4 @@ No markdown, just the array.`;
     ];
   }
 }
+

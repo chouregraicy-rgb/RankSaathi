@@ -58,9 +58,9 @@ const MOCK_TEST = {
 };
 
 type Status = "unseen" | "answered" | "marked" | "skipped";
-
+// @ts-ignore
 export default function TestTakingPage({ params }: { params: { id: string } }) {
-  // Keep everything same - just add this line at top of function:
+  
   const router = useRouter();
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});

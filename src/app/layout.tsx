@@ -6,8 +6,8 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 
 export const metadata: Metadata = {
   title: {
-    default: "RankSaathi — NEET & JEE Preparation",
-    template: "%s | RankSaathi",
+    default: "VidyaSaathi — NEET & JEE Preparation",
+    template: "%s | VidyaSaathi",
   },
   description:
     "AI-powered study platform for NEET UG, JEE Main & JEE Advanced aspirants. Track progress, solve doubts, analyse performance.",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
-    title: "RankSaathi",
+    title: "VidyaSaathi",
     description: "AI-powered NEET & JEE preparation platform",
     type: "website",
   },

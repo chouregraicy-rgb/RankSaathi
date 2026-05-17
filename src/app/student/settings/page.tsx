@@ -120,8 +120,8 @@ export default function SettingsPage() {
   function shareCode() {
     if (navigator.share) {
       navigator.share({
-        title: "Join me on RankSaathi",
-        text:  `Use my invite code ${inviteCode} to link as my parent on RankSaathi!`,
+        title: "Join me on VidyaSaathi",
+        text:  `Use my invite code ${inviteCode} to link as my parent on VidyaSaathi!`,
         url:   `${window.location.origin}/parent/link?code=${inviteCode}`,
       });
     } else {
@@ -338,7 +338,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Share this code with your parent so they can monitor your progress, study hours, and location on RankSaathi.
+              Share this code with your parent so they can monitor your progress, study hours, and location on VidyaSaathi.
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 flex items-center justify-center bg-muted rounded-xl py-4 px-3">
@@ -362,7 +362,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Link2 className="h-3 w-3" />
-                <span>Your parent uses this at <strong>ranksaathi.com/parent/link</strong></span>
+                <span>Your parent uses this at <strong>VidyaSaathi.com/parent/link</strong></span>
               </div>
               <button type="button" onClick={regenerateCode} disabled={loadingCode}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">

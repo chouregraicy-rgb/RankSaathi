@@ -1,5 +1,5 @@
 -- ============================================================
--- RankSaathi — Complete Supabase SQL Schema
+-- VidyaSaathi — Complete Supabase SQL Schema
 -- Run this in: Supabase Dashboard → SQL Editor → New Query
 -- ============================================================
 
@@ -527,3 +527,4 @@ ON CONFLICT DO NOTHING;
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================
+

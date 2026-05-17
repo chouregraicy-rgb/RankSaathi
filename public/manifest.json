@@ -1,6 +1,6 @@
 {
-  "name": "RankSaathi",
-  "short_name": "RankSaathi",
+  "name": "VidyaSaathi",
+  "short_name": "VidyaSaathi",
   "description": "AI-powered NEET & JEE preparation platform",
   "start_url": "/",
   "display": "standalone",
@@ -72,3 +72,4 @@
     }
   ]
 }
+

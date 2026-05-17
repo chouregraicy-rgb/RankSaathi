@@ -12,7 +12,7 @@ export default function ContactPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <GraduationCap className="h-4 w-4 text-white" />
             </div>
-            <span className="font-display font-bold text-lg">RankSaathi</span>
+            <span className="font-display font-bold text-lg">VidyaSaathi</span>
           </Link>
           <Link href="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
@@ -76,7 +76,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-semibold text-sm">Company</p>
                   <p className="text-sm text-muted-foreground mt-0.5">GlobalWebSaaS</p>
-                  <p className="text-xs text-muted-foreground mt-1">Operator of RankSaathi Platform</p>
+                  <p className="text-xs text-muted-foreground mt-1">Operator of VidyaSaathi Platform</p>
                 </div>
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function ContactPage() {
                 },
                 {
                   q: "Is there a free trial?",
-                  a: "Yes! RankSaathi offers a 7-day free trial for all premium features. No credit card required.",
+                  a: "Yes! VidyaSaathi offers a 7-day free trial for all premium features. No credit card required.",
                 },
                 {
                   q: "How do I cancel my subscription?",
@@ -172,7 +172,7 @@ export default function ContactPage() {
             <div className="w-6 h-6 rounded bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <GraduationCap className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-display font-bold text-sm">RankSaathi</span>
+            <span className="font-display font-bold text-sm">VidyaSaathi</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>

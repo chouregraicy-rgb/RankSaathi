@@ -1,5 +1,5 @@
 // ============================================================
-// RankSaathi — Global TypeScript Types
+// VidyaSaathi — Global TypeScript Types
 // ============================================================
 
 export type UserRole = "student" | "parent" | "admin";
@@ -298,3 +298,4 @@ export interface WeeklyReport {
   top_subjects: Subject[];
   weak_subjects: Subject[];
 }
+
