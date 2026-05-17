@@ -65,7 +65,7 @@ export default function LandingPage() {
           .single();
 
         const userRole = profile?.role ?? role;
-        window.location.href = `https://VidyaSaathi.onrender.com/${userRole}/dashboard`;
+        window.location.href = `https://vidhyasaathi.online/${userRole}/dashboard`;
       }
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
