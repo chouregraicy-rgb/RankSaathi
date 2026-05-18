@@ -35,10 +35,11 @@ export async function middleware(request: NextRequest) {
   const isLinkPage  = pathname === "/parent/link";
   const isLanding   = pathname === "/";
 
-  if (isApiRoute || isStatic || isAuthRoute || isLinkPage) return response;
+  const isPublicPage = ["/privacy", "/terms", "/contact", "/pricing"].includes(pathname);
 
-  if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
+if (isApiRoute || isStatic || isAuthRoute || isLinkPage || isPublicPage) return response;
 
+if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
   if (user) {
     const metaRole = user.user_metadata?.role;
     const { data: profile, error: profileError } = await supabase
