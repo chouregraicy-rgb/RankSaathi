@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Toaster } from "@/components/ui/toaster";
-import { Bell, Search, X, BookOpen, Zap, Play, BarChart2, Calendar, Users } from "lucide-react";
+import { Bell, Search, X, BookOpen, Zap, Play, BarChart2, Calendar, Users, Puzzle } from "lucide-react";
 import type { UserRole } from "@/types";
 import Link from "next/link";
 
@@ -20,6 +20,7 @@ const SEARCH_LINKS = [
   { label: "Analytics",   href: "/student/analytics",  icon: BarChart2, desc: "View your performance" },
   { label: "Schedule",    href: "/student/schedule",   icon: Calendar,  desc: "Today's study plan" },
   { label: "Community",   href: "/student/community",  icon: Users,     desc: "Connect with peers" },
+  { label: "Crossword", href: "/student/crossword", icon: Puzzle, desc: "AI-generated crossword puzzles" },
 ];
 
 // ── Static demo notifications ──
