@@ -1,187 +1,163 @@
-// src/app/contact/page.tsx
-import Link from "next/link";
-import { GraduationCap, Mail, ArrowLeft, MessageCircle, Clock, Building2, Phone } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Mail, MapPin, Clock, MessageSquare } from "lucide-react";
 
 export default function ContactPage() {
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.email || !form.message) return;
+    setStatus("sending");
+    // Simple mailto fallback — replace with your email API if needed
+    const mailtoLink = `mailto:contact@globalwebsaas.org?subject=${encodeURIComponent(form.subject || "VidyaSaathi Enquiry")}&body=${encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)}`;
+    window.location.href = mailtoLink;
+    setStatus("sent");
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-              <GraduationCap className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-display font-bold text-lg">VidyaSaathi</span>
-          </Link>
-          <Link href="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
-          </Link>
+    <div className="min-h-screen bg-gray-950 text-gray-200 py-16 px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <h1 className="text-4xl font-bold text-white mb-3">Contact Us</h1>
+          <p className="text-gray-400 text-lg">Have a question or need help? We're here for you.</p>
         </div>
-      </header>
 
-      {/* Hero */}
-      <div className="bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 py-14 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-4">
-            <MessageCircle className="h-7 w-7 text-white" />
-          </div>
-          <h1 className="text-4xl font-display font-bold text-white mb-3">Contact Us</h1>
-          <p className="text-brand-100 text-lg">We're here to help. Reach out anytime.</p>
-        </div>
-      </div>
-
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-2 gap-8">
-
-          {/* Contact Cards */}
-          <div className="space-y-5">
-            <h2 className="text-xl font-display font-bold">Get in Touch</h2>
-
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                  <Mail className="h-5 w-5 text-brand-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Email Us</p>
-                  <a href="mailto:contact@globalwebsaas.org"
-                    className="text-brand-600 hover:underline text-sm font-medium mt-0.5 block">
-                    contact@globalwebsaas.org
-                  </a>
-                  <p className="text-xs text-muted-foreground mt-1">For all queries, support, and feedback</p>
-                </div>
-              </div>
-
-              <div className="border-t border-border" />
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <Clock className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Response Time</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">We respond within 24 hours on business days</p>
-                  <p className="text-xs text-muted-foreground mt-1">Mon – Sat, 9 AM – 6 PM IST</p>
-                </div>
-              </div>
-
-              <div className="border-t border-border" />
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">Company</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">GlobalWebSaaS</p>
-                  <p className="text-xs text-muted-foreground mt-1">Operator of VidyaSaathi Platform</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Topics */}
-            <div className="bg-muted/40 rounded-2xl p-5 border border-border">
-              <p className="font-semibold text-sm mb-3">Common Topics</p>
-              <div className="space-y-2">
-                {[
-                  { topic: "Subscription & Billing", desc: "Plans, payments, cancellations" },
-                  { topic: "Technical Support", desc: "App issues, login problems" },
-                  { topic: "School/Institution Plans", desc: "Bulk licensing for schools" },
-                  { topic: "Data & Privacy", desc: "Account deletion, data requests" },
-                  { topic: "Partnership Enquiries", desc: "Coaching centres, institutions" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between py-1.5">
-                    <div>
-                      <p className="text-sm font-medium">{item.topic}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
-                    </div>
-                    <a href={`mailto:contact@globalwebsaas.org?subject=${encodeURIComponent(item.topic)}`}
-                      className="text-xs text-brand-600 hover:underline font-medium">
-                      Email →
+        <div className="grid md:grid-cols-2 gap-12">
+          {/* Contact Info */}
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-6">Get in Touch</h2>
+              <div className="space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Email</p>
+                    <a href="mailto:contact@globalwebsaas.org" className="text-white hover:text-blue-400 transition-colors">
+                      contact@globalwebsaas.org
                     </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Location</p>
+                    <p className="text-white">India</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Response Time</p>
+                    <p className="text-white">Within 24–48 hours</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">Support</p>
+                    <p className="text-white">Technical, billing & general queries</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-4">Common Questions</h2>
+              <div className="space-y-4 text-sm">
+                {[
+                  { q: "How do I cancel my subscription?", a: "Go to Settings → Subscription → Cancel Plan." },
+                  { q: "Can I switch from Student to Family plan?", a: "Yes, email us and we'll handle the upgrade/downgrade." },
+                  { q: "Is there a free trial?", a: "Yes! All new signups get a 7-day free trial." },
+                  { q: "How does parent linking work?", a: "Students share an invite code with parents from their settings." },
+                ].map((faq) => (
+                  <div key={faq.q} className="bg-gray-900 rounded-lg p-4">
+                    <p className="text-white font-medium mb-1">{faq.q}</p>
+                    <p className="text-gray-400">{faq.a}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Right side — Email CTA */}
-          <div className="space-y-5">
-            <h2 className="text-xl font-display font-bold">Send Us a Message</h2>
-
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <p className="text-muted-foreground text-sm leading-relaxed mb-5">
-                For the fastest response, email us directly at{" "}
-                <a href="mailto:contact@globalwebsaas.org" className="text-brand-600 font-medium hover:underline">
-                  contact@globalwebsaas.org
-                </a>{" "}
-                with your query. Please include your registered email and a brief description of the issue.
-              </p>
-
-              <a href="mailto:contact@globalwebsaas.org"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all">
-                <Mail className="h-4 w-4" />
-                Email contact@globalwebsaas.org
-              </a>
-
-              <div className="mt-6 pt-5 border-t border-border space-y-3">
-                <p className="text-sm font-semibold">For School & Institution Plans</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  If you're a school, coaching centre, or institution looking for bulk access or custom pricing, email us with the subject line <strong>"Institution Plan"</strong> and we'll get back to you within 48 hours with a tailored proposal.
-                </p>
-                <a href="mailto:contact@globalwebsaas.org?subject=Institution Plan Enquiry"
-                  className="inline-flex items-center gap-1.5 text-xs text-brand-600 font-medium hover:underline">
-                  Send Institution Enquiry →
-                </a>
+          {/* Contact Form */}
+          <div className="bg-gray-900 rounded-2xl p-8">
+            <h2 className="text-xl font-semibold text-white mb-6">Send a Message</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Your name"
+                />
               </div>
-            </div>
-
-            {/* FAQ snippet */}
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-              <p className="font-semibold text-sm">Frequently Asked</p>
-              {[
-                {
-                  q: "How do I link my parent account?",
-                  a: "After logging in as a parent, click 'Link Student' in the sidebar and enter the 8-character invite code from the student's Settings page.",
-                },
-                {
-                  q: "Is there a free trial?",
-                  a: "Yes! VidyaSaathi offers a 7-day free trial for all premium features. No credit card required.",
-                },
-                {
-                  q: "How do I cancel my subscription?",
-                  a: "Email us at contact@globalwebsaas.org with your registered email and we'll process the cancellation within 24 hours.",
-                },
-              ].map((item, i) => (
-                <div key={i} className="pb-4 border-b border-border last:border-0 last:pb-0">
-                  <p className="text-sm font-medium mb-1">{item.q}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.a}</p>
-                </div>
-              ))}
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500"
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={form.subject}
+                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500"
+                  placeholder="How can we help?"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Message *</label>
+                <textarea
+                  rows={5}
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 resize-none"
+                  placeholder="Describe your issue or question..."
+                />
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={status === "sending"}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {status === "sending" ? "Opening mail..." : status === "sent" ? "Message sent! ✓" : "Send Message"}
+              </button>
+              <p className="text-xs text-gray-500 text-center">
+                Or email us directly at contact@globalwebsaas.org
+              </p>
             </div>
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border mt-12 py-8 px-6">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-              <GraduationCap className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-display font-bold text-sm">VidyaSaathi</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link href="/contact" className="hover:text-foreground transition-colors font-medium text-foreground">Contact</Link>
-            <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-          </div>
-          <p className="text-xs text-muted-foreground">© 2026 GlobalWebSaaS. All rights reserved.</p>
+        <div className="mt-12 pt-8 border-t border-gray-800 flex gap-6 text-sm text-gray-500">
+          <a href="/privacy" className="hover:text-gray-300">Privacy Policy</a>
+          <a href="/terms" className="hover:text-gray-300">Terms of Service</a>
+          <a href="/" className="hover:text-gray-300">Back to Home</a>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
