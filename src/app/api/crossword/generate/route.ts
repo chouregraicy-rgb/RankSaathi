@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
         "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4",
-        max_tokens: 1500,
+        model: "google/gemma-3-12b-it:free",
+        max_tokens: 1000,
         messages: [{
           role: "user",
           content: `Generate exactly 18 crossword words for NEET/JEE students. ${topicPrompt}
