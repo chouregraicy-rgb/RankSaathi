@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, Brain,
   BarChart3, Calendar, Bell, Settings, LogOut,
   ChevronLeft, GraduationCap, Users, FileQuestion,
-  ClipboardList, Menu, X, MessageCircle, Trophy,
+  ClipboardList, Menu, X, MessageCircle, Trophy, Puzzle
 } from "lucide-react";
 import { cn } from "@/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -30,6 +30,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { href: "/student/community",  label: "Community",    icon: MessageCircle },
     { href: "/student/ranking",    label: "My Ranking",   icon: Trophy },
     { href: "/student/analytics",  label: "Analytics",    icon: BarChart3 },
+    { href: "/student/crossword",  label: "Crossword",    icon: Puzzle },
   ],
   parent: [
     { href: "/parent/dashboard",   label: "Dashboard",    icon: LayoutDashboard },
