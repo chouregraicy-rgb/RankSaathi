@@ -69,32 +69,15 @@ export default function CrosswordPage() {
       : "Mix topics from NEET and JEE syllabus.";
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `Generate exactly 18 crossword words for NEET/JEE students. ${topicPrompt}
-Mix Biology, Physics, and Chemistry. Mix Easy (class 11 basics), Medium (important concepts), Hard (advanced topics).
-Return ONLY valid JSON array, no markdown, no explanation:
-[{"word":"MITOSIS","clue":"Cell division producing identical daughter cells","subject":"biology","difficulty":"easy"},...]
-Rules:
-- Words 4-12 letters, UPPERCASE, no spaces/hyphens
-- Clues max 60 chars, exam-relevant
-- 6 biology, 6 physics, 6 chemistry words
-- 6 easy, 6 medium, 6 hard
-- All different words`
-          }]
-        })
-      });
+      const response = await fetch("/api/crossword/generate", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ topic: customTopic || topic }),
+});
 
-      const data = await response.json();
-      const text = data.content[0].text.trim();
-      const clean = text.replace(/```json|```/g, "").trim();
-      const wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[] = JSON.parse(clean);
+const data = await response.json();
+if (!data.words) throw new Error("No words returned");
+const wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[] = data.words;
 
       const placed = placeCrossword(wordList);
       if (placed.length > 0) {
