@@ -3,9 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     const { topic } = await req.json();
-    const topicPrompt = topic
-      ? `Focus on topic: ${topic}.`
-      : "Mix NEET/JEE topics across all chapters.";
+    const topicPrompt = topic ? `Focus on topic: ${topic}.` : "Mix NEET/JEE topics across all chapters.";
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
