@@ -92,7 +92,7 @@ const wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[] = data.words;
   }, [topic]);
 
   function placeCrossword(wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[]): WordEntry[] {
-    const GRID = 21;
+    const GRID = 15;
     const placed: WordEntry[] = [];
     const tempGrid: string[][] = Array.from({ length: GRID }, () => Array(GRID).fill(""));
 
