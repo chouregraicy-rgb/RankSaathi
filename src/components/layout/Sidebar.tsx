@@ -1,6 +1,7 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -37,7 +38,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { href: "/parent/reports",     label: "Reports",      icon: BarChart3 },
     { href: "/parent/alerts",      label: "Alerts",       icon: Bell },
     { href: "/parent/link",        label: "Link Student", icon: Users },
-  ],  
+  ],
   admin: [
     { href: "/admin/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
     { href: "/admin/users",        label: "Users",        icon: Users },
@@ -47,7 +48,6 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
   ],
 };
 
-// ✅ Settings only exists for student — parent has no settings page
 const SETTINGS_HREF: Partial<Record<UserRole, string>> = {
   student: "/student/settings",
 };
@@ -72,7 +72,6 @@ export function Sidebar({ role }: SidebarProps) {
   const navItems = NAV_ITEMS[role] ?? [];
   const settingsHref = SETTINGS_HREF[role];
 
-  // ✅ Fixed logout — goes to "/" not "/auth"
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -82,23 +81,43 @@ export function Sidebar({ role }: SidebarProps) {
 
   const SidebarContent = (
     <div className="flex flex-col h-full">
-      {/* Logo */}
+      {/* ── Logo ─────────────────────────────────────────────── */}
       <div className={cn(
-        "flex items-center gap-3 px-4 py-5 border-b border-border",
+        "flex items-center gap-3 px-4 py-4 border-b border-border",
         collapsed && "justify-center px-2"
       )}>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-bold text-sm font-display">RS</span>
-        </div>
-        {!collapsed && (
-          <div>
-            <span className="font-display font-bold text-lg leading-tight">VidyaSaathi</span>
-            <p className="text-[10px] text-muted-foreground capitalize">{role} Portal</p>
+        {collapsed ? (
+          /* Collapsed: show small square logo only */
+          <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-white">
+            <Image
+              src="/logo/logo.png"
+              alt="VidyaSaathi"
+              width={36}
+              height={36}
+              className="object-contain w-full h-full"
+            />
           </div>
+        ) : (
+          /* Expanded: show full logo image */
+          <Link href="/" className="flex items-center gap-2 min-w-0">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-white">
+              <Image
+                src="/logo/logo.png"
+                alt="VidyaSaathi"
+                width={36}
+                height={36}
+                className="object-contain w-full h-full"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="font-display font-bold text-base leading-tight truncate">VidyaSaathi</p>
+              <p className="text-[10px] text-muted-foreground capitalize">{role} Portal</p>
+            </div>
+          </Link>
         )}
       </div>
 
-      {/* Nav */}
+      {/* ── Nav ──────────────────────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-thin">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -124,9 +143,8 @@ export function Sidebar({ role }: SidebarProps) {
         })}
       </nav>
 
-      {/* Bottom: settings + logout + user */}
+      {/* ── Bottom ───────────────────────────────────────────── */}
       <div className="border-t border-border p-3 space-y-1">
-        {/* ✅ Only show Settings if that role has a settings page */}
         {settingsHref && (
           <Link
             href={settingsHref}
@@ -140,7 +158,6 @@ export function Sidebar({ role }: SidebarProps) {
           </Link>
         )}
 
-        {/* ✅ Logout button — works correctly */}
         <button
           type="button"
           onClick={handleLogout}
@@ -153,7 +170,6 @@ export function Sidebar({ role }: SidebarProps) {
           {!collapsed && <span>Logout</span>}
         </button>
 
-        {/* User info */}
         {!collapsed && user && (
           <div className="flex items-center gap-2 px-3 py-2 mt-1">
             <div className="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center">
@@ -184,10 +200,7 @@ export function Sidebar({ role }: SidebarProps) {
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* Mobile drawer */}
@@ -195,11 +208,7 @@ export function Sidebar({ role }: SidebarProps) {
         "lg:hidden fixed left-0 top-0 z-50 h-full w-64 bg-card border-r border-border transition-transform duration-300",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 p-1 rounded-md hover:bg-accent"
-        >
+        <button type="button" onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1 rounded-md hover:bg-accent">
           <X className="h-4 w-4" />
         </button>
         {SidebarContent}

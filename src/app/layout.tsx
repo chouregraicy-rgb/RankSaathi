@@ -14,22 +14,26 @@ export const metadata: Metadata = {
   keywords: ["NEET preparation", "JEE Main", "JEE Advanced", "study app", "AI tutor"],
   manifest: "/manifest.json",
   icons: {
-    icon: "/icons/icon-192x192.png",
-    apple: "/icons/apple-touch-icon.png",
+    icon: [
+      { url: "/logo/logo.png", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/logo/logo.png",
+    shortcut: "/logo/logo.png",
   },
   openGraph: {
     title: "VidyaSaathi",
     description: "AI-powered NEET & JEE preparation platform",
     type: "website",
+    images: [{ url: "/logo/logo.png", width: 1080, height: 1080, alt: "VidyaSaathi" }],
   },
 };
 
-// ✅ viewport and themeColor must be separate exports in Next.js 15
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#2b7fff",
+  themeColor: "#1e3a6e",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

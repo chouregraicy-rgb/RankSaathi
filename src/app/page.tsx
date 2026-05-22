@@ -10,6 +10,7 @@ import {
   HeartCrack, Lightbulb, Rocket
 } from "lucide-react";
 import { cn } from "@/utils";
+import Image from "next/image";
 
 type Role = "student" | "parent";
 type Mode = "login" | "signup";
@@ -119,10 +120,18 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050510]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-white" />
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0">
+              <Image
+                src="/logo/logo.png"
+                alt="VidyaSaathi"
+                width={36}
+                height={36}
+                className="object-contain w-full h-full"
+              />
             </div>
-            <span className="font-bold text-lg">VidyaSaathi</span>
+            <span className="font-bold text-lg tracking-tight">
+              <span className="text-white">vidhya</span><span className="text-amber-400">saathi</span>
+            </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
