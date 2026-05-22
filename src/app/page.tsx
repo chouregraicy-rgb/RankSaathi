@@ -7,7 +7,7 @@ import {
   Eye, EyeOff, GraduationCap, Users, Zap, Shield, TrendingUp,
   MapPin, Loader2, BookOpen, Target, Star, Brain, Clock,
   ChevronRight, Check, ArrowRight, Flame, Trophy, AlertCircle,
-  HeartCrack, Lightbulb, Rocket
+  HeartCrack, Lightbulb, Rocket, Tag, X, ToggleLeft, ToggleRight
 } from "lucide-react";
 import { cn } from "@/utils";
 import Image from "next/image";
@@ -27,6 +27,51 @@ export default function LandingPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const authRef = useRef<HTMLDivElement>(null);
+  const pricingRef = useRef<HTMLDivElement>(null);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [couponMsg, setCouponMsg] = useState("");
+  const [couponValid, setCouponValid] = useState(false);
+  const [billingYearly, setBillingYearly] = useState(false);
+
+  const COUPONS: Record<string, { type: "percent" | "free" | "trial"; value: number; label: string }> = {
+    VIDYASAATHI2026: { type: "percent", value: 20, label: "20% off applied! 🎉" },
+    LAUNCH50:        { type: "percent", value: 50, label: "50% off applied! 🚀" },
+    GRAICY100:       { type: "free",    value: 100, label: "100% free — enjoy! 🎁" },
+    TESTER3DAYS:     { type: "trial",   value: 3,   label: "3-day trial activated! ✅" },
+  };
+
+  function applyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    const coupon = COUPONS[code];
+    if (!coupon) {
+      setCouponMsg("❌ Invalid coupon code");
+      setCouponValid(false);
+      setAppliedCoupon("");
+      return;
+    }
+    setAppliedCoupon(code);
+    setCouponValid(true);
+    setCouponMsg(coupon.label);
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon("");
+    setCouponInput("");
+    setCouponMsg("");
+    setCouponValid(false);
+  }
+
+  function getDiscountedPrice(basePrice: number): number {
+    if (!appliedCoupon) return basePrice;
+    const c = COUPONS[appliedCoupon];
+    if (!c) return basePrice;
+    if (c.type === "free") return 0;
+    if (c.type === "percent") return Math.round(basePrice * (1 - c.value / 100));
+    return basePrice;
+  }
 
   const supabase = createClient();
 
@@ -274,46 +319,116 @@ export default function LandingPage() {
       {/* Pricing */}
       <section id="pricing" className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple <span className="text-violet-400">pricing</span></h2>
             <p className="text-slate-400">Start free. Upgrade when you're ready. Cancel anytime.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {plans.map((plan, i) => (
-              <div key={i} className={`relative bg-white/5 border-2 ${plan.color} rounded-2xl p-6 flex flex-col ${plan.popular ? "scale-105 bg-violet-950/30" : ""}`}>
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                <div className="mb-4">
-                  {plan.price === 0 ? (
-                    <p className="text-4xl font-bold text-white">Free</p>
-                  ) : (
-                    <>
-                      <p className="text-4xl font-bold text-white">₹{plan.price}<span className="text-base font-normal text-slate-400">/mo</span></p>
-                      <p className="text-sm text-green-400 mt-1">or ₹{plan.yearly}/yr (save up to 33%)</p>
-                    </>
-                  )}
+
+          {/* Billing toggle */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className={cn("text-sm font-medium", !billingYearly ? "text-white" : "text-slate-400")}>Monthly</span>
+            <button onClick={() => setBillingYearly(!billingYearly)}
+              className="relative w-12 h-6 rounded-full bg-violet-600 transition-colors">
+              <div className={cn("absolute top-1 w-4 h-4 rounded-full bg-white transition-all", billingYearly ? "left-7" : "left-1")} />
+            </button>
+            <span className={cn("text-sm font-medium", billingYearly ? "text-white" : "text-slate-400")}>
+              Yearly <span className="text-green-400 text-xs font-bold ml-1">Save 33%</span>
+            </span>
+          </div>
+
+          {/* Coupon input */}
+          <div className="max-w-sm mx-auto mb-8">
+            {!appliedCoupon ? (
+              <div className="flex gap-2">
+                <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
+                  <Tag className="w-4 h-4 text-slate-400 shrink-0" />
+                  <input
+                    value={couponInput}
+                    onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponMsg(""); }}
+                    onKeyDown={e => e.key === "Enter" && applyCoupon()}
+                    placeholder="Enter coupon code"
+                    className="bg-transparent text-white text-sm outline-none w-full placeholder-slate-500 tracking-widest"
+                  />
                 </div>
-                <ul className="space-y-2 mb-6 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check className="w-4 h-4 text-green-400 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button onClick={scrollToAuth}
-                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${plan.popular ? "bg-violet-600 hover:bg-violet-700 text-white" : "bg-white/10 hover:bg-white/20 text-white"}`}>
-                  {plan.cta}
+                <button onClick={applyCoupon}
+                  className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-xl transition-colors">
+                  Apply
                 </button>
               </div>
-            ))}
+            ) : (
+              <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-green-400" />
+                  <span className="text-green-400 font-mono font-bold text-sm">{appliedCoupon}</span>
+                </div>
+                <button onClick={removeCoupon} className="text-slate-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            {couponMsg && (
+              <p className={cn("text-xs mt-2 text-center", couponValid ? "text-green-400" : "text-red-400")}>
+                {couponMsg}
+              </p>
+            )}
           </div>
-          <p className="text-center text-slate-500 text-sm mt-6">
-            Have a coupon? Apply it on the <a href="/pricing" className="text-violet-400 hover:underline">full pricing page</a> for discounts!
+
+          {/* Plan cards */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {plans.map((plan, i) => {
+              const basePrice = billingYearly ? (plan.yearly ?? plan.price) : plan.price;
+              const finalPrice = getDiscountedPrice(basePrice);
+              const hasDiscount = finalPrice !== basePrice && basePrice > 0;
+              return (
+                <div key={i} className={`relative bg-white/5 border-2 ${plan.color} rounded-2xl p-6 flex flex-col ${plan.popular ? "scale-105 bg-violet-950/30" : ""}`}>
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                      Most Popular
+                    </div>
+                  )}
+                  <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                  <div className="mb-4 min-h-[64px]">
+                    {plan.price === 0 ? (
+                      <p className="text-4xl font-bold text-white">Free</p>
+                    ) : appliedCoupon && COUPONS[appliedCoupon]?.type === "free" ? (
+                      <div>
+                        <p className="text-2xl font-bold text-slate-400 line-through">₹{basePrice}</p>
+                        <p className="text-4xl font-bold text-green-400">FREE 🎁</p>
+                      </div>
+                    ) : hasDiscount ? (
+                      <div>
+                        <p className="text-xl font-bold text-slate-400 line-through">₹{basePrice}</p>
+                        <p className="text-4xl font-bold text-white">₹{finalPrice}<span className="text-base font-normal text-slate-400">/{billingYearly ? "yr" : "mo"}</span></p>
+                        <p className="text-xs text-green-400 mt-1">You save ₹{basePrice - finalPrice}!</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-4xl font-bold text-white">₹{basePrice}<span className="text-base font-normal text-slate-400">/{billingYearly ? "yr" : "mo"}</span></p>
+                        {!billingYearly && plan.yearly && (
+                          <p className="text-sm text-green-400 mt-1">or ₹{plan.yearly}/yr (save 33%)</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <ul className="space-y-2 mb-6 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
+                        <Check className="w-4 h-4 text-green-400 shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={scrollToAuth}
+                    className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${plan.popular ? "bg-violet-600 hover:bg-violet-700 text-white" : "bg-white/10 hover:bg-white/20 text-white"}`}>
+                    {plan.cta}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-center text-slate-500 text-xs mt-6">
+            Coupon applied at checkout. All plans include 7-day free trial for new users.
           </p>
         </div>
       </section>
