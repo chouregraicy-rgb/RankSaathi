@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Loader2, RefreshCw, CheckCircle, Eye, RotateCcw, Trophy, Zap, BookOpen } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle, Eye, RotateCcw, Trophy, Zap, BookOpen, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface WordEntry {
   word: string;
@@ -395,12 +396,18 @@ export default function CrosswordPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-violet-600" />
-              NEET & JEE Crossword
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI-generated puzzles — Biology, Physics & Chemistry</p>
+          <div className="flex items-center gap-3">
+            <Link href="/student/dashboard"
+              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <BookOpen className="w-6 h-6 text-violet-600" />
+                NEET & JEE Crossword
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI-generated puzzles — Biology, Physics & Chemistry</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {solved.size > 0 && (
