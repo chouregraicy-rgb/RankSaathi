@@ -54,9 +54,16 @@ export default function CrosswordPage() {
   const [score, setScore] = useState(0);
   const [topic, setTopic] = useState("");
   const [showComplete, setShowComplete] = useState(false);
+  const [error, setError] = useState("");
   const inputRefs = useRef<Record<string, HTMLInputElement>>({});
 
-  function placeCrossword(wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[]): WordEntry[] {
+  // ── FIX: placeCrossword now returns { placed, finalRows, finalCols }
+  // instead of calling setRows/setCols internally (which caused stale closure in buildGrid)
+  function placeCrossword(wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[]): {
+    placed: WordEntry[];
+    finalRows: number;
+    finalCols: number;
+  } {
     const GRID = 20;
     const tempGrid: string[][] = Array.from({ length: GRID }, () => Array(GRID).fill(""));
     const placed: WordEntry[] = [];
@@ -78,19 +85,19 @@ export default function CrosswordPage() {
         if (cell === word[i]) { intersects = true; continue; }
 
         if (dir === "across") {
-          if (r > 0 && tempGrid[r-1][c]) return false;
-          if (r < GRID-1 && tempGrid[r+1][c]) return false;
+          if (r > 0 && tempGrid[r - 1][c]) return false;
+          if (r < GRID - 1 && tempGrid[r + 1][c]) return false;
         } else {
-          if (c > 0 && tempGrid[r][c-1]) return false;
-          if (c < GRID-1 && tempGrid[r][c+1]) return false;
+          if (c > 0 && tempGrid[r][c - 1]) return false;
+          if (c < GRID - 1 && tempGrid[r][c + 1]) return false;
         }
       }
 
       if (dir === "across") {
-        if (col > 0 && tempGrid[row][col-1]) return false;
+        if (col > 0 && tempGrid[row][col - 1]) return false;
         if (col + word.length < GRID && tempGrid[row][col + word.length]) return false;
       } else {
-        if (row > 0 && tempGrid[row-1][col]) return false;
+        if (row > 0 && tempGrid[row - 1][col]) return false;
         if (row + word.length < GRID && tempGrid[row + word.length]?.[col]) return false;
       }
 
@@ -110,7 +117,7 @@ export default function CrosswordPage() {
       .filter(w => w.word.length >= 3)
       .sort((a, b) => b.word.length - a.word.length);
 
-    if (sorted.length === 0) return [];
+    if (sorted.length === 0) return { placed: [], finalRows: 15, finalCols: 15 };
 
     const first = sorted[0];
     const startRow = Math.floor(GRID / 2);
@@ -121,24 +128,15 @@ export default function CrosswordPage() {
     for (let wi = 1; wi < sorted.length; wi++) {
       const w = sorted[wi];
       let placedWord = false;
-
       for (const pw of placed) {
         if (placedWord) break;
         const newDir: "across" | "down" = pw.dir === "across" ? "down" : "across";
-
         for (let pi = 0; pi < pw.word.length && !placedWord; pi++) {
           for (let wi2 = 0; wi2 < w.word.length && !placedWord; wi2++) {
             if (pw.word[pi] !== w.word[wi2]) continue;
-
             let r: number, c: number;
-            if (newDir === "down") {
-              r = pw.row - wi2;
-              c = pw.col + pi;
-            } else {
-              r = pw.row + pi;
-              c = pw.col - wi2;
-            }
-
+            if (newDir === "down") { r = pw.row - wi2; c = pw.col + pi; }
+            else { r = pw.row + pi; c = pw.col - wi2; }
             if (canPlace(w.word, r, c, newDir)) {
               doPlace(w.word, r, c, newDir);
               placed.push({ ...w, dir: newDir, row: r, col: c, num: wordNum++ });
@@ -149,8 +147,9 @@ export default function CrosswordPage() {
       }
     }
 
-    if (placed.length < 3) return placed;
+    if (placed.length < 2) return { placed, finalRows: 15, finalCols: 15 };
 
+    // Calculate tight bounding box
     let minR = GRID, minC = GRID, maxR = 0, maxC = 0;
     placed.forEach(w => {
       minR = Math.min(minR, w.row);
@@ -164,26 +163,24 @@ export default function CrosswordPage() {
     const pad = 1;
     const offsetR = Math.max(0, minR - pad);
     const offsetC = Math.max(0, minC - pad);
-    const newRows = maxR - offsetR + pad + 1;
-    const newCols = maxC - offsetC + pad + 1;
-    setRows(newRows);
-    setCols(newCols);
+    const finalRows = maxR - offsetR + pad + 2;
+    const finalCols = maxC - offsetC + pad + 2;
 
-    return placed.map(w => ({ ...w, row: w.row - offsetR, col: w.col - offsetC }));
+    const adjusted = placed.map(w => ({ ...w, row: w.row - offsetR, col: w.col - offsetC }));
+    return { placed: adjusted, finalRows, finalCols };
   }
 
-  function buildGrid(placed: WordEntry[]) {
-    const R = rows + 2;
-    const C = cols + 2;
-    const newGrid: Cell[][] = Array.from({ length: R }, () =>
-      Array.from({ length: C }, () => ({ letter: "", filled: false, userInput: "", revealed: false }))
+  // ── FIX: buildGrid receives finalRows/finalCols as params — no stale closure
+  function buildGrid(placed: WordEntry[], finalRows: number, finalCols: number): Cell[][] {
+    const newGrid: Cell[][] = Array.from({ length: finalRows }, () =>
+      Array.from({ length: finalCols }, () => ({ letter: "", filled: false, userInput: "", revealed: false }))
     );
 
     placed.forEach(w => {
       for (let i = 0; i < w.word.length; i++) {
         const r = w.dir === "across" ? w.row : w.row + i;
         const c = w.dir === "across" ? w.col + i : w.col;
-        if (r < R && c < C) {
+        if (r < finalRows && c < finalCols) {
           newGrid[r][c].letter = w.word[i];
           newGrid[r][c].filled = true;
           if (i === 0 && !newGrid[r][c].num) newGrid[r][c].num = w.num;
@@ -191,22 +188,19 @@ export default function CrosswordPage() {
       }
     });
 
-    const usedRows = placed.flatMap(w => w.dir === "across" ? [w.row] : [w.row, w.row + w.word.length - 1]);
-    const usedCols = placed.flatMap(w => w.dir === "across" ? [w.col, w.col + w.word.length - 1] : [w.col]);
-    const finalR = Math.max(...usedRows) + 2;
-    const finalC = Math.max(...usedCols) + 2;
-    setRows(finalR);
-    setCols(finalC);
-    setGrid(newGrid.slice(0, finalR).map(row => row.slice(0, finalC)));
+    return newGrid;
   }
 
   const generateCrossword = useCallback(async (customTopic?: string) => {
     setLoading(true);
+    setError("");
     setChecked(false);
     setSolved(new Set());
     setSelectedCell(null);
     setSelectedWord(null);
     setShowComplete(false);
+    setGrid([]);
+    setWords([]);
 
     try {
       const response = await fetch("/api/crossword/generate", {
@@ -216,16 +210,29 @@ export default function CrosswordPage() {
       });
 
       const data = await response.json();
-      if (!data.words) throw new Error("No words returned");
+      if (!response.ok || !data.words || data.words.length === 0) {
+        throw new Error(data.error || "No words returned from AI");
+      }
+
       const wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[] = data.words;
 
-      const placed = placeCrossword(wordList);
-      if (placed.length > 0) {
-        buildGrid(placed);
-        setWords(placed);
+      // ── FIX: get rows/cols back from placeCrossword synchronously
+      const { placed, finalRows, finalCols } = placeCrossword(wordList);
+
+      if (placed.length < 2) {
+        throw new Error("Not enough words could be placed. Try a different topic.");
       }
-    } catch (err) {
+
+      // ── FIX: pass finalRows/finalCols directly — no stale state
+      const builtGrid = buildGrid(placed, finalRows, finalCols);
+
+      setRows(finalRows);
+      setCols(finalCols);
+      setGrid(builtGrid);
+      setWords(placed);
+    } catch (err: any) {
       console.error("Failed to generate crossword:", err);
+      setError(err.message || "Failed to generate crossword. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -282,7 +289,6 @@ export default function CrosswordPage() {
     newGrid[r][c].correct = undefined;
     setGrid(newGrid);
     if (val) moveNext(r, c);
-
     const w = selectedWord;
     if (w) {
       let full = "";
@@ -441,6 +447,14 @@ export default function CrosswordPage() {
           ))}
         </div>
 
+        {/* Error banner */}
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+            <span>⚠️ {error}</span>
+            <button onClick={() => setError("")} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 overflow-auto">
             {loading ? (
@@ -577,6 +591,9 @@ export default function CrosswordPage() {
                     </ul>
                   </div>
                 )}
+                {!loading && words.length === 0 && (
+                  <p className="text-xs text-gray-400">Generate a puzzle to see clues.</p>
+                )}
               </>
             )}
           </div>
@@ -585,3 +602,4 @@ export default function CrosswordPage() {
     </div>
   );
 }
+
