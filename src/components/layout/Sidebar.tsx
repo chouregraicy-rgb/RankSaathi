@@ -1,226 +1,389 @@
-// src/components/layout/Sidebar.tsx
+// src/app/student/settings/page.tsx
 "use client";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  LayoutDashboard, BookOpen, Brain,
-  BarChart3, Calendar, Bell, Settings, LogOut,
-  ChevronLeft, GraduationCap, Users, FileQuestion,
-  ClipboardList, Menu, X, MessageCircle, Trophy, Puzzle
+  User, Bell, Sun, Moon, Smartphone,
+  Save, GraduationCap, CheckCircle2,
+  Link2, Copy, RefreshCw, Share2, Users,
 } from "lucide-react";
 import { cn } from "@/utils";
 import { createClient } from "@/lib/supabase/client";
-import { useAuthStore } from "@/store/authStore";
-import type { UserRole } from "@/types";
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-}
+const EXAMS       = ["NEET", "JEE Main", "JEE Advanced"];
+const YEARS       = [2025, 2026, 2027];
+const CLASS_LEVELS = ["Class 11", "Class 12", "Dropper"];
 
-const NAV_ITEMS: Record<UserRole, NavItem[]> = {
-  student: [
-    { href: "/student/dashboard",  label: "Dashboard",    icon: LayoutDashboard },
-    { href: "/student/schedule",   label: "Schedule",     icon: Calendar },
-    { href: "/student/tests",      label: "Tests",        icon: ClipboardList },
-    { href: "/student/revision",   label: "Revision",     icon: BookOpen },
-    { href: "/student/doubts",     label: "Doubt Solver", icon: Brain },
-    { href: "/student/community",  label: "Community",    icon: MessageCircle },
-    { href: "/student/ranking",    label: "My Ranking",   icon: Trophy },
-    { href: "/student/analytics",  label: "Analytics",    icon: BarChart3 },
-    { href: "/student/crossword",  label: "Crossword",    icon: Puzzle },
-  ],
-  parent: [
-    { href: "/parent/dashboard",   label: "Dashboard",    icon: LayoutDashboard },
-    { href: "/parent/reports",     label: "Reports",      icon: BarChart3 },
-    { href: "/parent/alerts",      label: "Alerts",       icon: Bell },
-    { href: "/parent/link",        label: "Link Student", icon: Users },
-  ],
-  admin: [
-    { href: "/admin/dashboard",    label: "Dashboard",    icon: LayoutDashboard },
-    { href: "/admin/users",        label: "Users",        icon: Users },
-    { href: "/admin/questions",    label: "Questions",    icon: FileQuestion },
-    { href: "/admin/tests",        label: "Tests",        icon: ClipboardList },
-    { href: "/admin/syllabus",     label: "Syllabus",     icon: BookOpen },
-  ],
-};
+export default function SettingsPage() {
+  const [saved, setSaved]             = useState(false);
+  const [mounted, setMounted]         = useState(false); // ✅ fix hydration
+  const { theme, setTheme }           = useTheme();
 
-const SETTINGS_HREF: Partial<Record<UserRole, string>> = {
-  student: "/student/settings",
-};
+  // ✅ Real user ID from Supabase auth
+  const [userId, setUserId]           = useState<string | null>(null);
+  const [inviteCode, setInviteCode]   = useState("--------");
+  const [loadingCode, setLoadingCode] = useState(false);
+  const [copied, setCopied]           = useState(false);
 
-interface SidebarProps {
-  role: UserRole;
-}
+  const [notifications, setNotifications] = useState({
+    dailyReminder: true,
+    weeklyReport:  true,
+    streakAlert:   true,
+    testResults:   true,
+    revisionDue:   true,
+  });
 
-export function Sidebar({ role }: SidebarProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { user, reset } = useAuthStore();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profile, setProfile] = useState({
+    fullName:    "",
+    email:       "",
+    phone:       "",
+    targetExams: ["NEET"],
+    targetYear:  2026,
+    classLevel:  "Class 12",
+    coachingName:"",
+    city:        "",
+  });
 
-  const navItems = NAV_ITEMS[role] ?? [];
-  const settingsHref = SETTINGS_HREF[role];
+  // ✅ Fix hydration — only render theme UI after mount
+  useEffect(() => { setMounted(true); }, []);
 
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    reset();
-    router.push("/");
+  // ✅ Get real user ID on mount
+  useEffect(() => {
+    const init = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      // Prefill profile from DB
+      const { data: profile } = await supabase
+        .from("users")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        setProfile(prev => ({
+          ...prev,
+          fullName: profile.full_name ?? "",
+          email:    profile.email ?? "",
+        }));
+      }
+    };
+    init();
+  }, []);
+
+  // Fetch invite code once userId is known
+  useEffect(() => {
+    if (!userId) return;
+    fetchInviteCode();
+  }, [userId]);
+
+  async function fetchInviteCode() {
+    if (!userId) return;
+    setLoadingCode(true);
+    try {
+      const res  = await fetch(`/api/student/invite-code?userId=${userId}`);
+      if (!res.ok) { setInviteCode("OFFLINE1"); return; }
+      const data = await res.json();
+      if (data.invite_code) setInviteCode(data.invite_code);
+    } catch { setInviteCode("OFFLINE1"); }
+    finally  { setLoadingCode(false); }
   }
 
-  // ── Logo component ─────────────────────────────────────────
-  const LogoIcon = (
-    <div className="relative w-8 h-8 flex-shrink-0">
-      <Image
-        src="/logo/logo.png"
-        alt="VidyaSaathi"
-        fill
-        className="object-contain"
-        sizes="32px"
-        priority
-      />
-    </div>
-  );
+  async function regenerateCode() {
+    if (!userId) return;
+    setLoadingCode(true);
+    try {
+      const res  = await fetch("/api/student/invite-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (data.invite_code) setInviteCode(data.invite_code);
+    } catch { /* keep current */ }
+    finally  { setLoadingCode(false); }
+  }
 
-  const SidebarContent = (
-    <div className="flex flex-col h-full">
-      {/* ── Logo ─────────────────────────────────────────────── */}
-      <div className={cn(
-        "flex items-center gap-2.5 px-4 py-4 border-b border-border",
-        collapsed && "justify-center px-2"
-      )}>
-        {collapsed ? (
-          LogoIcon
-        ) : (
-          <Link href="/" className="flex items-center gap-2.5 min-w-0">
-            {LogoIcon}
-            <div className="min-w-0 leading-tight">
-              <p className="font-bold text-sm truncate">
-                <span className="text-foreground">vidhya</span><span className="text-amber-500">saathi</span>
-              </p>
-              <p className="text-[10px] text-muted-foreground capitalize">{role} Portal</p>
-            </div>
-          </Link>
-        )}
-      </div>
+  function copyCode() {
+    navigator.clipboard.writeText(inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
-      {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-thin">
-        {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                collapsed && "justify-center px-2"
-              )}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon className="h-4 w-4 flex-shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+  function shareCode() {
+    if (navigator.share) {
+      navigator.share({
+        title: "Join me on VidyaSaathi",
+        text:  `Use my invite code ${inviteCode} to link as my parent on VidyaSaathi!`,
+        url:   `${window.location.origin}/parent/link?code=${inviteCode}`,
+      });
+    } else {
+      copyCode();
+    }
+  }
 
-      {/* ── Bottom ───────────────────────────────────────────── */}
-      <div className="border-t border-border p-3 space-y-1">
-        {settingsHref && (
-          <Link
-            href={settingsHref}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
-              collapsed && "justify-center px-2"
-            )}
-          >
-            <Settings className="h-4 w-4 flex-shrink-0" />
-            {!collapsed && <span>Settings</span>}
-          </Link>
-        )}
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <LogOut className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span>Logout</span>}
-        </button>
-
-        {!collapsed && user && (
-          <div className="flex items-center gap-2 px-3 py-2 mt-1">
-            <div className="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-brand-700 dark:text-brand-300">
-                {user.full_name?.[0]?.toUpperCase() ?? "U"}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium truncate">{user.full_name}</p>
-              <p className="text-[10px] text-muted-foreground truncate">{user.email ?? user.phone}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  function handleSave() {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  }
 
   return (
-    <>
-      {/* Mobile toggle */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-background border border-border shadow-sm"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
+    <DashboardLayout role="student" title="Settings">
+      <div className="max-w-2xl space-y-5">
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setMobileOpen(false)} />
-      )}
+        {/* Profile */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-brand-500" />
+              <CardTitle className="text-base font-display">Profile</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Full Name</Label>
+                <Input value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} placeholder="Your full name" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Email</Label>
+                <Input value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} placeholder="your@email.com" type="email" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Phone</Label>
+                <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+91 XXXXXXXXXX" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">City</Label>
+                <Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} placeholder="Your city" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Coaching Centre (optional)</Label>
+                <Input value={profile.coachingName} onChange={(e) => setProfile({ ...profile, coachingName: e.target.value })} placeholder="Allen, FIITJEE, etc." />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Mobile drawer */}
-      <aside className={cn(
-        "lg:hidden fixed left-0 top-0 z-50 h-full w-64 bg-card border-r border-border transition-transform duration-300",
-        mobileOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <button type="button" onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1 rounded-md hover:bg-accent">
-          <X className="h-4 w-4" />
-        </button>
-        {SidebarContent}
-      </aside>
+        {/* Exam Preferences */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-brand-500" />
+              <CardTitle className="text-base font-display">Exam Preferences</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-xs mb-2 block">Target Exam(s)</Label>
+              <div className="flex flex-wrap gap-2">
+                {EXAMS.map((exam) => (
+                  <button key={exam} type="button"
+                    onClick={() => setProfile((prev) => ({
+                      ...prev,
+                      targetExams: prev.targetExams.includes(exam)
+                        ? prev.targetExams.filter((e) => e !== exam)
+                        : [...prev.targetExams, exam],
+                    }))}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                      profile.targetExams.includes(exam)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:bg-accent"
+                    )}
+                  >
+                    {exam}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs mb-2 block">Target Year</Label>
+              <div className="flex gap-2">
+                {YEARS.map((year) => (
+                  <button key={year} type="button"
+                    onClick={() => setProfile({ ...profile, targetYear: year })}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg text-sm font-medium border transition-all",
+                      profile.targetYear === year
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:bg-accent"
+                    )}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs mb-2 block">Class Level</Label>
+              <div className="flex gap-2 flex-wrap">
+                {CLASS_LEVELS.map((level) => (
+                  <button key={level} type="button"
+                    onClick={() => setProfile({ ...profile, classLevel: level })}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-xs font-medium border transition-all",
+                      profile.classLevel === level
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border hover:bg-accent"
+                    )}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Desktop sidebar */}
-      <aside className={cn(
-        "hidden lg:flex flex-col fixed left-0 top-0 h-full bg-card border-r border-border transition-all duration-300 z-30",
-        collapsed ? "w-16" : "w-[var(--sidebar-width)]"
-      )}>
-        {SidebarContent}
-        <button
-          type="button"
-          onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center hover:bg-accent transition-colors"
-        >
-          <ChevronLeft className={cn("h-3 w-3 transition-transform", collapsed && "rotate-180")} />
-        </button>
-      </aside>
-    </>
+        {/* Notifications */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-brand-500" />
+              <CardTitle className="text-base font-display">Notifications</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="divide-y divide-border">
+            {[
+              { key: "dailyReminder", label: "Daily Study Reminder",   desc: "Get reminded to study every day"          },
+              { key: "weeklyReport",  label: "Weekly Progress Report", desc: "Summary of your week every Sunday"        },
+              { key: "streakAlert",   label: "Streak Alerts",          desc: "Get notified about your study streak"     },
+              { key: "testResults",   label: "Test Result Alerts",     desc: "Notification when test results are ready" },
+              { key: "revisionDue",   label: "Revision Due Reminders", desc: "When chapters are due for revision"       },
+            ].map((item) => (
+              <div key={item.key} className="flex items-center justify-between py-3">
+                <div>
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+                <button type="button"
+                  onClick={() => setNotifications((prev) => ({ ...prev, [item.key]: !prev[item.key as keyof typeof prev] }))}
+                  className={cn(
+                    "w-11 h-6 rounded-full transition-all relative flex-shrink-0",
+                    notifications[item.key as keyof typeof notifications] ? "bg-primary" : "bg-muted"
+                  )}
+                >
+                  <span className={cn(
+                    "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform",
+                    notifications[item.key as keyof typeof notifications] ? "translate-x-5" : "translate-x-0"
+                  )} />
+                </button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* ✅ Appearance — only renders after mount to fix hydration */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4 text-brand-500" />
+              <CardTitle className="text-base font-display">Appearance</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Label className="text-xs mb-2 block">Theme</Label>
+            {!mounted ? (
+              <div className="grid grid-cols-3 gap-3">
+                {["Light", "Dark", "System"].map((t) => (
+                  <div key={t} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border">
+                    <div className="h-5 w-5 rounded bg-muted" />
+                    <span className="text-xs font-medium text-muted-foreground">{t}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { key: "light",  label: "Light",  icon: Sun        },
+                  { key: "dark",   label: "Dark",   icon: Moon       },
+                  { key: "system", label: "System", icon: Smartphone },
+                ].map((t) => {
+                  const Icon = t.icon;
+                  return (
+                    <button key={t.key} type="button"
+                      onClick={() => setTheme(t.key)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all",
+                        theme === t.key ? "border-primary bg-primary/5" : "border-border hover:bg-accent"
+                      )}
+                    >
+                      <Icon className={cn("h-5 w-5", theme === t.key ? "text-primary" : "text-muted-foreground")} />
+                      <span className={cn("text-xs font-medium", theme === t.key ? "text-primary" : "text-muted-foreground")}>
+                        {t.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Parent Link */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-brand-500" />
+              <CardTitle className="text-base font-display">Parent Link</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Share this code with your parent so they can monitor your progress, study hours, and location on VidyaSaathi.
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex items-center justify-center bg-muted rounded-xl py-4 px-3">
+                <span className="font-mono text-2xl font-bold tracking-[0.3em] text-primary select-all">
+                  {loadingCode ? "········" : inviteCode}
+                </span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button type="button" onClick={copyCode}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:bg-accent text-xs font-medium transition-all">
+                  {copied
+                    ? <><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Copied!</>
+                    : <><Copy className="h-3.5 w-3.5" /> Copy</>}
+                </button>
+                <button type="button" onClick={shareCode}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:bg-accent text-xs font-medium transition-all">
+                  <Share2 className="h-3.5 w-3.5" /> Share
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Link2 className="h-3 w-3" />
+                <span>Your parent uses this at <strong>vidhyasaathi.online/parent/link</strong></span>
+              </div>
+              <button type="button" onClick={regenerateCode} disabled={loadingCode}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <RefreshCw className={cn("h-3 w-3", loadingCode && "animate-spin")} />
+                New code
+              </button>
+            </div>
+            <p className="text-[10px] text-amber-500/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              ⚠ Generating a new code will disconnect your current parent link. Share the new code again.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Save */}
+        <Button className="w-full gap-2" size="lg" onClick={handleSave}>
+          {saved
+            ? <><CheckCircle2 className="h-4 w-4" /> Saved!</>
+            : <><Save className="h-4 w-4" /> Save Settings</>}
+        </Button>
+
+      </div>
+    </DashboardLayout>
   );
 }
-
