@@ -378,9 +378,9 @@ export default function CrosswordPage() {
     if (cell.revealed) return "bg-blue-100 dark:bg-blue-900";
     if (cell.correct === true) return "bg-green-100 dark:bg-green-900";
     if (cell.correct === false) return "bg-red-100 dark:bg-red-900";
-    if (isSelected) return "bg-violet-300 dark:bg-violet-700";
-    if (isHighlighted) return "bg-violet-100 dark:bg-violet-900";
-    return "bg-white dark:bg-gray-100";
+    if (isSelected) return "bg-violet-400";
+    if (isHighlighted) return "bg-violet-100";
+    return "bg-white";
   };
 
   // Filters highlight clues but never hide them — all clues always visible
@@ -456,7 +456,7 @@ export default function CrosswordPage() {
         )}
 
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 overflow-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 overflow-auto flex-shrink-0" style={{width:"fit-content",maxWidth:"100%"}}>
             {loading ? (
               <div className="flex flex-col items-center justify-center h-64 gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
@@ -465,7 +465,7 @@ export default function CrosswordPage() {
             ) : grid.length > 0 ? (
               <>
                 <div
-                  style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 32px)`, gap: "2px", backgroundColor: "#374151" }}
+                  style={{ display: "inline-grid", gridTemplateColumns: `repeat(${cols}, 32px)`, gap: "2px", backgroundColor: "#374151" }}
                   className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600"
                 >
                   {grid.slice(0, rows).map((row, r) =>
@@ -489,7 +489,7 @@ export default function CrosswordPage() {
                             onChange={e => handleInput(e, r, c)}
                             onKeyDown={e => handleKeyDown(e, r, c)}
                             onClick={() => selectCell(r, c)}
-                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-center text-xs font-bold uppercase text-gray-900 dark:text-white caret-transparent cursor-pointer pt-2"
+                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-center text-xs font-bold uppercase caret-transparent cursor-pointer pt-2" style={{color:"#111111"}}
                             aria-label={`Cell row ${r + 1} col ${c + 1}`}
                             readOnly={cell.revealed}
                           />
