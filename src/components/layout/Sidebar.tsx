@@ -77,28 +77,33 @@ export function Sidebar({ role }: SidebarProps) {
 
       {/* ── Logo ─────────────────────────────────────────────── */}
       <div className={cn(
-        "flex items-center gap-2 px-3 py-4 border-b border-border",
-        collapsed && "justify-center"
+        "flex items-center border-b border-border",
+        collapsed ? "justify-center p-3" : "gap-2 px-3 py-3"
       )}>
-        {/* Use plain <img> tag — no Next.js Image sizing issues */}
-        <img
-          src="/logo/logo.png"
-          alt="VidyaSaathi"
-          style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0 }}
-        />
+        {/* Logo image — fixed 36x36, no flex stretching */}
+        <div style={{ width: "36px", height: "36px", flexShrink: 0 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo/logo.png"
+            alt="VS"
+            style={{ width: "36px", height: "36px", objectFit: "contain", display: "block" }}
+          />
+        </div>
         {!collapsed && (
-          <div className="min-w-0">
-            <p className="font-bold text-sm leading-tight">
-              <span className="text-foreground">vidhya</span>
-              <span className="text-amber-500">saathi</span>
+          <div style={{ minWidth: 0, overflow: "hidden" }}>
+            <p style={{ fontWeight: 700, fontSize: "14px", lineHeight: "1.2", whiteSpace: "nowrap" }}>
+              <span style={{ color: "var(--foreground)" }}>vidhya</span>
+              <span style={{ color: "#f59e0b" }}>saathi</span>
             </p>
-            <p className="text-[10px] text-muted-foreground capitalize">{role} Portal</p>
+            <p style={{ fontSize: "10px", color: "var(--muted-foreground)", textTransform: "capitalize" }}>
+              {role} Portal
+            </p>
           </div>
         )}
       </div>
 
       {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -169,7 +174,6 @@ export function Sidebar({ role }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
@@ -178,12 +182,10 @@ export function Sidebar({ role }: SidebarProps) {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Mobile drawer */}
       <aside className={cn(
         "lg:hidden fixed left-0 top-0 z-50 h-full w-64 bg-card border-r border-border transition-transform duration-300",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -194,7 +196,6 @@ export function Sidebar({ role }: SidebarProps) {
         {SidebarContent}
       </aside>
 
-      {/* Desktop sidebar */}
       <aside className={cn(
         "hidden lg:flex flex-col fixed left-0 top-0 h-full bg-card border-r border-border transition-all duration-300 z-30",
         collapsed ? "w-16" : "w-[var(--sidebar-width)]"
