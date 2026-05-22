@@ -362,7 +362,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Link2 className="h-3 w-3" />
-                <span>Your parent uses this at <strong>VidyaSaathi.com/parent/link</strong></span>
+                <span>Your parent uses this at <strong>vidhyasaathi.online/parent/link</strong></span>
               </div>
               <button type="button" onClick={regenerateCode} disabled={loadingCode}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -387,3 +387,4 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
+

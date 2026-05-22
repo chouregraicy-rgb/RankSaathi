@@ -52,12 +52,6 @@ const SETTINGS_HREF: Partial<Record<UserRole, string>> = {
   student: "/student/settings",
 };
 
-const ROLE_ICONS: Record<UserRole, React.ElementType> = {
-  student: GraduationCap,
-  parent:  Users,
-  admin:   Settings,
-};
-
 interface SidebarProps {
   role: UserRole;
 }
@@ -79,38 +73,36 @@ export function Sidebar({ role }: SidebarProps) {
     router.push("/");
   }
 
+  // ── Logo component ─────────────────────────────────────────
+  const LogoIcon = (
+    <div className="relative w-8 h-8 flex-shrink-0">
+      <Image
+        src="/logo/logo.png"
+        alt="VidyaSaathi"
+        fill
+        className="object-contain"
+        sizes="32px"
+        priority
+      />
+    </div>
+  );
+
   const SidebarContent = (
     <div className="flex flex-col h-full">
       {/* ── Logo ─────────────────────────────────────────────── */}
       <div className={cn(
-        "flex items-center gap-3 px-4 py-4 border-b border-border",
+        "flex items-center gap-2.5 px-4 py-4 border-b border-border",
         collapsed && "justify-center px-2"
       )}>
         {collapsed ? (
-          /* Collapsed: show small square logo only */
-          <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-white">
-            <Image
-              src="/logo/logo.png"
-              alt="VidyaSaathi"
-              width={36}
-              height={36}
-              className="object-contain w-full h-full"
-            />
-          </div>
+          LogoIcon
         ) : (
-          /* Expanded: show full logo image */
-          <Link href="/" className="flex items-center gap-2 min-w-0">
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-white">
-              <Image
-                src="/logo/logo.png"
-                alt="VidyaSaathi"
-                width={36}
-                height={36}
-                className="object-contain w-full h-full"
-              />
-            </div>
-            <div className="min-w-0">
-              <p className="font-display font-bold text-base leading-tight truncate">VidyaSaathi</p>
+          <Link href="/" className="flex items-center gap-2.5 min-w-0">
+            {LogoIcon}
+            <div className="min-w-0 leading-tight">
+              <p className="font-bold text-sm truncate">
+                <span className="text-foreground">vidhya</span><span className="text-amber-500">saathi</span>
+              </p>
               <p className="text-[10px] text-muted-foreground capitalize">{role} Portal</p>
             </div>
           </Link>
@@ -172,7 +164,7 @@ export function Sidebar({ role }: SidebarProps) {
 
         {!collapsed && user && (
           <div className="flex items-center gap-2 px-3 py-2 mt-1">
-            <div className="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center flex-shrink-0">
               <span className="text-xs font-bold text-brand-700 dark:text-brand-300">
                 {user.full_name?.[0]?.toUpperCase() ?? "U"}
               </span>
@@ -231,3 +223,4 @@ export function Sidebar({ role }: SidebarProps) {
     </>
   );
 }
+
