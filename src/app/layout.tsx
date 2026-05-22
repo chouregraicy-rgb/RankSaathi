@@ -14,18 +14,15 @@ export const metadata: Metadata = {
   keywords: ["NEET preparation", "JEE Main", "JEE Advanced", "study app", "AI tutor"],
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      { url: "/logo/logo.png", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-    ],
-    apple: "/logo/logo.png",
-    shortcut: "/logo/logo.png",
+      icon: "/favicon-32x32.png",
+      apple: "/apple-touch-icon.png",
+      shortcut: "/favicon-32x32.png",
   },
   openGraph: {
     title: "VidyaSaathi",
     description: "AI-powered NEET & JEE preparation platform",
     type: "website",
-    images: [{ url: "/logo/logo.png", width: 1080, height: 1080, alt: "VidyaSaathi" }],
+    images: [{ url: "/logo/logo.png" }],
   },
 };
 
@@ -42,6 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="icon" href="/favicon-32x32.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="min-h-screen antialiased">
         <ThemeProvider
