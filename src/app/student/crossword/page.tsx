@@ -372,7 +372,7 @@ export default function CrosswordPage() {
   };
 
   const getCellClass = (r: number, c: number, cell: Cell) => {
-    if (!cell.filled) return "bg-gray-900 dark:bg-gray-950";
+    if (!cell.filled) return "bg-gray-950 dark:bg-black";
     const isSelected = selectedCell?.[0] === r && selectedCell?.[1] === c;
     const isHighlighted = isInSelectedWord(r, c);
     if (cell.revealed) return "bg-blue-100 dark:bg-blue-900";
@@ -380,16 +380,16 @@ export default function CrosswordPage() {
     if (cell.correct === false) return "bg-red-100 dark:bg-red-900";
     if (isSelected) return "bg-violet-300 dark:bg-violet-700";
     if (isHighlighted) return "bg-violet-100 dark:bg-violet-900";
-    return "bg-white dark:bg-gray-800";
+    return "bg-white dark:bg-gray-100";
   };
 
-  const filteredWords = words.filter(w =>
+  // Filters highlight clues but never hide them — all clues always visible
+  const isFiltered = (w: WordEntry) =>
     (filterSubject === "All" || w.subject === filterSubject.toLowerCase()) &&
-    (filterDiff === "All" || w.difficulty === filterDiff.toLowerCase())
-  );
+    (filterDiff === "All" || w.difficulty === filterDiff.toLowerCase());
 
-  const acrossWords = filteredWords.filter(w => w.dir === "across").sort((a, b) => a.num - b.num);
-  const downWords = filteredWords.filter(w => w.dir === "down").sort((a, b) => a.num - b.num);
+  const acrossWords = words.filter(w => w.dir === "across").sort((a, b) => a.num - b.num);
+  const downWords = words.filter(w => w.dir === "down").sort((a, b) => a.num - b.num);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4">
@@ -465,7 +465,7 @@ export default function CrosswordPage() {
             ) : grid.length > 0 ? (
               <>
                 <div
-                  style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 30px)`, gap: "1px", backgroundColor: "#d1d5db" }}
+                  style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 32px)`, gap: "2px", backgroundColor: "#374151" }}
                   className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600"
                 >
                   {grid.slice(0, rows).map((row, r) =>
@@ -473,11 +473,11 @@ export default function CrosswordPage() {
                       <div
                         key={`${r}-${c}`}
                         className={`relative ${getCellClass(r, c, cell)} transition-colors`}
-                        style={{ width: 30, height: 30 }}
+                        style={{ width: 32, height: 32 }}
                         onClick={() => cell.filled && selectCell(r, c)}
                       >
                         {cell.num && (
-                          <span className="absolute top-0 left-0.5 text-[7px] text-gray-500 dark:text-gray-400 leading-none z-10 pointer-events-none">
+                          <span className="absolute top-0 left-0.5 text-[7px] font-bold text-gray-900 dark:text-white leading-none z-10 pointer-events-none" style={{fontSize:"6px",fontWeight:"800",color:"#111"}}>
                             {cell.num}
                           </span>
                         )}
@@ -554,7 +554,7 @@ export default function CrosswordPage() {
                         return (
                           <li key={key}
                             onClick={() => { setSelectedDir("across"); setSelectedWord(w); setSelectedCell([w.row, w.col]); setTimeout(() => inputRefs.current[`${w.row}-${w.col}`]?.focus(), 10); }}
-                            className={`flex gap-2 p-1.5 rounded-lg cursor-pointer text-xs transition-colors ${isActive ? "bg-violet-50 dark:bg-violet-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"} ${isSolved ? "opacity-50" : ""}`}>
+                            className={`flex gap-2 p-1.5 rounded-lg cursor-pointer text-xs transition-colors ${isActive ? "bg-violet-50 dark:bg-violet-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"} ${isSolved ? "opacity-50" : ""} ${!isFiltered(w) && filterSubject !== "All" || !isFiltered(w) && filterDiff !== "All" ? "opacity-30" : ""}`}>
                             <span className="font-bold text-gray-500 min-w-[18px]">{w.num}.</span>
                             <span className={`flex-1 ${isSolved ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>{w.clue}</span>
                             <div className="flex flex-col gap-0.5 items-end">
@@ -578,7 +578,7 @@ export default function CrosswordPage() {
                         return (
                           <li key={key}
                             onClick={() => { setSelectedDir("down"); setSelectedWord(w); setSelectedCell([w.row, w.col]); setTimeout(() => inputRefs.current[`${w.row}-${w.col}`]?.focus(), 10); }}
-                            className={`flex gap-2 p-1.5 rounded-lg cursor-pointer text-xs transition-colors ${isActive ? "bg-violet-50 dark:bg-violet-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"} ${isSolved ? "opacity-50" : ""}`}>
+                            className={`flex gap-2 p-1.5 rounded-lg cursor-pointer text-xs transition-colors ${isActive ? "bg-violet-50 dark:bg-violet-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"} ${isSolved ? "opacity-50" : ""} ${!isFiltered(w) && filterSubject !== "All" || !isFiltered(w) && filterDiff !== "All" ? "opacity-30" : ""}`}>
                             <span className="font-bold text-gray-500 min-w-[18px]">{w.num}.</span>
                             <span className={`flex-1 ${isSolved ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>{w.clue}</span>
                             <div className="flex flex-col gap-0.5 items-end">
@@ -602,4 +602,3 @@ export default function CrosswordPage() {
     </div>
   );
 }
-
