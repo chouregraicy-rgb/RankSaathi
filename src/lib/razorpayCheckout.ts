@@ -3,9 +3,9 @@
  * Call initiateRazorpayCheckout() from your pricing page.
  *
  * Flow:
- *   1. POST /api/payment/create-order  → get orderId
+ *   1. POST /api/razorpay/create-order  → get orderId
  *   2. Open Razorpay modal
- *   3. On success → POST /api/payment/verify → subscription saved in DB
+ *   3. On success → POST /api/razorpay/verify-payment → subscription saved in DB
  *   4. onSuccess(planLabel, expiresAt) called → you can refetch badge
  */
 
@@ -54,7 +54,7 @@ export async function initiateRazorpayCheckout(opts: CheckoutOptions) {
   let free = false;
 
   try {
-    const res  = await fetch("/api/payment/create-order", {
+    const res  = await fetch("/api/razorpay/create-order", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ plan, userId, coupon }),
@@ -71,7 +71,7 @@ export async function initiateRazorpayCheckout(opts: CheckoutOptions) {
   // Step 2: 100% coupon — skip modal, call verify directly with synthetic IDs
   if (free) {
     try {
-      const res = await fetch("/api/payment/verify", {
+      const res = await fetch("/api/razorpay/verify-payment", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
@@ -107,7 +107,7 @@ export async function initiateRazorpayCheckout(opts: CheckoutOptions) {
       razorpay_signature: string;
     }) => {
       try {
-        const res = await fetch("/api/payment/verify", {
+        const res = await fetch("/api/razorpay/verify-payment", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
           body:    JSON.stringify({
