@@ -7,21 +7,18 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
-  // ✅ Use x-forwarded-host (set by Render's proxy) to get the real public URL
-  
-  const appUrl = "https://vidhyasaathi.online";
-    
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
         },
       },
     }
@@ -29,42 +26,46 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isApiRoute  = pathname.startsWith("/api/");
-  const isStatic    = pathname.startsWith("/_next/") || pathname.startsWith("/favicon") || pathname.startsWith("/icons");
-  const isAuthRoute = pathname.startsWith("/auth/");
-  const isLinkPage  = pathname === "/parent/link";
-  const isLanding   = pathname === "/";
+  // Public routes — always accessible
+  const publicPaths = ["/", "/auth/callback", "/parent/link"];
+  const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith("/auth/"));
+  const isApiRoute = pathname.startsWith("/api/");
+  const isStatic = pathname.startsWith("/_next/") || pathname.startsWith("/favicon");
 
-  const isPublicPage = ["/privacy", "/terms", "/contact", "/pricing"].includes(pathname);
+  if (isApiRoute || isStatic) return response;
 
-if (isApiRoute || isStatic || isAuthRoute || isLinkPage || isPublicPage) return response;
+  // Not logged in — redirect to landing
+  if (!user && !isPublic) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
-if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
+  // Logged in — redirect away from landing page
+  if (user && pathname === "/") {
+    const role = user.user_metadata?.role ?? "student";
+    return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
+  }
+
+  // Role protection — student can't access /parent/* and vice versa
   if (user) {
-    const metaRole = user.user_metadata?.role;
-    const { data: profile, error: profileError } = await supabase
-      .from("users").select("role").eq("id", user.id).single();
-    const dbRole = profile?.role;
+    const role = user.user_metadata?.role ?? "student";
 
-    console.log("=== MIDDLEWARE DEBUG ===");
-    console.log("User ID:", user.id);
-    console.log("appUrl:", appUrl);
-    console.log("Meta role:", metaRole);
-    console.log("DB role:", dbRole);
-    console.log("DB error:", profileError?.message);
-
-    const role = dbRole ?? metaRole ?? "student";
-    console.log("Final role:", role);
-
-    if (isLanding) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
-    if (pathname.startsWith("/student/") && role !== "student") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
-    if (pathname.startsWith("/parent/") && role !== "parent" && !isLinkPage) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
-    if (pathname.startsWith("/admin/") && role !== "admin") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
+    if (pathname.startsWith("/student/") && role !== "student") {
+      return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
+    }
+    if (pathname.startsWith("/parent/") && role !== "parent") {
+      return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
+    }
+    if (pathname.startsWith("/admin/") && role !== "admin") {
+      return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
+    }
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icons).*)",
+  ],
 };
+
