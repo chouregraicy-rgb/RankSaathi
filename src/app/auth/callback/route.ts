@@ -6,7 +6,8 @@ const APP_URL = "https://vidhyasaathi.online";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
+  const code     = searchParams.get("code");
+  const redirect = searchParams.get("redirect"); // ← capture redirect param
 
   if (code) {
     const supabase = await createClient();
@@ -16,22 +17,30 @@ export async function GET(request: Request) {
     if (user) {
       const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "";
       await supabase.from("users").upsert({
-        id: user.id,
-        email: user.email,
+        id:        user.id,
+        email:     user.email,
         full_name: fullName,
-        role: user.user_metadata?.role || "student",
+        role:      user.user_metadata?.role || "student",
       }, { onConflict: "id" });
     }
 
     if (!error && data.user) {
-      const role = data.user.user_metadata?.role ?? "student";
+      const role       = data.user.user_metadata?.role ?? "student";
       const hasProfile = !!data.user.user_metadata?.full_name;
+
       if (!hasProfile) {
         return NextResponse.redirect(`${APP_URL}/auth?tab=signup&step=onboard`);
       }
+
+      // ── If a redirect param was passed, honour it ──────────────────────
+      if (redirect && redirect.startsWith("/")) {
+        return NextResponse.redirect(`${APP_URL}${redirect}`);
+      }
+
       return NextResponse.redirect(`${APP_URL}/${role}/dashboard`);
     }
   }
 
   return NextResponse.redirect(`${APP_URL}/?error=callback_failed`);
 }
+
