@@ -99,8 +99,8 @@ export async function middleware(request: NextRequest) {
         .limit(1)
         .maybeSingle();
 
-      // Debug: log what we get (remove after fixing)
-      console.log("[sub-gate] user:", user.id, "sub:", sub, "err:", subError);
+      
+      
 
       if (!sub) {
         return NextResponse.redirect(new URL("/pricing", appUrl));
