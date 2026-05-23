@@ -91,6 +91,7 @@ export default function PricingPage() {
   const [couponError, setCouponError] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const router = useRouter();
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -113,7 +114,6 @@ export default function PricingPage() {
     setCouponLoading(true);
     setCouponError("");
     setCoupon(null);
-
     try {
       const res = await fetch("/api/coupon/validate", {
         method: "POST",
@@ -121,11 +121,8 @@ export default function PricingPage() {
         body: JSON.stringify({ code: couponCode, userId: user?.id }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setCouponError(data.error);
-      } else {
-        setCoupon(data);
-      }
+      if (!res.ok) setCouponError(data.error);
+      else setCoupon(data);
     } catch {
       setCouponError("Failed to validate coupon");
     } finally {
@@ -146,105 +143,159 @@ export default function PricingPage() {
     return originalPrice;
   };
 
-  const handlePayment = async (plan: (typeof plans)[0]) => {
-    if (plan.id === "free") { router.push("/student/dashboard"); return; }
-    if (plan.id === "institution") {
+  // Helper: call verify-payment API (creates subscription row in DB)
+  const activateSubscription = async ({
+    plan,
+    userId,
+    isFree,
+    trialDays,
+    coupon: couponStr,
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+  }: {
+    plan: string;
+    userId: string;
+    isFree?: boolean;
+    trialDays?: number;
+    coupon?: string;
+    razorpay_order_id?: string;
+    razorpay_payment_id?: string;
+    razorpay_signature?: string;
+  }) => {
+    const res = await fetch("/api/razorpay/verify-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        razorpay_order_id:   razorpay_order_id   ?? `free_${Date.now()}`,
+        razorpay_payment_id: razorpay_payment_id ?? `free_${Date.now()}`,
+        razorpay_signature:  razorpay_signature  ?? "free",
+        plan,
+        userId,
+        isFree:    isFree ?? true,
+        trialDays: trialDays ?? undefined,
+        coupon:    couponStr ?? undefined,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || "Activation failed");
+    return data;
+  };
+
+  const handlePayment = async (planObj: (typeof plans)[0]) => {
+    // Institution — email contact
+    if (planObj.id === "institution") {
       window.location.href = "mailto:contact@globalwebsaas.org?subject=VidyaSaathi Institution Plan";
       return;
     }
-    if (!user) { router.push("/login?redirect=/pricing"); return; }
 
-    setLoading(plan.id);
+    // Must be logged in for all plans
+    if (!user) {
+      router.push("/auth?tab=login&redirect=/pricing");
+      return;
+    }
 
-    const originalAmount = billing === "monthly" ? plan.monthlyPrice! : plan.yearlyPrice!;
-    const planId = `${plan.id}_${billing}`;
+    // Resolve plan key: "student_monthly", "family_yearly", etc.
+    // Free tier always maps to student_monthly
+    const planKey = planObj.id === "free"
+      ? "student_monthly"
+      : `${planObj.id}_${billing}` as string;
 
-    // Handle trial coupon
-    if (coupon?.type === "trial_days") {
-      try {
-        await fetch("/api/razorpay/verify-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            razorpay_order_id: "trial_" + Date.now(),
-            razorpay_payment_id: "trial_" + Date.now(),
-            razorpay_signature: "trial",
-            planId: planId + "_trial",
-            userId: user.id,
-            amount: 0,
-            trialDays: coupon.value,
-            couponCode: coupon.code,
-          }),
+    const originalAmount = billing === "monthly" ? planObj.monthlyPrice! : planObj.yearlyPrice!;
+
+    setLoading(planObj.id);
+
+    try {
+      // ── Free tier button ──────────────────────────────────────────────
+      if (planObj.id === "free") {
+        await activateSubscription({ plan: planKey, userId: user.id, isFree: true });
+        router.push("/student/dashboard");
+        return;
+      }
+
+      // ── Trial-days coupon ─────────────────────────────────────────────
+      if (coupon?.type === "trial_days") {
+        await activateSubscription({
+          plan:      planKey,
+          userId:    user.id,
+          isFree:    true,
+          trialDays: coupon.value,
+          coupon:    coupon.code,
         });
         router.push("/student/dashboard?payment=trial");
         return;
-      } catch { setLoading(null); return; }
-    }
+      }
 
-    const finalAmount = getDiscountedPrice(originalAmount);
+      const finalAmount = getDiscountedPrice(originalAmount);
 
-    // Handle 100% free coupon
-    if (finalAmount === 0) {
-      try {
-        await fetch("/api/razorpay/verify-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            razorpay_order_id: "free_" + Date.now(),
-            razorpay_payment_id: "free_" + Date.now(),
-            razorpay_signature: "free",
-            planId,
-            userId: user.id,
-            amount: 0,
-            couponCode: coupon?.code,
-          }),
+      // ── 100% free coupon ──────────────────────────────────────────────
+      if (finalAmount === 0) {
+        await activateSubscription({
+          plan:   planKey,
+          userId: user.id,
+          isFree: true,
+          coupon: coupon?.code,
         });
         router.push("/student/dashboard?payment=success");
         return;
-      } catch { setLoading(null); return; }
-    }
+      }
 
-    try {
-      const res = await fetch("/api/razorpay/create-order", {
+      // ── Paid — create Razorpay order then open modal ──────────────────
+      const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: finalAmount, planId, userId: user.id }),
+        body: JSON.stringify({ plan: planKey, userId: user.id, coupon: coupon?.code }),
       });
-      const { orderId } = await res.json();
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) throw new Error(orderData.error || "Order creation failed");
 
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: finalAmount * 100,
-        currency: "INR",
-        name: "VidyaSaathi",
-        description: `${plan.name} Plan - ${billing === "monthly" ? "Monthly" : "Yearly"}${coupon ? ` (${coupon.code})` : ""}`,
-        image: "/logo.png",
-        order_id: orderId,
-        handler: async (response: any) => {
-          const verifyRes = await fetch("/api/razorpay/verify-payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...response,
-              planId,
-              userId: user.id,
-              amount: finalAmount,
-              couponCode: coupon?.code,
-            }),
-          });
-          const result = await verifyRes.json();
-          if (result.success) router.push("/student/dashboard?payment=success");
-          else alert("Payment verification failed. Contact support.");
+      const rzp = new window.Razorpay({
+        key:         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount:      orderData.amount,   // already in paise from create-order
+        currency:    "INR",
+        name:        "VidyaSaathi",
+        description: `${planObj.name} Plan — ${billing === "monthly" ? "Monthly" : "Yearly"}`,
+        order_id:    orderData.orderId,
+        prefill: {
+          name:  user.user_metadata?.full_name ?? "",
+          email: user.email ?? "",
         },
-        prefill: { name: user.user_metadata?.full_name || "", email: user.email || "" },
         theme: { color: "#7c3aed" },
+        handler: async (response: any) => {
+          try {
+            await activateSubscription({
+              plan:                planKey,
+              userId:              user.id,
+              isFree:              false,
+              coupon:              coupon?.code,
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+            });
+            router.push("/student/dashboard?payment=success");
+          } catch {
+            alert("Payment verified but activation failed. Contact support.");
+          } finally {
+            setLoading(null);
+          }
+        },
         modal: { ondismiss: () => setLoading(null) },
-      };
+      });
 
-      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (r: any) => {
+        alert(r.error?.description || "Payment failed. Please try again.");
+        setLoading(null);
+      });
+
       rzp.open();
-    } catch { alert("Something went wrong. Please try again."); }
-    finally { setLoading(null); }
+      // Don't setLoading(null) here — wait for handler/ondismiss
+      return;
+
+    } catch (err: any) {
+      alert(err.message || "Something went wrong. Please try again.");
+    }
+
+    setLoading(null);
   };
 
   const yearlySavings = (monthly: number, yearly: number) =>
@@ -259,11 +310,13 @@ export default function PricingPage() {
 
         {/* Billing Toggle */}
         <div className="inline-flex items-center gap-3 bg-slate-800 rounded-full p-1 mb-8">
-          <button onClick={() => setBilling("monthly")}
+          <button
+            onClick={() => setBilling("monthly")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${billing === "monthly" ? "bg-violet-600 text-white shadow" : "text-slate-400 hover:text-white"}`}>
             Monthly
           </button>
-          <button onClick={() => setBilling("yearly")}
+          <button
+            onClick={() => setBilling("yearly")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${billing === "yearly" ? "bg-violet-600 text-white shadow" : "text-slate-400 hover:text-white"}`}>
             Yearly
             <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">Save up to 33%</span>
@@ -288,8 +341,7 @@ export default function PricingPage() {
               <button
                 onClick={applyCoupon}
                 disabled={couponLoading || !couponCode.trim()}
-                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-              >
+                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
                 {couponLoading ? "..." : "Apply"}
               </button>
             </div>
@@ -299,9 +351,9 @@ export default function PricingPage() {
                 <Check className="w-4 h-4" />
                 <span className="font-medium">{coupon.code}</span>
                 <span className="text-green-300">
-                  {coupon.type === "percent" && `${coupon.value}% off applied!`}
-                  {coupon.type === "trial_days" && `${coupon.value}-day free trial!`}
-                  {coupon.type === "full_free" && "100% free access!"}
+                  {coupon.type === "percent"     && `${coupon.value}% off applied!`}
+                  {coupon.type === "trial_days"  && `${coupon.value}-day free trial!`}
+                  {coupon.type === "full_free"   && "100% free access!"}
                 </span>
               </div>
               <button onClick={removeCoupon} className="text-slate-400 hover:text-white">
@@ -318,16 +370,23 @@ export default function PricingPage() {
         {plans.map((plan) => {
           const Icon = plan.icon;
           const originalPrice = billing === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
-          const finalPrice = originalPrice !== null ? getDiscountedPrice(originalPrice) : null;
-          const isPopular = plan.badge === "Most Popular";
-          const hasDiscount = coupon && originalPrice && finalPrice !== originalPrice;
+          const finalPrice    = originalPrice !== null ? getDiscountedPrice(originalPrice) : null;
+          const isPopular     = plan.badge === "Most Popular";
+          const hasDiscount   = coupon && originalPrice && finalPrice !== originalPrice;
 
           return (
-            <div key={plan.id}
-              className={`relative rounded-2xl p-6 flex flex-col border transition-all duration-300 hover:scale-105 ${isPopular ? "border-violet-500 bg-violet-950/50 shadow-xl shadow-violet-500/20" : "border-slate-700 bg-slate-900/50"}`}>
+            <div
+              key={plan.id}
+              className={`relative rounded-2xl p-6 flex flex-col border transition-all duration-300 hover:scale-105 ${
+                isPopular
+                  ? "border-violet-500 bg-violet-950/50 shadow-xl shadow-violet-500/20"
+                  : "border-slate-700 bg-slate-900/50"
+              }`}>
               {plan.badge && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className={`px-4 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${plan.color}`}>{plan.badge}</span>
+                  <span className={`px-4 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${plan.color}`}>
+                    {plan.badge}
+                  </span>
                 </div>
               )}
 
@@ -345,14 +404,22 @@ export default function PricingPage() {
                 ) : (
                   <>
                     {hasDiscount && (
-                      <p className="text-sm text-slate-400 line-through">₹{originalPrice}/{billing === "monthly" ? "mo" : "yr"}</p>
+                      <p className="text-sm text-slate-400 line-through">
+                        ₹{originalPrice}/{billing === "monthly" ? "mo" : "yr"}
+                      </p>
                     )}
                     <p className="text-3xl font-bold text-white">
                       {finalPrice === 0 ? "FREE" : `₹${finalPrice}`}
-                      {finalPrice !== 0 && <span className="text-sm font-normal text-slate-400">/{billing === "monthly" ? "mo" : "yr"}</span>}
+                      {finalPrice !== 0 && (
+                        <span className="text-sm font-normal text-slate-400">
+                          /{billing === "monthly" ? "mo" : "yr"}
+                        </span>
+                      )}
                     </p>
                     {billing === "yearly" && plan.monthlyPrice && !coupon && (
-                      <p className="text-xs text-green-400 mt-1">Save {yearlySavings(plan.monthlyPrice, plan.yearlyPrice!)}% vs monthly</p>
+                      <p className="text-xs text-green-400 mt-1">
+                        Save {yearlySavings(plan.monthlyPrice, plan.yearlyPrice!)}% vs monthly
+                      </p>
                     )}
                     {hasDiscount && coupon?.type === "percent" && (
                       <p className="text-xs text-green-400 mt-1">{coupon.value}% off applied!</p>
@@ -373,7 +440,13 @@ export default function PricingPage() {
               <button
                 onClick={() => handlePayment(plan)}
                 disabled={loading === plan.id}
-                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${isPopular ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:opacity-90 shadow-lg" : plan.id === "free" ? "bg-slate-700 text-white hover:bg-slate-600" : `bg-gradient-to-r ${plan.color} text-white hover:opacity-90`} disabled:opacity-50 disabled:cursor-not-allowed`}>
+                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                  isPopular
+                    ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:opacity-90 shadow-lg"
+                    : plan.id === "free"
+                    ? "bg-slate-700 text-white hover:bg-slate-600"
+                    : `bg-gradient-to-r ${plan.color} text-white hover:opacity-90`
+                } disabled:opacity-50 disabled:cursor-not-allowed`}>
                 {loading === plan.id ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -397,3 +470,4 @@ export default function PricingPage() {
     </div>
   );
 }
+
