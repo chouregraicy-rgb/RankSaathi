@@ -147,7 +147,7 @@ export default function PricingPage() {
   };
 
   const handlePayment = async (plan: (typeof plans)[0]) => {
-    if (plan.id === "free") { router.push("/dashboard"); return; }
+    if (plan.id === "free") { router.push("/student/dashboard"); return; }
     if (plan.id === "institution") {
       window.location.href = "mailto:contact@globalwebsaas.org?subject=VidyaSaathi Institution Plan";
       return;
@@ -176,7 +176,7 @@ export default function PricingPage() {
             couponCode: coupon.code,
           }),
         });
-        router.push("/dashboard?payment=trial");
+        router.push("/student/dashboard?payment=trial");
         return;
       } catch { setLoading(null); return; }
     }
@@ -199,7 +199,7 @@ export default function PricingPage() {
             couponCode: coupon?.code,
           }),
         });
-        router.push("/dashboard?payment=success");
+        router.push("/student/dashboard?payment=success");
         return;
       } catch { setLoading(null); return; }
     }
@@ -233,7 +233,7 @@ export default function PricingPage() {
             }),
           });
           const result = await verifyRes.json();
-          if (result.success) router.push("/dashboard?payment=success");
+          if (result.success) router.push("/student/dashboard?payment=success");
           else alert("Payment verification failed. Contact support.");
         },
         prefill: { name: user.user_metadata?.full_name || "", email: user.email || "" },
