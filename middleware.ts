@@ -5,12 +5,11 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request });
-
-  // ✅ Use x-forwarded-host (set by Render's proxy) to get the real public URL
-  
   const appUrl = "https://vidhyasaathi.online";
-    
+
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,9 +17,9 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: request.headers } });
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
@@ -29,37 +28,53 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isApiRoute  = pathname.startsWith("/api/");
-  const isStatic    = pathname.startsWith("/_next/") || pathname.startsWith("/favicon") || pathname.startsWith("/icons");
-  const isAuthRoute = pathname.startsWith("/auth/");
-  const isLinkPage  = pathname === "/parent/link";
-  const isLanding   = pathname === "/";
-
+  const isApiRoute   = pathname.startsWith("/api/");
+  const isStatic     = pathname.startsWith("/_next/") || pathname.startsWith("/favicon") || pathname.startsWith("/icons");
+  const isAuthRoute  = pathname.startsWith("/auth/");
+  const isLinkPage   = pathname === "/parent/link";
+  const isLanding    = pathname === "/";
   const isPublicPage = ["/privacy", "/terms", "/contact", "/pricing"].includes(pathname);
 
-if (isApiRoute || isStatic || isAuthRoute || isLinkPage || isPublicPage) return response;
+  if (isApiRoute || isStatic || isAuthRoute || isLinkPage || isPublicPage) return response;
+  if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
 
-if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
   if (user) {
-    const metaRole = user.user_metadata?.role;
-    const { data: profile, error: profileError } = await supabase
-      .from("users").select("role").eq("id", user.id).single();
-    const dbRole = profile?.role;
-
-    console.log("=== MIDDLEWARE DEBUG ===");
-    console.log("User ID:", user.id);
-    console.log("appUrl:", appUrl);
-    console.log("Meta role:", metaRole);
-    console.log("DB role:", dbRole);
-    console.log("DB error:", profileError?.message);
-
-    const role = dbRole ?? metaRole ?? "student";
-    console.log("Final role:", role);
+    const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+    const role = profile?.role ?? user.user_metadata?.role ?? "student";
 
     if (isLanding) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
     if (pathname.startsWith("/student/") && role !== "student") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
     if (pathname.startsWith("/parent/") && role !== "parent" && !isLinkPage) return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
     if (pathname.startsWith("/admin/") && role !== "admin") return NextResponse.redirect(new URL(`/${role}/dashboard`, appUrl));
+
+    if (role === "student" && pathname.startsWith("/student/")) {
+
+      // These pages are always free
+      const alwaysFreePages = [
+        "/student/dashboard",
+        "/student/settings",
+        "/student/community",
+        "/student/analytics",
+      ];
+      const isAlwaysFree = alwaysFreePages.some(p => pathname.startsWith(p));
+
+      // Check subscription for paid-only routes
+      if (!isAlwaysFree) {
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("status, expires_at")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .limit(1)
+          .maybeSingle();
+
+        const hasActiveSub = sub && new Date(sub.expires_at) > new Date();
+
+        if (!hasActiveSub) {
+          return NextResponse.redirect(new URL("/pricing", appUrl));
+        }
+      }
+    }
   }
 
   return response;
