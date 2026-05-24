@@ -55,6 +55,7 @@ export async function middleware(request: NextRequest) {
         "/student/settings",
         "/student/community",
         "/student/analytics",
+        "/student/tests",
       ];
       const isAlwaysFree = alwaysFreePages.some(p => pathname.startsWith(p));
 
