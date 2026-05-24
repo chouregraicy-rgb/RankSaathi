@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, Brain,
   BarChart3, Calendar, Bell, Settings, LogOut,
@@ -51,6 +51,22 @@ const SETTINGS_HREF: Partial<Record<UserRole, string>> = {
   student: "/student/settings",
 };
 
+const PLAN_LABELS: Record<string, string> = {
+  student_monthly: "Student Monthly",
+  student_yearly:  "Student Yearly",
+  family_monthly:  "Family Monthly",
+  family_yearly:   "Family Yearly",
+  free:            "Free Plan",
+};
+
+const PLAN_COLORS: Record<string, string> = {
+  student_monthly: "bg-violet-500/20 text-violet-400",
+  student_yearly:  "bg-violet-500/20 text-violet-400",
+  family_monthly:  "bg-blue-500/20 text-blue-400",
+  family_yearly:   "bg-blue-500/20 text-blue-400",
+  free:            "bg-slate-500/20 text-slate-400",
+};
+
 interface SidebarProps {
   role: UserRole;
 }
@@ -61,9 +77,30 @@ export function Sidebar({ role }: SidebarProps) {
   const { user, reset } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [planId, setPlanId] = useState<string | null>(null);
 
   const navItems = NAV_ITEMS[role] ?? [];
   const settingsHref = SETTINGS_HREF[role];
+
+  // Fetch current subscription plan
+  useEffect(() => {
+    if (role !== "student") return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      if (!authUser) return;
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("plan_id, status, expires_at")
+        .eq("user_id", authUser.id)
+        .eq("status", "active")
+        .maybeSingle();
+      if (data && new Date(data.expires_at) > new Date()) {
+        setPlanId(data.plan_id);
+      } else {
+        setPlanId("free");
+      }
+    });
+  }, [role]);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -71,6 +108,9 @@ export function Sidebar({ role }: SidebarProps) {
     reset();
     router.push("/");
   }
+
+  const planLabel = planId ? (PLAN_LABELS[planId] ?? planId) : null;
+  const planColor = planId ? (PLAN_COLORS[planId] ?? PLAN_COLORS.free) : null;
 
   const SidebarContent = (
     <div className="flex flex-col h-full">
@@ -80,7 +120,6 @@ export function Sidebar({ role }: SidebarProps) {
         "flex items-center border-b border-border",
         collapsed ? "justify-center p-3" : "gap-2 px-3 py-3"
       )}>
-        {/* Logo image — fixed 36x36, no flex stretching */}
         <div style={{ width: "36px", height: "36px", flexShrink: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -165,6 +204,15 @@ export function Sidebar({ role }: SidebarProps) {
             <div className="min-w-0">
               <p className="text-xs font-medium truncate">{user.full_name}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email ?? user.phone}</p>
+              {/* Plan badge */}
+              {planLabel && (
+                <span className={cn(
+                  "inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full",
+                  planColor
+                )}>
+                  {planLabel}
+                </span>
+              )}
             </div>
           </div>
         )}
