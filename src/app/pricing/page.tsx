@@ -143,104 +143,98 @@ export default function PricingPage() {
     return originalPrice;
   };
 
-  // Helper: call verify-payment API (creates subscription row in DB)
-  const activateSubscription = async ({
-    plan,
-    userId,
-    isFree,
-    trialDays,
-    coupon: couponStr,
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-  }: {
-    plan: string;
-    userId: string;
-    isFree?: boolean;
-    trialDays?: number;
-    coupon?: string;
-    razorpay_order_id?: string;
-    razorpay_payment_id?: string;
-    razorpay_signature?: string;
-  }) => {
-    const res = await fetch("/api/razorpay/verify-payment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        razorpay_order_id:   razorpay_order_id   ?? `free_${Date.now()}`,
-        razorpay_payment_id: razorpay_payment_id ?? `free_${Date.now()}`,
-        razorpay_signature:  razorpay_signature  ?? "free",
-        plan,
-        userId,
-        isFree:    isFree ?? true,
-        trialDays: trialDays ?? undefined,
-        coupon:    couponStr ?? undefined,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(data.error || "Activation failed");
-    return data;
+  // Single function that calls verify-payment and always awaits the result
+  const writeSubscription = async (payload: object): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/razorpay/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert("Activation failed: " + (data.error || "Unknown error"));
+        return false;
+      }
+      return true;
+    } catch (e: any) {
+      alert("Network error: " + e.message);
+      return false;
+    }
   };
 
   const handlePayment = async (planObj: (typeof plans)[0]) => {
-    // Institution — email contact
     if (planObj.id === "institution") {
       window.location.href = "mailto:contact@globalwebsaas.org?subject=VidyaSaathi Institution Plan";
       return;
     }
 
-    // Must be logged in for all plans
     if (!user) {
       router.push("/auth?tab=login&redirect=/pricing");
       return;
     }
 
-    // Resolve plan key: "student_monthly", "family_yearly", etc.
-    // Free tier always maps to student_monthly
+    // plan key sent to API: "student_monthly", "student_yearly", "family_monthly", "family_yearly"
     const planKey = planObj.id === "free"
       ? "student_monthly"
-      : `${planObj.id}_${billing}` as string;
+      : `${planObj.id}_${billing}`;
 
     const originalAmount = billing === "monthly" ? planObj.monthlyPrice! : planObj.yearlyPrice!;
 
     setLoading(planObj.id);
 
+    // ── Free tier ──────────────────────────────────────────────────────────
+    if (planObj.id === "free") {
+      const ok = await writeSubscription({
+        plan: planKey,
+        userId: user.id,
+        isFree: true,
+        razorpay_order_id: "free_" + Date.now(),
+        razorpay_payment_id: "free_" + Date.now(),
+        razorpay_signature: "free",
+      });
+      setLoading(null);
+      if (ok) router.push("/student/dashboard");
+      return;
+    }
+
+    // ── Trial-days coupon (e.g. TESTER3DAYS) ─────────────────────────────
+    if (coupon?.type === "trial_days") {
+      const ok = await writeSubscription({
+        plan: planKey,
+        userId: user.id,
+        isFree: true,
+        trialDays: coupon.value,
+        coupon: coupon.code,
+        razorpay_order_id: "trial_" + Date.now(),
+        razorpay_payment_id: "trial_" + Date.now(),
+        razorpay_signature: "free",
+      });
+      setLoading(null);
+      if (ok) router.push("/student/dashboard?payment=trial");
+      return;
+    }
+
+    const finalAmount = getDiscountedPrice(originalAmount);
+
+    // ── 100% free coupon (e.g. GRAICY100) ────────────────────────────────
+    if (finalAmount === 0) {
+      const ok = await writeSubscription({
+        plan: planKey,
+        userId: user.id,
+        isFree: true,
+        coupon: coupon?.code,
+        razorpay_order_id: "free_" + Date.now(),
+        razorpay_payment_id: "free_" + Date.now(),
+        razorpay_signature: "free",
+      });
+      setLoading(null);
+      if (ok) router.push("/student/dashboard?payment=success");
+      return;
+    }
+
+    // ── Paid — open Razorpay modal ────────────────────────────────────────
     try {
-      // ── Free tier button ──────────────────────────────────────────────
-      if (planObj.id === "free") {
-        await activateSubscription({ plan: planKey, userId: user.id, isFree: true });
-        router.push("/student/dashboard");
-        return;
-      }
-
-      // ── Trial-days coupon ─────────────────────────────────────────────
-      if (coupon?.type === "trial_days") {
-        await activateSubscription({
-          plan:      planKey,
-          userId:    user.id,
-          isFree:    true,
-          trialDays: coupon.value,
-          coupon:    coupon.code,
-        });
-        router.push("/student/dashboard?payment=trial");
-        return;
-      }
-
-      const finalAmount = getDiscountedPrice(originalAmount);
-
-      // ── 100% free coupon ──────────────────────────────────────────────
-      if (finalAmount === 0) {
-        await activateSubscription({
-          plan:   planKey,
-          userId: user.id,
-          isFree: true,
-          coupon: coupon?.code,
-        });
-        router.push("/student/dashboard?payment=success");
-        return;
-      }
-
-      // ── Paid — create Razorpay order then open modal ──────────────────
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -250,34 +244,29 @@ export default function PricingPage() {
       if (!orderRes.ok) throw new Error(orderData.error || "Order creation failed");
 
       const rzp = new window.Razorpay({
-        key:         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount:      orderData.amount,   // already in paise from create-order
-        currency:    "INR",
-        name:        "VidyaSaathi",
-        description: `${planObj.name} Plan — ${billing === "monthly" ? "Monthly" : "Yearly"}`,
-        order_id:    orderData.orderId,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: "INR",
+        name: "VidyaSaathi",
+        description: planKey,
+        order_id: orderData.orderId,
         prefill: {
-          name:  user.user_metadata?.full_name ?? "",
+          name: user.user_metadata?.full_name ?? "",
           email: user.email ?? "",
         },
         theme: { color: "#7c3aed" },
         handler: async (response: any) => {
-          try {
-            await activateSubscription({
-              plan:                planKey,
-              userId:              user.id,
-              isFree:              false,
-              coupon:              coupon?.code,
-              razorpay_order_id:   response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature:  response.razorpay_signature,
-            });
-            router.push("/student/dashboard?payment=success");
-          } catch {
-            alert("Payment verified but activation failed. Contact support.");
-          } finally {
-            setLoading(null);
-          }
+          const ok = await writeSubscription({
+            plan: planKey,
+            userId: user.id,
+            isFree: false,
+            coupon: coupon?.code,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+          setLoading(null);
+          if (ok) router.push("/student/dashboard?payment=success");
         },
         modal: { ondismiss: () => setLoading(null) },
       });
@@ -288,14 +277,10 @@ export default function PricingPage() {
       });
 
       rzp.open();
-      // Don't setLoading(null) here — wait for handler/ondismiss
-      return;
-
-    } catch (err: any) {
-      alert(err.message || "Something went wrong. Please try again.");
+    } catch (e: any) {
+      alert(e.message || "Something went wrong. Please try again.");
+      setLoading(null);
     }
-
-    setLoading(null);
   };
 
   const yearlySavings = (monthly: number, yearly: number) =>
@@ -303,20 +288,17 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 py-16 px-4">
-      {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Simple, Transparent Pricing</h1>
         <p className="text-slate-400 text-lg mb-8">Choose the plan that fits your preparation journey</p>
 
         {/* Billing Toggle */}
         <div className="inline-flex items-center gap-3 bg-slate-800 rounded-full p-1 mb-8">
-          <button
-            onClick={() => setBilling("monthly")}
+          <button onClick={() => setBilling("monthly")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${billing === "monthly" ? "bg-violet-600 text-white shadow" : "text-slate-400 hover:text-white"}`}>
             Monthly
           </button>
-          <button
-            onClick={() => setBilling("yearly")}
+          <button onClick={() => setBilling("yearly")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${billing === "yearly" ? "bg-violet-600 text-white shadow" : "text-slate-400 hover:text-white"}`}>
             Yearly
             <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">Save up to 33%</span>
@@ -338,9 +320,7 @@ export default function PricingPage() {
                   className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
                 />
               </div>
-              <button
-                onClick={applyCoupon}
-                disabled={couponLoading || !couponCode.trim()}
+              <button onClick={applyCoupon} disabled={couponLoading || !couponCode.trim()}
                 className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
                 {couponLoading ? "..." : "Apply"}
               </button>
@@ -351,9 +331,9 @@ export default function PricingPage() {
                 <Check className="w-4 h-4" />
                 <span className="font-medium">{coupon.code}</span>
                 <span className="text-green-300">
-                  {coupon.type === "percent"     && `${coupon.value}% off applied!`}
-                  {coupon.type === "trial_days"  && `${coupon.value}-day free trial!`}
-                  {coupon.type === "full_free"   && "100% free access!"}
+                  {coupon.type === "percent"    && `${coupon.value}% off applied!`}
+                  {coupon.type === "trial_days" && `${coupon.value}-day free trial!`}
+                  {coupon.type === "full_free"  && "100% free access!"}
                 </span>
               </div>
               <button onClick={removeCoupon} className="text-slate-400 hover:text-white">
@@ -375,8 +355,7 @@ export default function PricingPage() {
           const hasDiscount   = coupon && originalPrice && finalPrice !== originalPrice;
 
           return (
-            <div
-              key={plan.id}
+            <div key={plan.id}
               className={`relative rounded-2xl p-6 flex flex-col border transition-all duration-300 hover:scale-105 ${
                 isPopular
                   ? "border-violet-500 bg-violet-950/50 shadow-xl shadow-violet-500/20"
@@ -470,4 +449,3 @@ export default function PricingPage() {
     </div>
   );
 }
-
