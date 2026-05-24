@@ -61,15 +61,18 @@ export async function middleware(request: NextRequest) {
 
       // Check subscription for paid-only routes
       if (!isAlwaysFree) {
-        const { data: sub } = await supabase
+        console.log("🔒 Checking subscription for:", user.id);
+        const { data: sub, error } = await supabase 
           .from("subscriptions")
           .select("status, expires_at")
           .eq("user_id", user.id)
           .eq("status", "active")
           .limit(1)
           .maybeSingle();
+        console.log("📦 Sub result:", sub, "Error:", error);
 
         const hasActiveSub = sub && new Date(sub.expires_at) > new Date();
+         console.log("✅ hasActiveSub:", hasActiveSub);
 
         if (!hasActiveSub) {
           return NextResponse.redirect(new URL("/pricing", appUrl));
