@@ -8,6 +8,7 @@ interface LeadForm {
   name: string;
   email: string;
   phone: string;
+  course: string;
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
@@ -43,13 +44,13 @@ function NavBar() {
 }
 
 function LeadCaptureForm({ source }: { source: string }) {
-  const [form, setForm] = useState<LeadForm>({ name: "", email: "", phone: "" });
+  const [form, setForm] = useState<LeadForm>({ name: "", email: "", phone: "", course: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.phone) return;
+    if (!form.name || !form.email || !form.phone || !form.course) return;
     setStatus("loading");
     setErrorMsg("");
 
@@ -67,6 +68,12 @@ function LeadCaptureForm({ source }: { source: string }) {
     }
   };
 
+  const courseLabels: Record<string, string> = {
+    NEET: "NEET",
+    JEE: "JEE",
+    BOTH: "Both NEET & JEE",
+  };
+
   if (status === "success") {
     return (
       <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
@@ -77,13 +84,13 @@ function LeadCaptureForm({ source }: { source: string }) {
         </div>
         <h3 className="font-bold text-green-800 text-lg mb-1">You're on the list! 🎉</h3>
         <p className="text-green-700 text-sm mb-4">
-          Your <strong>Free NEET Study Planner PDF</strong> is on its way to <strong>{form.email}</strong>
+          Your <strong>Free {courseLabels[form.course] ?? form.course} Study Planner PDF</strong> is on its way to <strong>{form.email}</strong>
         </p>
         <Link
           href="/signup"
           className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md"
         >
-          Start Your NEET Prep Now →
+          Start Your {courseLabels[form.course] ?? ""} Prep Now →
         </Link>
       </div>
     );
@@ -91,6 +98,26 @@ function LeadCaptureForm({ source }: { source: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {/* Course selector */}
+      <div className="grid grid-cols-3 gap-2">
+        {(["NEET", "JEE", "BOTH"] as const).map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setForm({ ...form, course: c })}
+            className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+              form.course === c
+                ? "bg-orange-500 border-orange-500 text-white shadow-md"
+                : "bg-white border-gray-200 text-gray-600 hover:border-orange-300"
+            }`}
+          >
+            {c === "BOTH" ? "Both" : c}
+          </button>
+        ))}
+      </div>
+      {!form.course && (
+        <p className="text-xs text-orange-500 font-medium">Please select your exam above</p>
+      )}
       <div>
         <input
           type="text"
