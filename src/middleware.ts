@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = pathname.startsWith("/auth/");
   const isLinkPage = pathname === "/parent/link";
   const isLanding = pathname === "/";
-  const isPublicPage = ["/privacy", "/terms", "/contact", "/pricing"].includes(pathname);
+  const isPublicPage = ["/privacy", "/terms", "/contact", "/pricing", "/login", "/signup", "/auth/login", "/auth/signup"].includes(pathname);
 
   if (isApiRoute || isStatic || isAuthRoute || isLinkPage || isPublicPage) return response;
   if (!user && !isLanding) return NextResponse.redirect(new URL("/", appUrl));
