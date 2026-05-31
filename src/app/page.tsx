@@ -1,567 +1,589 @@
-// src/app/page.tsx
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import {
-  Eye, EyeOff, GraduationCap, Users, Zap, Shield, TrendingUp,
-  MapPin, Loader2, BookOpen, Target, Star, Brain, Clock,
-  ChevronRight, Check, ArrowRight, Flame, Trophy, AlertCircle,
-  HeartCrack, Lightbulb, Rocket, Tag, X, ToggleLeft, ToggleRight
-} from "lucide-react";
-import { cn } from "@/utils";
-import Image from "next/image";
 
-type Role = "student" | "parent";
-type Mode = "login" | "signup";
+import { useState } from "react";
+import Link from "next/link";
 
-export default function LandingPage() {
-  const router = useRouter();
-  const [role, setRole] = useState<Role>("student");
-  const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const authRef = useRef<HTMLDivElement>(null);
-  const pricingRef = useRef<HTMLDivElement>(null);
+// ─── Types ──────────────────────────────────────────────────────────────────
+interface LeadForm {
+  name: string;
+  email: string;
+  phone: string;
+}
 
-  // Coupon state
-  const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState("");
-  const [couponMsg, setCouponMsg] = useState("");
-  const [couponValid, setCouponValid] = useState(false);
-  const [billingYearly, setBillingYearly] = useState(false);
+// ─── Sub-components ─────────────────────────────────────────────────────────
 
-  const COUPONS: Record<string, { type: "percent" | "free" | "trial"; value: number; label: string }> = {
-    VIDYASAATHI2026: { type: "percent", value: 20, label: "20% off applied! 🎉" },
-    LAUNCH50:        { type: "percent", value: 50, label: "50% off applied! 🚀" },
-    GRAICY100:       { type: "free",    value: 100, label: "100% free — enjoy! 🎁" },
-    TESTER3DAYS:     { type: "trial",   value: 3,   label: "3-day trial activated! ✅" },
-  };
+function NavBar() {
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-orange-100">
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">V</span>
+          </div>
+          <span className="font-bold text-gray-900 text-lg tracking-tight">
+            Vidya<span className="text-orange-500">Saathi</span>
+          </span>
+        </div>
+        <div className="hidden md:flex items-center gap-8 text-sm text-gray-600 font-medium">
+          <a href="#features" className="hover:text-orange-500 transition-colors">Features</a>
+          <a href="#pricing" className="hover:text-orange-500 transition-colors">Pricing</a>
+          <a href="#faq" className="hover:text-orange-500 transition-colors">FAQ</a>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">
+            Log in
+          </Link>
+          <Link href="/signup" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">
+            Start Now
+          </Link>
+        </div>
+      </div>
+    </nav>
+  );
+}
 
-  function applyCoupon() {
-    const code = couponInput.trim().toUpperCase();
-    const coupon = COUPONS[code];
-    if (!coupon) {
-      setCouponMsg("❌ Invalid coupon code");
-      setCouponValid(false);
-      setAppliedCoupon("");
-      return;
-    }
-    setAppliedCoupon(code);
-    setCouponValid(true);
-    setCouponMsg(coupon.label);
-  }
+function LeadCaptureForm({ source }: { source: string }) {
+  const [form, setForm] = useState<LeadForm>({ name: "", email: "", phone: "" });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  function removeCoupon() {
-    setAppliedCoupon("");
-    setCouponInput("");
-    setCouponMsg("");
-    setCouponValid(false);
-  }
-
-  function getDiscountedPrice(basePrice: number): number {
-    if (!appliedCoupon) return basePrice;
-    const c = COUPONS[appliedCoupon];
-    if (!c) return basePrice;
-    if (c.type === "free") return 0;
-    if (c.type === "percent") return Math.round(basePrice * (1 - c.value / 100));
-    return basePrice;
-  }
-
-  const supabase = createClient();
-
-  useEffect(() => {
-    const check = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        const { data: profile } = await supabase
-          .from("users").select("role").eq("id", data.session.user.id).single();
-        const r = profile?.role ?? "student";
-        window.location.href = `https://vidhyasaathi.online/${r}/dashboard`;
-      }
-    };
-    check();
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    if (!form.name || !form.email || !form.phone) return;
+    setStatus("loading");
+    setErrorMsg("");
+
     try {
-      if (mode === "signup") {
-        const { error: signupErr } = await supabase.auth.signUp({
-          email, password,
-          options: { data: { role, full_name: fullName } },
-        });
-        if (signupErr) throw signupErr;
-        setSuccess("Account created! Check your email to verify, then log in.");
-        setMode("login");
-      } else {
-        const { data, error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
-        if (loginErr) throw loginErr;
-        const { data: profile } = await supabase
-          .from("users").select("role").eq("id", data.user.id).single();
-        const userRole = profile?.role ?? role;
-        window.location.href = `https://vidhyasaathi.online/${userRole}/dashboard`;
-      }
-    } catch (err: any) {
-      setError(err.message ?? "Something went wrong");
-    } finally {
-      setLoading(false);
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, source }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setStatus("success");
+    } catch {
+      setStatus("error");
+      setErrorMsg("Something went wrong. Please try again.");
     }
-  }
-
-  async function handleGoogle() {
-    setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: { prompt: "select_account" },
-      },
-    });
-  }
-
-  const scrollToAuth = () => {
-    authRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const painPoints = [
-    { icon: HeartCrack, text: "Studied 10 hours but still blanked in the exam?", color: "text-red-400" },
-    { icon: Clock, text: "Wasted months on wrong topics while rank slipped away?", color: "text-orange-400" },
-    { icon: AlertCircle, text: "No one to solve your doubts at 2AM before the test?", color: "text-yellow-400" },
-    { icon: Brain, text: "Forgot everything you studied just days before NEET?", color: "text-purple-400" },
-  ];
-
-  const features = [
-    { icon: Brain, title: "AI Doubt Solver", desc: "Get instant, accurate answers to any NEET/JEE question — 24/7, no waiting.", color: "from-violet-500 to-purple-600" },
-    { icon: Target, title: "Smart Revision", desc: "AI schedules what you need to revise and when, so nothing slips through.", color: "from-blue-500 to-cyan-500" },
-    { icon: Zap, title: "Chapter Tests", desc: "50+ questions per chapter with detailed explanations after each attempt.", color: "from-amber-500 to-orange-500" },
-    { icon: TrendingUp, title: "Rank Tracker", desc: "Know exactly where you stand among lakhs of aspirants in real-time.", color: "from-green-500 to-emerald-500" },
-    { icon: MapPin, title: "Parent Dashboard", desc: "Parents track location, scores, and mood — stay connected, stay calm.", color: "from-pink-500 to-rose-500" },
-    { icon: Shield, title: "Burnout Guard", desc: "Detects stress patterns and suggests breaks before you break down.", color: "from-indigo-500 to-violet-500" },
-  ];
-
-  const testimonials = [
-    { name: "Priya S.", score: "NEET 650+", text: "The AI doubt solver saved me during my last 2 months. Got answers instantly at midnight!", avatar: "P" },
-    { name: "Arjun M.", score: "JEE Adv. 98%ile", text: "Smart revision made sure I never forgot what I studied. Game changer for retention.", avatar: "A" },
-    { name: "Sneha K.", score: "NEET 620+", text: "My parents could track my progress without calling me every hour. Less stress for all!", avatar: "S" },
-  ];
-
-  const plans = [
-    { name: "Free", price: 0, features: ["5 AI doubts/day", "Basic tests", "Community"], cta: "Start Free", color: "border-slate-600" },
-    { name: "Student", price: 99, yearly: 799, features: ["Unlimited AI doubts", "Full test series", "Analytics", "Rank tracking"], cta: "Start Learning", color: "border-violet-500", popular: true },
-    { name: "Family", price: 149, yearly: 1199, features: ["Everything in Student", "Parent dashboard", "Live location", "3 students"], cta: "Get Family Plan", color: "border-blue-500" },
-  ];
+  if (status === "success") {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
+        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 className="font-bold text-green-800 text-lg mb-1">You're on the list! 🎉</h3>
+        <p className="text-green-700 text-sm mb-4">
+          Your <strong>Free NEET Study Planner PDF</strong> is on its way to <strong>{form.email}</strong>
+        </p>
+        <Link
+          href="/signup"
+          className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md"
+        >
+          Start Your NEET Prep Now →
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#050510] text-white overflow-x-hidden">
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <input
+          type="text"
+          placeholder="Student's Full Name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          required
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
+        />
+      </div>
+      <div>
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          required
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
+        />
+      </div>
+      <div>
+        <div className="flex">
+          <span className="flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">
+            +91
+          </span>
+          <input
+            type="tel"
+            placeholder="WhatsApp Number"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            required
+            pattern="[6-9][0-9]{9}"
+            className="flex-1 px-4 py-3 rounded-r-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
+          />
+        </div>
+      </div>
+      {errorMsg && (
+        <p className="text-red-500 text-xs">{errorMsg}</p>
+      )}
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+      >
+        {status === "loading" ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Sending...
+          </span>
+        ) : (
+          "Get Free Study Planner PDF →"
+        )}
+      </button>
+      <p className="text-xs text-gray-400 text-center">
+        No spam. We'll also send you NEET prep tips on WhatsApp.
+      </p>
+    </form>
+  );
+}
 
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050510]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0">
-              <Image
-                src="/logo/logo.png"
-                alt="VidyaSaathi"
-                width={36}
-                height={36}
-                className="object-contain w-full h-full"
-              />
+function HeroSection() {
+  return (
+    <section className="relative pt-28 pb-20 overflow-hidden bg-gradient-to-b from-orange-50 via-white to-white">
+      {/* Decorative background */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-orange-100 rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-30" />
+
+      <div className="relative max-w-6xl mx-auto px-4">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          {/* Left */}
+          <div>
+            <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
+              <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+              India's Smartest NEET & JEE Prep Platform
             </div>
-            <span className="font-bold text-lg tracking-tight">
-              <span className="text-white">vidhya</span><span className="text-amber-400">saathi</span>
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-slate-400">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <button onClick={scrollToAuth}
-            className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            Get Started Free
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="pt-32 pb-20 px-6 relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl" />
-          <div className="absolute top-40 right-1/4 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl" />
-        </div>
-        <div className="max-w-5xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 bg-violet-600/10 border border-violet-500/20 rounded-full px-4 py-1.5 text-sm text-violet-300 mb-6">
-            <Flame className="w-4 h-4" />
-            India's #1 AI-Powered NEET & JEE Prep Platform
-          </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
-            <span className="text-white">Stop Studying Hard.</span>
-            <br />
-            <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Start Studying Smart.
-            </span>
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Join <strong className="text-white">1,23,000+ aspirants</strong> who use AI to solve doubts instantly,
-            revise smarter, and crack NEET & JEE with confidence.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={scrollToAuth}
-              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all hover:scale-105 flex items-center gap-2">
-              Start Free — No Credit Card <ArrowRight className="w-5 h-5" />
-            </button>
-            <a href="#features"
-              className="text-slate-400 hover:text-white text-sm flex items-center gap-1 transition-colors">
-              See how it works <ChevronRight className="w-4 h-4" />
-            </a>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-12 mt-16">
-            {[
-              { value: "1,23,000+", label: "Students" },
-              { value: "98%", label: "Satisfaction Rate" },
-              { value: "Top 100", label: "Avg Rank Improvement" },
-              { value: "24/7", label: "AI Support" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <p className="text-3xl font-bold text-white">{s.value}</p>
-                <p className="text-slate-400 text-sm mt-1">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pain Points */}
-      <section className="py-20 px-6 bg-gradient-to-b from-transparent to-slate-950/50">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Sound familiar? <span className="text-violet-400">You're not alone.</span>
-            </h2>
-            <p className="text-slate-400 text-lg">Every NEET/JEE aspirant faces these struggles. VidyaSaathi fixes all of them.</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            {painPoints.map((p, i) => (
-              <div key={i} className="flex items-start gap-4 bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/8 transition-colors">
-                <div className={`shrink-0 mt-0.5 ${p.color}`}>
-                  <p.icon className="w-5 h-5" />
-                </div>
-                <p className="text-slate-300 font-medium">{p.text}</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <div className="inline-flex items-center gap-2 text-green-400 font-semibold text-lg">
-              <Lightbulb className="w-5 h-5" />
-              VidyaSaathi solves every single one of these.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need to <span className="text-violet-400">crack the exam</span></h2>
-            <p className="text-slate-400 text-lg">Built specifically for NEET & JEE aspirants by people who understand the grind.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-violet-500/30 transition-all hover:bg-white/8 group">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <f.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">{f.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 px-6 bg-gradient-to-b from-transparent to-violet-950/20">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Students who <span className="text-violet-400">made it</span></h2>
-            <p className="text-slate-400">Real results from real aspirants.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center font-bold text-white">{t.avatar}</div>
-                  <div>
-                    <p className="font-semibold text-white text-sm">{t.name}</p>
-                    <p className="text-violet-400 text-xs font-medium">{t.score}</p>
-                  </div>
-                </div>
-                <p className="text-slate-300 text-sm leading-relaxed">"{t.text}"</p>
-                <div className="flex gap-1 mt-3">
-                  {[...Array(5)].map((_, j) => <Star key={j} className="w-3 h-3 text-amber-400 fill-amber-400" />)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple <span className="text-violet-400">pricing</span></h2>
-            <p className="text-slate-400">Start free. Upgrade when you're ready. Cancel anytime.</p>
-          </div>
-
-          {/* Billing toggle */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <span className={cn("text-sm font-medium", !billingYearly ? "text-white" : "text-slate-400")}>Monthly</span>
-            <button onClick={() => setBillingYearly(!billingYearly)}
-              className="relative w-12 h-6 rounded-full bg-violet-600 transition-colors">
-              <div className={cn("absolute top-1 w-4 h-4 rounded-full bg-white transition-all", billingYearly ? "left-7" : "left-1")} />
-            </button>
-            <span className={cn("text-sm font-medium", billingYearly ? "text-white" : "text-slate-400")}>
-              Yearly <span className="text-green-400 text-xs font-bold ml-1">Save 33%</span>
-            </span>
-          </div>
-
-          {/* Coupon input */}
-          <div className="max-w-sm mx-auto mb-8">
-            {!appliedCoupon ? (
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
-                  <Tag className="w-4 h-4 text-slate-400 shrink-0" />
-                  <input
-                    value={couponInput}
-                    onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponMsg(""); }}
-                    onKeyDown={e => e.key === "Enter" && applyCoupon()}
-                    placeholder="Enter coupon code"
-                    className="bg-transparent text-white text-sm outline-none w-full placeholder-slate-500 tracking-widest"
-                  />
-                </div>
-                <button onClick={applyCoupon}
-                  className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-xl transition-colors">
-                  Apply
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-green-400" />
-                  <span className="text-green-400 font-mono font-bold text-sm">{appliedCoupon}</span>
-                </div>
-                <button onClick={removeCoupon} className="text-slate-400 hover:text-white">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-            {couponMsg && (
-              <p className={cn("text-xs mt-2 text-center", couponValid ? "text-green-400" : "text-red-400")}>
-                {couponMsg}
-              </p>
-            )}
-          </div>
-
-          {/* Plan cards */}
-          <div className="grid md:grid-cols-3 gap-6">
-            {plans.map((plan, i) => {
-              const basePrice = billingYearly ? (plan.yearly ?? plan.price) : plan.price;
-              const finalPrice = getDiscountedPrice(basePrice);
-              const hasDiscount = finalPrice !== basePrice && basePrice > 0;
-              return (
-                <div key={i} className={`relative bg-white/5 border-2 ${plan.color} rounded-2xl p-6 flex flex-col ${plan.popular ? "scale-105 bg-violet-950/30" : ""}`}>
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                      Most Popular
-                    </div>
-                  )}
-                  <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                  <div className="mb-4 min-h-[64px]">
-                    {plan.price === 0 ? (
-                      <p className="text-4xl font-bold text-white">Free</p>
-                    ) : appliedCoupon && COUPONS[appliedCoupon]?.type === "free" ? (
-                      <div>
-                        <p className="text-2xl font-bold text-slate-400 line-through">₹{basePrice}</p>
-                        <p className="text-4xl font-bold text-green-400">FREE 🎁</p>
-                      </div>
-                    ) : hasDiscount ? (
-                      <div>
-                        <p className="text-xl font-bold text-slate-400 line-through">₹{basePrice}</p>
-                        <p className="text-4xl font-bold text-white">₹{finalPrice}<span className="text-base font-normal text-slate-400">/{billingYearly ? "yr" : "mo"}</span></p>
-                        <p className="text-xs text-green-400 mt-1">You save ₹{basePrice - finalPrice}!</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-4xl font-bold text-white">₹{basePrice}<span className="text-base font-normal text-slate-400">/{billingYearly ? "yr" : "mo"}</span></p>
-                        {!billingYearly && plan.yearly && (
-                          <p className="text-sm text-green-400 mt-1">or ₹{plan.yearly}/yr (save 33%)</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <ul className="space-y-2 mb-6 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
-                        <Check className="w-4 h-4 text-green-400 shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button onClick={scrollToAuth}
-                    className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${plan.popular ? "bg-violet-600 hover:bg-violet-700 text-white" : "bg-white/10 hover:bg-white/20 text-white"}`}>
-                    {plan.cta}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="text-center text-slate-500 text-xs mt-6">
-            Coupon applied at checkout. All plans include 7-day free trial for new users.
-          </p>
-        </div>
-      </section>
-
-      {/* CTA Banner */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto bg-gradient-to-r from-violet-600 to-blue-600 rounded-3xl p-10 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-white/5 rounded-3xl" />
-          <Rocket className="w-12 h-12 text-white/80 mx-auto mb-4 relative" />
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 relative">
-            Your rank won't improve by itself.
-          </h2>
-          <p className="text-white/80 text-lg mb-8 relative">
-            Start your free 3-day trial today. No credit card required.
-          </p>
-          <button onClick={scrollToAuth}
-            className="bg-white text-violet-700 font-bold px-8 py-4 rounded-xl text-lg hover:bg-white/90 transition-all hover:scale-105 relative">
-            Start Free Now →
-          </button>
-        </div>
-      </section>
-
-      {/* Auth Section */}
-      <section ref={authRef} id="auth" className="py-20 px-6 bg-gradient-to-b from-transparent to-slate-950">
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-2">Join VidyaSaathi</h2>
-            <p className="text-slate-400">Start your journey to NEET/JEE success today.</p>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
-            {/* Role Toggle */}
-            <div className="flex gap-1 p-1 bg-white/10 rounded-xl mb-6">
-              <button onClick={() => { setRole("student"); setError(""); }}
-                className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all",
-                  role === "student" ? "bg-violet-600 text-white" : "text-slate-400 hover:text-white")}>
-                <GraduationCap className="h-4 w-4" /> Student
-              </button>
-              <button onClick={() => { setRole("parent"); setError(""); }}
-                className={cn("flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all",
-                  role === "parent" ? "bg-violet-600 text-white" : "text-slate-400 hover:text-white")}>
-                <Users className="h-4 w-4" /> Parent
-              </button>
-            </div>
-
-            <h3 className="text-xl font-bold mb-1">{mode === "login" ? "Welcome back!" : `Create ${role} account`}</h3>
-            <p className="text-slate-400 text-sm mb-6">
-              {mode === "login" ? `Sign in to your ${role} account` : `Join thousands of ${role === "student" ? "students cracking NEET/JEE" : "parents monitoring their child"}`}
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+              Crack NEET & JEE <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">
+                with AI by your side
+              </span>
+            </h1>
+            <p className="text-gray-600 text-lg mb-6 leading-relaxed">
+              Personalised study plans, AI doubt solver, mock tests, and parent tracking — everything your NEET/JEE journey needs, starting at just <strong className="text-gray-800">₹99/month</strong>.
             </p>
+            <div className="flex flex-wrap gap-3 mb-8">
+              {["AI Doubt Solver", "Mock Tests", "Parent Dashboard", "Rank Predictor"].map((f) => (
+                <span key={f} className="flex items-center gap-1.5 text-sm text-gray-700 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {f}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex -space-x-2">
+                {["🧑‍🎓", "👩‍🎓", "🧑‍🎓", "👩‍🎓"].map((e, i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-orange-100 border-2 border-white flex items-center justify-center text-sm">
+                    {e}
+                  </div>
+                ))}
+              </div>
+              <span><strong className="text-gray-800">2,400+</strong> students already preparing</span>
+            </div>
+          </div>
 
-            {/* Google */}
-            <button onClick={handleGoogle} disabled={loading}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition-all text-sm font-medium mb-4">
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Continue with Google
-            </button>
+          {/* Right — Lead Form */}
+          <div className="relative">
+            <div className="bg-white rounded-3xl shadow-2xl shadow-orange-100 border border-orange-100 p-7">
+              {/* PDF Upsell Banner */}
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
+                <div className="w-10 h-12 bg-orange-500 rounded-lg flex-shrink-0 flex items-center justify-center shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-bold text-amber-900 text-sm">🎁 Free Gift for You!</p>
+                  <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
+                    Download our <strong>NEET Study Planner PDF</strong> — 12-month subject-wise schedule trusted by toppers.
+                  </p>
+                </div>
+              </div>
 
-            <div className="relative flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-xs text-slate-500">or</span>
-              <div className="flex-1 h-px bg-white/10" />
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Get your free planner</h2>
+              <p className="text-gray-500 text-sm mb-4">Fill in your details and we'll send it instantly.</p>
+
+              <LeadCaptureForm source="hero" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {mode === "signup" && (
-                <div>
-                  <label className="text-xs font-medium text-slate-400 block mb-1">Full Name</label>
-                  <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
-                    placeholder="Your full name"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all placeholder-slate-500" />
+            {/* Floating badge */}
+            <div className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+              100% Free
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const FEATURES = [
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+    ),
+    color: "bg-orange-100 text-orange-600",
+    title: "AI Doubt Solver",
+    desc: "Get chapter-by-chapter explanations in seconds. Ask in Hindi or English — our AI understands both.",
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    ),
+    color: "bg-blue-100 text-blue-600",
+    title: "Full Mock Tests",
+    desc: "NEET & JEE pattern tests with auto-grading, detailed solutions, and rank prediction.",
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+    color: "bg-purple-100 text-purple-600",
+    title: "Parent Dashboard",
+    desc: "Parents get real-time study reports, location tracking, and performance updates — all in one place.",
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    ),
+    color: "bg-green-100 text-green-600",
+    title: "Smart Revision",
+    desc: "Spaced repetition flashcards and weak-topic targeting built into your daily study flow.",
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+    color: "bg-pink-100 text-pink-600",
+    title: "Community Forum",
+    desc: "Ask peers, share notes, form study groups. A safe, moderated NEET community.",
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+    color: "bg-amber-100 text-amber-600",
+    title: "Performance Analytics",
+    desc: "Chapter-wise accuracy charts, time-per-question analysis, and improvement trends.",
+  },
+];
+
+function FeaturesSection() {
+  return (
+    <section id="features" className="py-20 bg-white">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+            Everything you need to crack NEET
+          </h2>
+          <p className="text-gray-500 text-lg max-w-xl mx-auto">
+            Not just another notes app. VidyaSaathi is your complete AI-powered exam partner.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FEATURES.map((f) => (
+            <div
+              key={f.title}
+              className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:border-orange-100 transition-all group"
+            >
+              <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                {f.icon}
+              </div>
+              <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const PLANS = [
+  {
+    name: "Student Monthly",
+    price: "₹99",
+    period: "/month",
+    annualPrice: "₹799",
+    annualPeriod: "/year",
+    annualSaving: "Save ₹389",
+    color: "border-gray-200",
+    badge: null,
+    features: [
+      "AI Doubt Solver (unlimited)",
+      "Full Mock Tests",
+      "Smart Revision",
+      "Performance Analytics",
+      "Community Access",
+      "Chapter Summaries",
+    ],
+    cta: "Start Learning →",
+    ctaStyle: "bg-gray-900 hover:bg-gray-700 text-white",
+  },
+  {
+    name: "Family Plan",
+    price: "₹149",
+    period: "/month",
+    annualPrice: "₹1,199",
+    annualPeriod: "/year",
+    annualSaving: "Save ₹589",
+    color: "border-orange-400 ring-2 ring-orange-400",
+    badge: "Most Popular",
+    features: [
+      "Everything in Student",
+      "Parent Dashboard",
+      "Real-time Location Sharing",
+      "Study Time Reports",
+      "Parent WhatsApp Alerts",
+      "Priority Support",
+    ],
+    cta: "Get Family Plan →",
+    ctaStyle: "bg-orange-500 hover:bg-orange-600 text-white",
+  },
+];
+
+function PricingSection() {
+  return (
+    <section id="pricing" className="py-20 bg-gradient-to-b from-white to-orange-50">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+            Simple, affordable pricing
+          </h2>
+          <p className="text-gray-500 text-lg">
+            Less than a cup of chai per day. Cancel anytime.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {PLANS.map((plan) => (
+            <div
+              key={plan.name}
+              className={`relative bg-white rounded-3xl border-2 ${plan.color} p-8 transition-all hover:shadow-xl`}
+            >
+              {plan.badge && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full">
+                  {plan.badge}
                 </div>
               )}
-              <div>
-                <label className="text-xs font-medium text-slate-400 block mb-1">Email</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all placeholder-slate-500" />
+              <h3 className="font-bold text-gray-900 text-lg mb-4">{plan.name}</h3>
+
+              {/* Monthly price */}
+              <div className="mb-1">
+                <span className="text-4xl font-extrabold text-gray-900">{plan.price}</span>
+                <span className="text-gray-500 text-sm">{plan.period}</span>
               </div>
-              <div>
-                <label className="text-xs font-medium text-slate-400 block mb-1">Password</label>
-                <div className="relative">
-                  <input type={showPw ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••" minLength={6}
-                    className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-white/10 bg-white/5 text-white text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all placeholder-slate-500" />
-                  <button type="button" onClick={() => setShowPw(!showPw)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+              {/* Annual price */}
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-sm text-gray-600">or <strong>{plan.annualPrice}</strong>{plan.annualPeriod}</span>
+                <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">{plan.annualSaving}</span>
+              </div>
+
+              <ul className="space-y-2.5 mb-7">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href="/signup"
+                className={`block w-full text-center font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg ${plan.ctaStyle}`}
+              >
+                {plan.cta}
+              </Link>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-gray-400 text-sm mt-6">
+          🔒 Secure payment via Razorpay · No hidden charges
+        </p>
+      </div>
+    </section>
+  );
+}
+
+const FAQS = [
+  {
+    q: "Is there a free trial?",
+    a: "We don't offer a free trial, but our plans start at just ₹99/month — less than the cost of a single coaching class. You can cancel any time if you're not satisfied.",
+  },
+  {
+    q: "What is the NEET Study Planner PDF?",
+    a: "It's a free 12-month subject-wise schedule designed by our academic team, covering Physics, Chemistry, and Biology topics aligned with NTA's NEET syllabus. It's a planning tool — full study material is inside the app.",
+  },
+  {
+    q: "What's the difference between Student and Family plans?",
+    a: "Both plans give the student full access to all learning features. The Family plan additionally gives parents a separate dashboard with real-time updates, location sharing, and WhatsApp alerts.",
+  },
+  {
+    q: "Does it work for JEE as well?",
+    a: "Yes! VidyaSaathi covers both NEET (Biology/Chemistry/Physics) and JEE (Maths/Chemistry/Physics) with separate test series and AI-curated content for each.",
+  },
+  {
+    q: "Can parents and student use the same account?",
+    a: "No — parents get their own login linked to the student via an invite code. This keeps each dashboard clean and focused for its user.",
+  },
+  {
+    q: "Is my data safe?",
+    a: "Absolutely. All data is encrypted, stored securely on Indian servers, and never shared with third parties. Read our Privacy Policy for full details.",
+  },
+];
+
+function FAQSection() {
+  const [open, setOpen] = useState<number | null>(null);
+
+  return (
+    <section id="faq" className="py-20 bg-white">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Frequently asked questions</h2>
+          <p className="text-gray-500">Got more questions? Email us at <a href="mailto:contact@globalwebsaas.org" className="text-orange-500 hover:underline">contact@globalwebsaas.org</a></p>
+        </div>
+        <div className="space-y-3">
+          {FAQS.map((faq, i) => (
+            <div key={i} className="border border-gray-200 rounded-2xl overflow-hidden">
+              <button
+                className="w-full px-5 py-4 flex items-center justify-between text-left text-gray-900 font-medium text-sm hover:bg-gray-50 transition-colors"
+                onClick={() => setOpen(open === i ? null : i)}
+              >
+                <span>{faq.q}</span>
+                <svg
+                  className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${open === i ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {open === i && (
+                <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed">
+                  {faq.a}
                 </div>
-              </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-              {error && <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-2.5 text-xs text-red-400">{error}</div>}
-              {success && <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-3.5 py-2.5 text-xs text-green-400">{success}</div>}
-
-              <button type="submit" disabled={loading}
-                className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium text-sm transition-all flex items-center justify-center gap-2 mt-1">
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Please wait…</> : mode === "login" ? "Sign In" : "Create Account"}
-              </button>
-            </form>
-
-            <p className="text-center text-sm text-slate-400 mt-4">
-              {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setSuccess(""); }}
-                className="text-violet-400 font-medium hover:underline">
-                {mode === "login" ? "Sign up" : "Sign in"}
-              </button>
+function PDFCTASection() {
+  return (
+    <section className="py-16 bg-gradient-to-r from-orange-500 to-rose-500">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+          <div className="flex-1 text-white">
+            <h2 className="text-2xl md:text-3xl font-extrabold mb-3">
+              📥 Get your free NEET Study Planner PDF
+            </h2>
+            <p className="text-white/80 leading-relaxed">
+              A complete 12-month subject-wise roadmap. Used by thousands of NEET aspirants to stay on track.
             </p>
           </div>
+          <div className="w-full md:w-80 bg-white rounded-2xl p-6 shadow-2xl">
+            <LeadCaptureForm source="pdf_cta" />
+          </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center">
-              <GraduationCap className="h-4 w-4 text-white" />
+function Footer() {
+  return (
+    <footer className="bg-gray-950 text-gray-400 py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">V</span>
+              </div>
+              <span className="font-bold text-white text-base">VidyaSaathi</span>
             </div>
-            <span>© 2026 GlobalWebSaaS</span>
+            <p className="text-sm leading-relaxed max-w-xs">
+              India's AI-powered NEET & JEE preparation platform. Smart study, real results.
+            </p>
+            <p className="text-xs mt-3 text-gray-600">
+              A GlobalWebSaaS product · contact@globalwebsaas.org
+            </p>
           </div>
-          <div className="flex gap-6">
-            <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/terms" className="hover:text-white transition-colors">Terms</a>
-            <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-            <a href="/pricing" className="hover:text-white transition-colors">Pricing</a>
+          <div>
+            <h4 className="text-white font-semibold text-sm mb-3">Platform</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/login" className="hover:text-white transition-colors">Log in</Link></li>
+              <li><Link href="/signup" className="hover:text-white transition-colors">Sign up</Link></li>
+              <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+              <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold text-sm mb-3">Legal</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+            </ul>
           </div>
         </div>
-      </footer>
-    </div>
+        <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+          <p>© 2026 VidyaSaathi · vidhyasaathi.online · All rights reserved.</p>
+          <p>Made with ❤️ for India's NEET aspirants</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ─── Main Export ─────────────────────────────────────────────────────────────
+export default function LandingPage() {
+  return (
+    <>
+      <NavBar />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <PricingSection />
+        <PDFCTASection />
+        <FAQSection />
+      </main>
+      <Footer />
+    </>
   );
 }
