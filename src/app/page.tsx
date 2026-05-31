@@ -193,7 +193,7 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
         </div>
         <h3 className="font-bold text-green-800 text-lg mb-1">{t.successTitle}</h3>
         <p className="text-green-700 text-sm mb-4">{t.successDesc} <strong>{form.email}</strong></p>
-        <Link href="/signup" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md">
+        <Link href="/auth/signup" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md">
           {t.startBtn}
         </Link>
       </div>
@@ -266,8 +266,8 @@ export default function LandingPage() {
               className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-all">
               {lang === "en" ? "🇮🇳 हिंदी" : "🇬🇧 English"}
             </button>
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">{t.login}</Link>
-            <Link href="/signup" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">{t.startNow}</Link>
+            <Link href="/auth/login" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">{t.login}</Link>
+            <Link href="/auth/signup" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">{t.startNow}</Link>
           </div>
         </div>
       </nav>
@@ -387,7 +387,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup"
+                  <Link href="/auth/signup"
                     className={`block w-full text-center font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg ${idx === 1 ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-gray-900 hover:bg-gray-700 text-white"}`}>
                     {plan.cta}
                   </Link>
@@ -455,8 +455,8 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold text-sm mb-3">{t.footerPlatform}</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/login" className="hover:text-white transition-colors">{t.footerLinks[0]}</Link></li>
-                <li><Link href="/signup" className="hover:text-white transition-colors">{t.footerLinks[1]}</Link></li>
+                <li><Link href="/auth/login" className="hover:text-white transition-colors">{t.footerLinks[0]}</Link></li>
+                <li><Link href="/auth/signup" className="hover:text-white transition-colors">{t.footerLinks[1]}</Link></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">{t.footerLinks[2]}</a></li>
                 <li><a href="#features" className="hover:text-white transition-colors">{t.footerLinks[3]}</a></li>
               </ul>
