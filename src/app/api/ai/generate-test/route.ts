@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-lite",
+        model: "google/gemini-flash-1.5",  // ← FIXED: was "google/gemini-3.1-flash-lite" (invalid)
         max_tokens: 8000,
         messages: [{ role: "user", content: prompt }],
       }),
