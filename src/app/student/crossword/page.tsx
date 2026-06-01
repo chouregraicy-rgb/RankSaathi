@@ -1,612 +1,516 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { Loader2, RefreshCw, CheckCircle, Eye, RotateCcw, Trophy, Zap, BookOpen, ArrowLeft } from "lucide-react";
-import Link from "next/link";
+// src/app/student/crossword/page.tsx
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { RefreshCw, Trophy, BookOpen } from "lucide-react";
+import { toast } from "sonner";
 
-interface WordEntry {
+// ──────────────────────────────────────────────
+// Types
+// ──────────────────────────────────────────────
+interface CrosswordWord {
   word: string;
   clue: string;
-  subject: "biology" | "physics" | "chemistry";
-  difficulty: "easy" | "medium" | "hard";
-  dir: "across" | "down";
+  topic?: string;
+}
+
+interface PlacedWord {
+  word: string;
+  clue: string;
+  topic?: string;
   row: number;
   col: number;
-  num: number;
+  direction: "across" | "down";
+  number: number;
 }
 
 interface Cell {
   letter: string;
-  filled: boolean;
-  num?: number;
-  userInput: string;
-  revealed: boolean;
-  correct?: boolean;
+  wordNumbers: number[];
+  isBlack: boolean;
 }
 
-const SUBJECTS = ["All", "Biology", "Physics", "Chemistry"];
-const DIFFICULTIES = ["All", "Easy", "Medium", "Hard"];
+// ──────────────────────────────────────────────
+// Grid builder
+// ──────────────────────────────────────────────
+const GRID_SIZE = 15;
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  easy: "bg-green-100 text-green-700 border-green-300",
-  medium: "bg-amber-100 text-amber-700 border-amber-300",
-  hard: "bg-red-100 text-red-700 border-red-300",
-};
+function buildGrid(words: CrosswordWord[]): {
+  grid: Cell[][];
+  placed: PlacedWord[];
+} {
+  const grid: Cell[][] = Array.from({ length: GRID_SIZE }, () =>
+    Array.from({ length: GRID_SIZE }, () => ({
+      letter: "",
+      wordNumbers: [],
+      isBlack: true,
+    }))
+  );
 
-const SUBJECT_COLORS: Record<string, string> = {
-  biology: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  physics: "bg-blue-50 text-blue-700 border-blue-200",
-  chemistry: "bg-orange-50 text-orange-700 border-orange-200",
-};
+  const placed: PlacedWord[] = [];
+  let wordNum = 1;
 
-export default function CrosswordPage() {
-  const [words, setWords] = useState<WordEntry[]>([]);
-  const [grid, setGrid] = useState<Cell[][]>([]);
-  const [rows, setRows] = useState(15);
-  const [cols, setCols] = useState(15);
-  const [loading, setLoading] = useState(false);
-  const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null);
-  const [selectedDir, setSelectedDir] = useState<"across" | "down">("across");
-  const [selectedWord, setSelectedWord] = useState<WordEntry | null>(null);
-  const [solved, setSolved] = useState<Set<string>>(new Set());
-  const [checked, setChecked] = useState(false);
-  const [filterSubject, setFilterSubject] = useState("All");
-  const [filterDiff, setFilterDiff] = useState("All");
-  const [score, setScore] = useState(0);
-  const [topic, setTopic] = useState("");
-  const [showComplete, setShowComplete] = useState(false);
-  const [error, setError] = useState("");
-  const inputRefs = useRef<Record<string, HTMLInputElement>>({});
+  const canPlace = (
+    word: string,
+    row: number,
+    col: number,
+    dir: "across" | "down"
+  ): boolean => {
+    const len = word.length;
+    if (dir === "across" && col + len > GRID_SIZE) return false;
+    if (dir === "down" && row + len > GRID_SIZE) return false;
+    if (row < 0 || col < 0) return false;
 
-  // ── FIX: placeCrossword now returns { placed, finalRows, finalCols }
-  // instead of calling setRows/setCols internally (which caused stale closure in buildGrid)
-  function placeCrossword(wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[]): {
-    placed: WordEntry[];
-    finalRows: number;
-    finalCols: number;
-  } {
-    const GRID = 20;
-    const tempGrid: string[][] = Array.from({ length: GRID }, () => Array(GRID).fill(""));
-    const placed: WordEntry[] = [];
-    let wordNum = 1;
+    for (let i = 0; i < len; i++) {
+      const r = dir === "across" ? row : row + i;
+      const c = dir === "across" ? col + i : col;
+      const cell = grid[r][c];
+      if (!cell.isBlack && cell.letter !== word[i]) return false;
+    }
+    return true;
+  };
 
-    const canPlace = (word: string, row: number, col: number, dir: "across" | "down"): boolean => {
-      if (dir === "across" && (col < 0 || col + word.length > GRID)) return false;
-      if (dir === "down" && (row < 0 || row + word.length > GRID)) return false;
+  const placeWord = (
+    word: string,
+    clue: string,
+    topic: string | undefined,
+    row: number,
+    col: number,
+    dir: "across" | "down"
+  ) => {
+    for (let i = 0; i < word.length; i++) {
+      const r = dir === "across" ? row : row + i;
+      const c = dir === "across" ? col + i : col;
+      grid[r][c].letter = word[i];
+      grid[r][c].isBlack = false;
+      if (i === 0) grid[r][c].wordNumbers.push(wordNum);
+    }
+    placed.push({ word, clue, topic, row, col, direction: dir, number: wordNum });
+    wordNum++;
+  };
 
-      let intersects = placed.length === 0;
+  if (words.length === 0) return { grid, placed };
+  const first = words[0];
+  const startCol = Math.floor((GRID_SIZE - first.word.length) / 2);
+  const startRow = Math.floor(GRID_SIZE / 2);
+  placeWord(first.word, first.clue, first.topic, startRow, startCol, "across");
 
-      for (let i = 0; i < word.length; i++) {
-        const r = dir === "across" ? row : row + i;
-        const c = dir === "across" ? col + i : col;
-        if (r < 0 || r >= GRID || c < 0 || c >= GRID) return false;
+  for (let wi = 1; wi < words.length; wi++) {
+    const { word, clue, topic } = words[wi];
+    let placed_ = false;
 
-        const cell = tempGrid[r][c];
-        if (cell && cell !== word[i]) return false;
-        if (cell === word[i]) { intersects = true; continue; }
+    for (const p of placed) {
+      for (let pi = 0; pi < p.word.length && !placed_; pi++) {
+        for (let wi2 = 0; wi2 < word.length && !placed_; wi2++) {
+          if (p.word[pi] !== word[wi2]) continue;
+          const pr = p.direction === "across" ? p.row : p.row + pi;
+          const pc = p.direction === "across" ? p.col + pi : p.col;
 
-        if (dir === "across") {
-          if (r > 0 && tempGrid[r - 1][c]) return false;
-          if (r < GRID - 1 && tempGrid[r + 1][c]) return false;
-        } else {
-          if (c > 0 && tempGrid[r][c - 1]) return false;
-          if (c < GRID - 1 && tempGrid[r][c + 1]) return false;
-        }
-      }
-
-      if (dir === "across") {
-        if (col > 0 && tempGrid[row][col - 1]) return false;
-        if (col + word.length < GRID && tempGrid[row][col + word.length]) return false;
-      } else {
-        if (row > 0 && tempGrid[row - 1][col]) return false;
-        if (row + word.length < GRID && tempGrid[row + word.length]?.[col]) return false;
-      }
-
-      return intersects;
-    };
-
-    const doPlace = (word: string, row: number, col: number, dir: "across" | "down") => {
-      for (let i = 0; i < word.length; i++) {
-        const r = dir === "across" ? row : row + i;
-        const c = dir === "across" ? col + i : col;
-        tempGrid[r][c] = word[i];
-      }
-    };
-
-    const sorted = [...wordList]
-      .map(w => ({ ...w, word: w.word.toUpperCase().replace(/[^A-Z]/g, "") }))
-      .filter(w => w.word.length >= 3)
-      .sort((a, b) => b.word.length - a.word.length);
-
-    if (sorted.length === 0) return { placed: [], finalRows: 15, finalCols: 15 };
-
-    const first = sorted[0];
-    const startRow = Math.floor(GRID / 2);
-    const startCol = Math.floor((GRID - first.word.length) / 2);
-    doPlace(first.word, startRow, startCol, "across");
-    placed.push({ ...first, dir: "across", row: startRow, col: startCol, num: wordNum++ });
-
-    for (let wi = 1; wi < sorted.length; wi++) {
-      const w = sorted[wi];
-      let placedWord = false;
-      for (const pw of placed) {
-        if (placedWord) break;
-        const newDir: "across" | "down" = pw.dir === "across" ? "down" : "across";
-        for (let pi = 0; pi < pw.word.length && !placedWord; pi++) {
-          for (let wi2 = 0; wi2 < w.word.length && !placedWord; wi2++) {
-            if (pw.word[pi] !== w.word[wi2]) continue;
-            let r: number, c: number;
-            if (newDir === "down") { r = pw.row - wi2; c = pw.col + pi; }
-            else { r = pw.row + pi; c = pw.col - wi2; }
-            if (canPlace(w.word, r, c, newDir)) {
-              doPlace(w.word, r, c, newDir);
-              placed.push({ ...w, dir: newDir, row: r, col: c, num: wordNum++ });
-              placedWord = true;
+          if (p.direction === "across") {
+            const r = pr - wi2;
+            const c = pc;
+            if (canPlace(word, r, c, "down")) {
+              placeWord(word, clue, topic, r, c, "down");
+              placed_ = true;
+            }
+          } else {
+            const r = pr;
+            const c = pc - wi2;
+            if (canPlace(word, r, c, "across")) {
+              placeWord(word, clue, topic, r, c, "across");
+              placed_ = true;
             }
           }
         }
       }
     }
 
-    if (placed.length < 2) return { placed, finalRows: 15, finalCols: 15 };
-
-    // Calculate tight bounding box
-    let minR = GRID, minC = GRID, maxR = 0, maxC = 0;
-    placed.forEach(w => {
-      minR = Math.min(minR, w.row);
-      minC = Math.min(minC, w.col);
-      const endR = w.dir === "across" ? w.row : w.row + w.word.length - 1;
-      const endC = w.dir === "across" ? w.col + w.word.length - 1 : w.col;
-      maxR = Math.max(maxR, endR);
-      maxC = Math.max(maxC, endC);
-    });
-
-    const pad = 1;
-    const offsetR = Math.max(0, minR - pad);
-    const offsetC = Math.max(0, minC - pad);
-    const finalRows = maxR - offsetR + pad + 2;
-    const finalCols = maxC - offsetC + pad + 2;
-
-    const adjusted = placed.map(w => ({ ...w, row: w.row - offsetR, col: w.col - offsetC }));
-    return { placed: adjusted, finalRows, finalCols };
-  }
-
-  // ── FIX: buildGrid receives finalRows/finalCols as params — no stale closure
-  function buildGrid(placed: WordEntry[], finalRows: number, finalCols: number): Cell[][] {
-    const newGrid: Cell[][] = Array.from({ length: finalRows }, () =>
-      Array.from({ length: finalCols }, () => ({ letter: "", filled: false, userInput: "", revealed: false }))
-    );
-
-    placed.forEach(w => {
-      for (let i = 0; i < w.word.length; i++) {
-        const r = w.dir === "across" ? w.row : w.row + i;
-        const c = w.dir === "across" ? w.col + i : w.col;
-        if (r < finalRows && c < finalCols) {
-          newGrid[r][c].letter = w.word[i];
-          newGrid[r][c].filled = true;
-          if (i === 0 && !newGrid[r][c].num) newGrid[r][c].num = w.num;
+    if (!placed_) {
+      for (let r = 1; r < GRID_SIZE - word.length && !placed_; r++) {
+        for (let c = 1; c < GRID_SIZE - 1 && !placed_; c++) {
+          if (canPlace(word, r, c, "across")) {
+            placeWord(word, clue, topic, r, c, "across");
+            placed_ = true;
+          }
         }
       }
-    });
-
-    return newGrid;
+    }
   }
 
-  const generateCrossword = useCallback(async (customTopic?: string) => {
+  return { grid, placed };
+}
+
+// ──────────────────────────────────────────────
+// Component
+// ──────────────────────────────────────────────
+export default function CrosswordPage() {
+  const [subject, setSubject] = useState<string>("biology");
+  const [loading, setLoading] = useState(false);
+  const [grid, setGrid] = useState<Cell[][]>([]);
+  const [placedWords, setPlacedWords] = useState<PlacedWord[]>([]);
+  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+  const [checked, setChecked] = useState(false);
+  const [score, setScore] = useState<{ correct: number; total: number } | null>(null);
+  const [selectedWord, setSelectedWord] = useState<PlacedWord | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const subjects = [
+    { value: "biology", label: "Biology" },
+    { value: "physics", label: "Physics" },
+    { value: "chemistry", label: "Chemistry" },
+    { value: "mathematics", label: "Mathematics" },
+  ];
+
+  // FIX 1: useCallback with empty deps is correct here because
+  // `subj` is passed as a parameter — no stale closure issue.
+  // FIX 2: API path corrected to /api/ai/generate-crossword
+  const generateCrossword = useCallback(async (subj: string) => {
     setLoading(true);
-    setError("");
     setChecked(false);
-    setSolved(new Set());
-    setSelectedCell(null);
+    setScore(null);
+    setUserAnswers({});
     setSelectedWord(null);
-    setShowComplete(false);
-    setGrid([]);
-    setWords([]);
+    setError(null);
 
     try {
-      const response = await fetch("/api/crossword/generate", {
+      const res = await fetch("/api/ai/generate-crossword", {   // ← FIXED path
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: customTopic || topic }),
+        body: JSON.stringify({ subject: subj, wordCount: 12 }),  // subj param used directly
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.words || data.words.length === 0) {
-        throw new Error(data.error || "No words returned from AI");
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to generate crossword");
       }
 
-      const wordList: Omit<WordEntry, "dir" | "row" | "col" | "num">[] = data.words;
+      const words: CrosswordWord[] = data.crossword.words;
+      const { grid: newGrid, placed } = buildGrid(words);
+      setGrid(newGrid);
+      setPlacedWords(placed);
 
-      // ── FIX: get rows/cols back from placeCrossword synchronously
-      const { placed, finalRows, finalCols } = placeCrossword(wordList);
-
-      if (placed.length < 2) {
-        throw new Error("Not enough words could be placed. Try a different topic.");
-      }
-
-      // ── FIX: pass finalRows/finalCols directly — no stale state
-      const builtGrid = buildGrid(placed, finalRows, finalCols);
-
-      setRows(finalRows);
-      setCols(finalCols);
-      setGrid(builtGrid);
-      setWords(placed);
+      const initAnswers: Record<string, string> = {};
+      placed.forEach((pw) => {
+        for (let i = 0; i < pw.word.length; i++) {
+          const r = pw.direction === "across" ? pw.row : pw.row + i;
+          const c = pw.direction === "across" ? pw.col + i : pw.col;
+          initAnswers[`${r}-${c}`] = "";
+        }
+      });
+      setUserAnswers(initAnswers);
     } catch (err: any) {
-      console.error("Failed to generate crossword:", err);
-      setError(err.message || "Failed to generate crossword. Please try again.");
+      setError(err.message || "Something went wrong");
+      toast.error(err.message || "Failed to generate crossword");
     } finally {
       setLoading(false);
     }
-  }, [topic]);
+  }, []);
 
-  function findWordAt(r: number, c: number, dir: "across" | "down") {
-    return words.find(w => {
-      if (w.dir !== dir) return false;
-      if (dir === "across") return w.row === r && c >= w.col && c < w.col + w.word.length;
-      return w.col === c && r >= w.row && r < w.row + w.word.length;
-    }) || null;
-  }
+  // Auto-generate on mount and when subject changes
+  useEffect(() => {
+    generateCrossword(subject);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject]);
 
-  function selectCell(r: number, c: number) {
-    if (!grid[r]?.[c]?.filled) return;
-    let dir = selectedDir;
-    const wa = findWordAt(r, c, "across");
-    const wd = findWordAt(r, c, "down");
-    if (selectedCell?.[0] === r && selectedCell?.[1] === c) {
-      dir = selectedDir === "across" ? "down" : "across";
-    }
-    if (dir === "across" && !wa) dir = "down";
-    if (dir === "down" && !wd) dir = "across";
-    setSelectedDir(dir);
-    setSelectedCell([r, c]);
-    setSelectedWord(dir === "across" ? wa : wd);
-    setTimeout(() => inputRefs.current[`${r}-${c}`]?.focus(), 10);
-  }
+  const handleSubjectChange = (val: string) => {
+    setSubject(val); // triggers useEffect above
+  };
 
-  function handleKeyDown(e: React.KeyboardEvent, r: number, c: number) {
-    if (e.key === "Backspace") {
-      const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-      if (newGrid[r][c].userInput) { newGrid[r][c].userInput = ""; setGrid(newGrid); }
-      else movePrev(r, c);
-      e.preventDefault();
-    } else if (e.key === "ArrowRight") { selectCell(r, c + 1); e.preventDefault(); }
-    else if (e.key === "ArrowLeft") { selectCell(r, c - 1); e.preventDefault(); }
-    else if (e.key === "ArrowDown") { selectCell(r + 1, c); e.preventDefault(); }
-    else if (e.key === "ArrowUp") { selectCell(r - 1, c); e.preventDefault(); }
-    else if (e.key === "Tab") {
-      e.preventDefault();
-      if (!selectedWord) return;
-      const idx = words.indexOf(selectedWord);
-      const next = words[(idx + 1) % words.length];
-      setSelectedDir(next.dir); setSelectedWord(next); setSelectedCell([next.row, next.col]);
-      setTimeout(() => inputRefs.current[`${next.row}-${next.col}`]?.focus(), 10);
-    }
-  }
+  const handleCellInput = (row: number, col: number, value: string) => {
+    setUserAnswers((prev) => ({
+      ...prev,
+      [`${row}-${col}`]: value.toUpperCase().slice(-1),
+    }));
+  };
 
-  function handleInput(e: React.ChangeEvent<HTMLInputElement>, r: number, c: number) {
-    const val = e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(-1);
-    const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-    newGrid[r][c].userInput = val;
-    newGrid[r][c].correct = undefined;
-    setGrid(newGrid);
-    if (val) moveNext(r, c);
-    const w = selectedWord;
-    if (w) {
-      let full = "";
-      for (let i = 0; i < w.word.length; i++) {
-        const wr = w.dir === "across" ? w.row : w.row + i;
-        const wc = w.dir === "across" ? w.col + i : w.col;
-        full += newGrid[wr]?.[wc]?.userInput || "";
-      }
-      if (full === w.word) {
-        const key = `${w.num}-${w.dir}`;
-        setSolved(prev => {
-          const next = new Set(prev);
-          next.add(key);
-          if (next.size === words.length) setShowComplete(true);
-          return next;
-        });
-      }
-    }
-  }
-
-  function moveNext(r: number, c: number) {
-    if (!selectedWord) return;
-    const w = selectedWord;
-    if (w.dir === "across" && c < w.col + w.word.length - 1) selectCell(r, c + 1);
-    else if (w.dir === "down" && r < w.row + w.word.length - 1) selectCell(r + 1, c);
-  }
-
-  function movePrev(r: number, c: number) {
-    if (!selectedWord) return;
-    const w = selectedWord;
-    if (w.dir === "across" && c > w.col) selectCell(r, c - 1);
-    else if (w.dir === "down" && r > w.row) selectCell(r - 1, c);
-  }
-
-  function checkAnswers() {
-    setChecked(true);
-    const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
+  const handleCheck = () => {
     let correct = 0;
-    words.forEach(w => {
-      let allRight = true;
-      for (let i = 0; i < w.word.length; i++) {
-        const r = w.dir === "across" ? w.row : w.row + i;
-        const c = w.dir === "across" ? w.col + i : w.col;
-        if (newGrid[r]?.[c]) {
-          const isRight = newGrid[r][c].userInput === w.word[i];
-          if (newGrid[r][c].userInput) newGrid[r][c].correct = isRight;
-          if (!isRight) allRight = false;
+    const total = placedWords.length;
+
+    placedWords.forEach((pw) => {
+      let wordCorrect = true;
+      for (let i = 0; i < pw.word.length; i++) {
+        const r = pw.direction === "across" ? pw.row : pw.row + i;
+        const c = pw.direction === "across" ? pw.col + i : pw.col;
+        if ((userAnswers[`${r}-${c}`] || "") !== pw.word[i]) {
+          wordCorrect = false;
+          break;
         }
       }
-      if (allRight) correct++;
+      if (wordCorrect) correct++;
     });
-    setGrid(newGrid);
-    setScore(correct);
-  }
 
-  function revealLetter() {
-    if (!selectedCell) return;
-    const [r, c] = selectedCell;
-    const newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-    newGrid[r][c].userInput = newGrid[r][c].letter;
-    newGrid[r][c].revealed = true;
-    newGrid[r][c].correct = true;
-    setGrid(newGrid);
-    moveNext(r, c);
-  }
+    setScore({ correct, total });
+    setChecked(true);
 
-  function resetGrid() {
-    const newGrid = grid.map(row => row.map(cell => ({ ...cell, userInput: "", revealed: false, correct: undefined })));
-    setGrid(newGrid);
-    setSolved(new Set());
-    setChecked(false);
-    setScore(0);
-    setShowComplete(false);
-  }
-
-  const isInSelectedWord = (r: number, c: number) => {
-    if (!selectedWord) return false;
-    const w = selectedWord;
-    if (w.dir === "across") return w.row === r && c >= w.col && c < w.col + w.word.length;
-    return w.col === c && r >= w.row && r < w.row + w.word.length;
+    // FIX 3: use toast instead of console.log for user feedback
+    if (correct === total) {
+      toast.success("🎉 Perfect score! All words correct!");
+    } else {
+      toast.info(`${correct} / ${total} words correct`);
+    }
   };
 
-  const getCellClass = (r: number, c: number, cell: Cell) => {
-    if (!cell.filled) return "bg-gray-950 dark:bg-black";
-    const isSelected = selectedCell?.[0] === r && selectedCell?.[1] === c;
-    const isHighlighted = isInSelectedWord(r, c);
-    if (cell.revealed) return "bg-blue-100 dark:bg-blue-900";
-    if (cell.correct === true) return "bg-green-100 dark:bg-green-900";
-    if (cell.correct === false) return "bg-red-100 dark:bg-red-900";
-    if (isSelected) return "bg-violet-400";
-    if (isHighlighted) return "bg-violet-100";
-    return "bg-white";
+  const getCellState = (row: number, col: number) => {
+    if (!checked) return "neutral";
+    const key = `${row}-${col}`;
+    const cell = grid[row]?.[col];
+    if (!cell || cell.isBlack) return "neutral";
+    return userAnswers[key] === cell.letter ? "correct" : "wrong";
   };
 
-  // Filters highlight clues but never hide them — all clues always visible
-  const isFiltered = (w: WordEntry) =>
-    (filterSubject === "All" || w.subject === filterSubject.toLowerCase()) &&
-    (filterDiff === "All" || w.difficulty === filterDiff.toLowerCase());
-
-  const acrossWords = words.filter(w => w.dir === "across").sort((a, b) => a.num - b.num);
-  const downWords = words.filter(w => w.dir === "down").sort((a, b) => a.num - b.num);
+  const acrossClues = placedWords.filter((w) => w.direction === "across");
+  const downClues = placedWords.filter((w) => w.direction === "down");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Link href="/student/dashboard"
-              className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <BookOpen className="w-6 h-6 text-violet-600" />
-                NEET & JEE Crossword
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI-generated puzzles — Biology, Physics & Chemistry</p>
-            </div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Science Crossword</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Test your NEET/JEE vocabulary — one subject at a time
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            {solved.size > 0 && (
-              <div className="flex items-center gap-1 text-sm text-green-600 font-medium">
-                <Trophy className="w-4 h-4" />
-                {solved.size}/{words.length} solved
-              </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={subject} onValueChange={handleSubjectChange}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {subjects.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={() => generateCrossword(subject)}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              New Puzzle
+            </Button>
+            {placedWords.length > 0 && !checked && (
+              <Button onClick={handleCheck}>Check Answers</Button>
             )}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 mb-4 flex flex-wrap gap-3 items-center">
-          <input
-            type="text"
-            value={topic}
-            onChange={e => setTopic(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && generateCrossword()}
-            placeholder="Topic (e.g. Cell Division, Optics, Organic Chemistry)..."
-            className="flex-1 min-w-48 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-violet-500"
-          />
-          <button
-            onClick={() => generateCrossword()}
-            disabled={loading}
-            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-5 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
+        {/* Score banner */}
+        {score && (
+          <Card
+            className={
+              score.correct === score.total
+                ? "border-green-500 bg-green-50"
+                : "border-yellow-400 bg-yellow-50"
+            }
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {loading ? "Generating..." : "New Puzzle"}
-          </button>
-        </div>
+            <CardContent className="py-4 flex items-center gap-3">
+              <Trophy
+                className={`h-6 w-6 ${
+                  score.correct === score.total ? "text-green-600" : "text-yellow-600"
+                }`}
+              />
+              <p className="font-semibold text-gray-800">
+                {score.correct === score.total
+                  ? "🎉 Perfect! All words correct!"
+                  : `${score.correct} / ${score.total} words correct`}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <div className="flex flex-wrap gap-2 mb-4">
-          {SUBJECTS.map(s => (
-            <button key={s} onClick={() => setFilterSubject(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filterSubject === s ? "bg-violet-600 text-white border-violet-600" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-violet-400"}`}>
-              {s === "Biology" ? "🧬" : s === "Physics" ? "⚡" : s === "Chemistry" ? "🧪" : "📚"} {s}
-            </button>
-          ))}
-          <div className="w-px bg-gray-200 dark:bg-gray-700 mx-1" />
-          {DIFFICULTIES.map(d => (
-            <button key={d} onClick={() => setFilterDiff(d)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${filterDiff === d ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700"}`}>
-              {d}
-            </button>
-          ))}
-        </div>
-
-        {/* Error banner */}
+        {/* Error */}
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-            <span>⚠️ {error}</span>
-            <button onClick={() => setError("")} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+          <Card className="border-red-300 bg-red-50">
+            <CardContent className="py-4 text-red-700 text-sm">{error}</CardContent>
+          </Card>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center space-y-3">
+              <RefreshCw className="h-8 w-8 animate-spin text-indigo-500 mx-auto" />
+              <p className="text-gray-500 text-sm">
+                Generating {subjects.find((s) => s.value === subject)?.label} crossword…
+              </p>
+            </div>
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 overflow-auto flex-shrink-0" style={{width:"fit-content",maxWidth:"100%"}}>
-            {loading ? (
-              <div className="flex flex-col items-center justify-center h-64 gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-                <p className="text-sm text-gray-500">AI is generating your crossword...</p>
-              </div>
-            ) : grid.length > 0 ? (
-              <>
+        {/* Grid + Clues */}
+        {!loading && grid.length > 0 && (
+          <div className="flex flex-col lg:flex-row gap-6">
+
+            {/* Grid */}
+            <Card className="flex-shrink-0">
+              <CardContent className="p-3 overflow-auto">
                 <div
-                  style={{ display: "inline-grid", gridTemplateColumns: `repeat(${cols}, 32px)`, gap: "2px", backgroundColor: "#374151" }}
-                  className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${GRID_SIZE}, 2rem)`,
+                    gap: "1px",
+                    background: "#d1d5db",
+                    border: "2px solid #d1d5db",
+                  }}
                 >
-                  {grid.slice(0, rows).map((row, r) =>
-                    row.slice(0, cols).map((cell, c) => (
-                      <div
-                        key={`${r}-${c}`}
-                        className={`relative ${getCellClass(r, c, cell)} transition-colors`}
-                        style={{ width: 32, height: 32 }}
-                        onClick={() => cell.filled && selectCell(r, c)}
-                      >
-                        {cell.num && (
-                          <span className="absolute top-0 left-0.5 text-[7px] font-bold text-gray-900 dark:text-white leading-none z-10 pointer-events-none" style={{fontSize:"6px",fontWeight:"800",color:"#111"}}>
-                            {cell.num}
-                          </span>
-                        )}
-                        {cell.filled && (
-                          <input
-                            ref={el => { if (el) inputRefs.current[`${r}-${c}`] = el; }}
-                            maxLength={1}
-                            value={cell.userInput}
-                            onChange={e => handleInput(e, r, c)}
-                            onKeyDown={e => handleKeyDown(e, r, c)}
-                            onClick={() => selectCell(r, c)}
-                            className="absolute inset-0 w-full h-full bg-transparent border-none outline-none text-center text-xs font-bold uppercase caret-transparent cursor-pointer pt-2" style={{color:"#111111"}}
-                            aria-label={`Cell row ${r + 1} col ${c + 1}`}
-                            readOnly={cell.revealed}
+                  {grid.map((row, ri) =>
+                    row.map((cell, ci) => {
+                      if (cell.isBlack) {
+                        return (
+                          <div
+                            key={`${ri}-${ci}`}
+                            style={{
+                              width: "2rem",
+                              height: "2rem",
+                              background: "#1f2937",
+                            }}
                           />
-                        )}
-                      </div>
-                    ))
+                        );
+                      }
+                      const state = getCellState(ri, ci);
+                      const bgColor =
+                        state === "correct"
+                          ? "#bbf7d0"
+                          : state === "wrong"
+                          ? "#fecaca"
+                          : "white";
+                      return (
+                        <div
+                          key={`${ri}-${ci}`}
+                          style={{
+                            width: "2rem",
+                            height: "2rem",
+                            background: bgColor,
+                            position: "relative",
+                          }}
+                        >
+                          {cell.wordNumbers.length > 0 && (
+                            <span
+                              style={{
+                                position: "absolute",
+                                top: 1,
+                                left: 2,
+                                fontSize: "0.45rem",
+                                fontWeight: 700,
+                                color: "#374151",
+                                lineHeight: 1,
+                              }}
+                            >
+                              {cell.wordNumbers[0]}
+                            </span>
+                          )}
+                          <input
+                            maxLength={1}
+                            value={userAnswers[`${ri}-${ci}`] || ""}
+                            onChange={(e) => handleCellInput(ri, ci, e.target.value)}
+                            disabled={checked}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              textAlign: "center",
+                              fontSize: "0.75rem",
+                              fontWeight: 700,
+                              background: "transparent",
+                              border: "none",
+                              outline: "none",
+                              textTransform: "uppercase",
+                              paddingTop: cell.wordNumbers.length > 0 ? "6px" : "0",
+                              cursor: checked ? "default" : "text",
+                            }}
+                          />
+                        </div>
+                      );
+                    })
                   )}
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <button onClick={checkAnswers}
-                    className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    <CheckCircle className="w-4 h-4" /> Check
-                  </button>
-                  <button onClick={revealLetter}
-                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    <Eye className="w-4 h-4" /> Reveal letter
-                  </button>
-                  <button onClick={resetGrid}
-                    className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                    <RotateCcw className="w-4 h-4" /> Reset
-                  </button>
-                </div>
+            {/* Clues */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" /> Across
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {acrossClues.map((w) => (
+                    <div
+                      key={w.number}
+                      className={`text-xs p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
+                        selectedWord?.number === w.number
+                          ? "bg-indigo-50 border border-indigo-200"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedWord(w)}
+                    >
+                      <span className="font-bold text-indigo-600 mr-1">{w.number}.</span>
+                      {w.clue}
+                      {w.topic && (
+                        <Badge variant="outline" className="ml-2 text-[10px]">
+                          {w.topic}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-                {checked && (
-                  <div className={`mt-3 px-4 py-2.5 rounded-xl text-sm font-medium ${score === words.length ? "bg-green-50 text-green-700 border border-green-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
-                    {score === words.length ? `Perfect! All ${words.length} words correct!` : `${score} of ${words.length} words correct. Red = wrong letter.`}
-                  </div>
-                )}
-
-                {showComplete && (
-                  <div className="mt-3 px-4 py-3 rounded-xl bg-violet-50 border border-violet-200 text-violet-700 text-sm font-medium flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-violet-500" />
-                    Congratulations! Puzzle complete! Generate a new one to keep practicing!
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
-                <Zap className="w-8 h-8" />
-                <p className="text-sm">Click "New Puzzle" to generate a crossword</p>
-              </div>
-            )}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" /> Down
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {downClues.map((w) => (
+                    <div
+                      key={w.number}
+                      className={`text-xs p-2 rounded cursor-pointer hover:bg-gray-100 transition-colors ${
+                        selectedWord?.number === w.number
+                          ? "bg-indigo-50 border border-indigo-200"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedWord(w)}
+                    >
+                      <span className="font-bold text-indigo-600 mr-1">{w.number}.</span>
+                      {w.clue}
+                      {w.topic && (
+                        <Badge variant="outline" className="ml-2 text-[10px]">
+                          {w.topic}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 lg:w-72 xl:w-80 flex-shrink-0 overflow-y-auto max-h-[600px]">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Clues</h2>
-            {loading ? (
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading clues...
-              </div>
-            ) : (
-              <>
-                {acrossWords.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Across</p>
-                    <ul className="space-y-1">
-                      {acrossWords.map(w => {
-                        const key = `${w.num}-across`;
-                        const isSolved = solved.has(key);
-                        const isActive = selectedWord?.num === w.num && selectedWord?.dir === w.dir;
-                        return (
-                          <li key={key}
-                            onClick={() => { setSelectedDir("across"); setSelectedWord(w); setSelectedCell([w.row, w.col]); setTimeout(() => inputRefs.current[`${w.row}-${w.col}`]?.focus(), 10); }}
-                            className={`flex gap-2 p-1.5 rounded-lg cursor-pointer text-xs transition-colors ${isActive ? "bg-violet-50 dark:bg-violet-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"} ${isSolved ? "opacity-50" : ""} ${!isFiltered(w) && filterSubject !== "All" || !isFiltered(w) && filterDiff !== "All" ? "opacity-30" : ""}`}>
-                            <span className="font-bold text-gray-500 min-w-[18px]">{w.num}.</span>
-                            <span className={`flex-1 ${isSolved ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>{w.clue}</span>
-                            <div className="flex flex-col gap-0.5 items-end">
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SUBJECT_COLORS[w.subject]}`}>{w.subject.slice(0, 3)}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${DIFFICULTY_COLORS[w.difficulty]}`}>{w.difficulty.slice(0, 3)}</span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-                {downWords.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Down</p>
-                    <ul className="space-y-1">
-                      {downWords.map(w => {
-                        const key = `${w.num}-down`;
-                        const isSolved = solved.has(key);
-                        const isActive = selectedWord?.num === w.num && selectedWord?.dir === w.dir;
-                        return (
-                          <li key={key}
-                            onClick={() => { setSelectedDir("down"); setSelectedWord(w); setSelectedCell([w.row, w.col]); setTimeout(() => inputRefs.current[`${w.row}-${w.col}`]?.focus(), 10); }}
-                            className={`flex gap-2 p-1.5 rounded-lg cursor-pointer text-xs transition-colors ${isActive ? "bg-violet-50 dark:bg-violet-950" : "hover:bg-gray-50 dark:hover:bg-gray-800"} ${isSolved ? "opacity-50" : ""} ${!isFiltered(w) && filterSubject !== "All" || !isFiltered(w) && filterDiff !== "All" ? "opacity-30" : ""}`}>
-                            <span className="font-bold text-gray-500 min-w-[18px]">{w.num}.</span>
-                            <span className={`flex-1 ${isSolved ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>{w.clue}</span>
-                            <div className="flex flex-col gap-0.5 items-end">
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${SUBJECT_COLORS[w.subject]}`}>{w.subject.slice(0, 3)}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${DIFFICULTY_COLORS[w.difficulty]}`}>{w.difficulty.slice(0, 3)}</span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-                {!loading && words.length === 0 && (
-                  <p className="text-xs text-gray-400">Generate a puzzle to see clues.</p>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
 }
-
