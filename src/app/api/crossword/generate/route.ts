@@ -64,7 +64,7 @@ Return ONLY this JSON (no markdown, no backticks):
           "X-Title": "VidyaSaathi",
         },
         body: JSON.stringify({
-          model: "google/gemini-flash-1.5",
+          model: "google/gemini-2.5-flash-lite",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
