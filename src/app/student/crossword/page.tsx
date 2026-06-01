@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, Trophy, BookOpen } from "lucide-react";
-import { toast } from "sonner";
+
 
 // ──────────────────────────────────────────────
 // Types
@@ -215,7 +215,7 @@ export default function CrosswordPage() {
       setUserAnswers(initAnswers);
     } catch (err: any) {
       setError(err.message || "Something went wrong");
-      toast.error(err.message || "Failed to generate crossword");
+    
     } finally {
       setLoading(false);
     }
@@ -260,9 +260,9 @@ export default function CrosswordPage() {
 
     // FIX 3: use toast instead of console.log for user feedback
     if (correct === total) {
-      toast.success("🎉 Perfect score! All words correct!");
+      alert("🎉 Perfect score! All words correct!");
     } else {
-      toast.info(`${correct} / ${total} words correct`);
+      alert(`${correct} / ${total} words correct`);
     }
   };
 
