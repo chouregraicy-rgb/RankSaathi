@@ -1,9 +1,6 @@
 // src/app/api/crossword/generate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
-const GOOGLE_AI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_API_KEY}`;
-
 const SUBJECT_TOPICS: Record<string, string> = {
   biology:
     "cell biology, genetics, evolution, ecology, human physiology, plant physiology, reproduction, biotechnology, microorganisms, biomolecules",
@@ -16,39 +13,45 @@ const SUBJECT_TOPICS: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
+  // FIX: build URL inside function so env var is resolved at runtime
+  const GOOGLE_AI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+
   try {
     const body = await req.json();
-    const { subject = "biology", wordCount = 10 } = body;
+    const { subject, chapter, wordCount = 10 } = body;
 
-    const normalizedSubject = subject.toLowerCase().trim();
-    const topicHints =
-      SUBJECT_TOPICS[normalizedSubject] || SUBJECT_TOPICS["biology"];
+    // Support both chapter-wise and subject-wise
+    const normalizedSubject = (subject || "biology").toLowerCase().trim();
+    const topicHints = SUBJECT_TOPICS[normalizedSubject] || SUBJECT_TOPICS["biology"];
     const subjectDisplay =
       normalizedSubject.charAt(0).toUpperCase() + normalizedSubject.slice(1);
 
-    const prompt = `You are a NEET/JEE crossword puzzle creator. Generate ONLY valid JSON with no markdown or code fences. Every single word and clue MUST be strictly from ${subjectDisplay} only.
+    // If chapter provided, use it for more specific puzzle
+    const chapterLine = chapter
+      ? `Focus specifically on the chapter: "${chapter}". All words must be key terms from this chapter.`
+      : `Words should be important ${subjectDisplay} terms covering: ${topicHints}`;
 
-Create a crossword puzzle with exactly ${wordCount} words, ALL strictly from ${subjectDisplay} for NEET/JEE.
+    const contextLabel = chapter ? `${chapter} (${subjectDisplay})` : subjectDisplay;
+
+    const prompt = `You are a NEET/JEE crossword puzzle creator.
+Generate exactly ${wordCount} crossword words strictly from ${contextLabel} for NEET/JEE.
+
+${chapterLine}
 
 CRITICAL RULES:
-1. ALL words and clues must be from ${subjectDisplay} ONLY
-2. Do NOT include any words or clues from any other subject
-3. Words should be important ${subjectDisplay} terms: ${topicHints}
-4. Each word: 4-12 characters, uppercase, only A-Z letters (no spaces, hyphens)
-5. Clue must clearly indicate it is a ${subjectDisplay} concept
+1. ALL words must be from ${contextLabel} ONLY — no words from other subjects
+2. Each word: 4-12 uppercase letters only (A-Z, no spaces, no hyphens)
+3. Each clue must clearly reference ${contextLabel}
 
 Return ONLY this JSON (no markdown, no backticks):
-{"subject":"${subjectDisplay}","words":[{"word":"EXAMPLE","clue":"${subjectDisplay} clue: definition or hint","topic":"specific ${subjectDisplay} chapter/topic"}]}`;
+{"subject":"${subjectDisplay}","chapter":"${chapter || ""}","words":[{"word":"EXAMPLE","clue":"clue specific to ${contextLabel}","topic":"chapter/topic name"}]}`;
 
     const response = await fetch(GOOGLE_AI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 3000,
-        },
+        generationConfig: { temperature: 0.3, maxOutputTokens: 3000 },
       }),
     });
 
@@ -62,8 +65,7 @@ Return ONLY this JSON (no markdown, no backticks):
     }
 
     const aiData = await response.json();
-    const rawContent =
-      aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const rawContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     const cleaned = rawContent.replace(/```json|```/g, "").trim();
 
     let parsed: any;
@@ -84,19 +86,16 @@ Return ONLY this JSON (no markdown, no backticks):
       );
     }
 
-    // Filter words from wrong subjects
+    // Filter wrong-subject words and clean
     const otherSubjectKeywords = getOtherSubjectKeywords(normalizedSubject);
     let filteredWords = parsed.words.filter((w: any) => {
       const clue = (w.clue || "").toLowerCase();
       const topic = (w.topic || "").toLowerCase();
-      return !otherSubjectKeywords.some(
-        (kw) => clue.includes(kw) || topic.includes(kw)
-      );
+      return !otherSubjectKeywords.some((kw) => clue.includes(kw) || topic.includes(kw));
     });
 
     if (filteredWords.length < 5) filteredWords = parsed.words;
 
-    // Clean words: uppercase, letters only, 4-12 chars
     filteredWords = filteredWords
       .map((w: any) => ({
         ...w,
@@ -106,14 +105,11 @@ Return ONLY this JSON (no markdown, no backticks):
 
     return NextResponse.json({
       success: true,
-      crossword: { subject: subjectDisplay, words: filteredWords },
+      crossword: { subject: subjectDisplay, chapter: chapter || "", words: filteredWords },
     });
   } catch (error: any) {
     console.error("Crossword generation error:", error);
-    return NextResponse.json(
-      { error: "Server error. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error. Please try again." }, { status: 500 });
   }
 }
 
