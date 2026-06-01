@@ -2,10 +2,17 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  // FIX: build URL inside function so env var is resolved at runtime
-  const GOOGLE_AI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+  const key = process.env.GOOGLE_AI_API_KEY;
+
+  if (!key) {
+    console.error("GOOGLE_AI_API_KEY is not set");
+    return NextResponse.json({ error: "AI service not configured." }, { status: 500 });
+  }
+
+  const GOOGLE_AI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 
   const { type, subject, chapter, exam, questionCount } = await request.json();
+  console.log("Generate test request:", { type, subject, chapter, exam, questionCount });
 
   let prompt = "";
 
@@ -27,12 +34,30 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Google AI error:", response.status, errText.slice(0, 300));
+      throw new Error(`Google AI error: ${response.status}`);
+    }
 
     const data = await response.json();
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    const cleaned = content.replace(/```json|```/g, "").trim();
-    return NextResponse.json(JSON.parse(cleaned));
+    console.log("Generate test raw (first 200):", content.slice(0, 200));
+
+    const cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+
+    // Robust JSON extraction
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start === -1 || end === -1) throw new Error("No JSON in response");
+
+    const parsed = JSON.parse(cleaned.slice(start, end + 1));
+    if (!parsed.questions || !Array.isArray(parsed.questions)) {
+      throw new Error("Invalid response: missing questions array");
+    }
+
+    console.log(`Generated ${parsed.questions.length} questions`);
+    return NextResponse.json(parsed);
   } catch (error: any) {
     console.error("Generate test error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
