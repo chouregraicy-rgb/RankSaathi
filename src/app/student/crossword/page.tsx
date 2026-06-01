@@ -188,7 +188,7 @@ export default function CrosswordPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/ai/generate-crossword", {   // ← FIXED path
+      const res = await fetch("/api/crossword/generate", {   // ← FIXED path
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject: subj, wordCount: 12 }),  // subj param used directly
