@@ -1,110 +1,174 @@
+// src/app/api/generate-crossword/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-// openrouter/free automatically picks whatever free model is available
-// Falls back to specific models if the router itself fails
-const MODELS = [
-  "openrouter/auto",           // auto-router (picks best available)
-  "meta-llama/llama-4-scout:free",
-  "deepseek/deepseek-r1:free",
-  "qwen/qwen3-coder:free",
-];
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+// Subject-specific term banks as fallback/seed
+const SUBJECT_TOPICS: Record<string, string> = {
+  biology:
+    "cell biology, genetics, evolution, ecology, human physiology, plant physiology, reproduction, biotechnology, microorganisms, biomolecules",
+  physics:
+    "mechanics, thermodynamics, electrostatics, magnetism, optics, modern physics, waves, gravitation, semiconductor, current electricity",
+  chemistry:
+    "organic chemistry, periodic table, chemical bonding, electrochemistry, coordination compounds, polymers, biomolecules, equilibrium, kinetics, solutions",
+  mathematics:
+    "calculus, algebra, trigonometry, coordinate geometry, vectors, probability, matrices, differential equations, integration, limits",
+};
 
 export async function POST(req: NextRequest) {
   try {
-    const { topic } = await req.json();
-    const topicPrompt = topic ? `Focus on topic: ${topic}.` : "Mix NEET/JEE topics.";
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) return NextResponse.json({ error: "Missing API key" }, { status: 500 });
+    const body = await req.json();
+    const { subject = "biology", wordCount = 10 } = body;
 
-    const prompt = `Generate 15 crossword words for NEET/JEE students. ${topicPrompt}
-Return ONLY a JSON array, nothing else, no explanation, no markdown:
-[{"word":"MITOSIS","clue":"Cell division producing identical daughter cells","subject":"biology","difficulty":"easy"}]
-Rules: words must be 4-10 letters UPPERCASE, no spaces, no hyphens. Mix biology, physics, chemistry.`;
+    const normalizedSubject = subject.toLowerCase().trim();
 
-    let lastError = "";
+    const topicHints =
+      SUBJECT_TOPICS[normalizedSubject] ||
+      SUBJECT_TOPICS["biology"];
 
-    for (const model of MODELS) {
-      try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`,
-            "HTTP-Referer": "https://vidhyasaathi.online",
-            "X-Title": "VidyaSaathi",
-          },
-          body: JSON.stringify({
-            model,
-            max_tokens: 1200,
-            messages: [{ role: "user", content: prompt }],
-          }),
-        });
+    const subjectDisplay =
+      normalizedSubject.charAt(0).toUpperCase() +
+      normalizedSubject.slice(1);
 
-        const raw = await response.text();
+    const systemPrompt = `You are a NEET/JEE crossword puzzle creator. Generate ONLY valid JSON with no markdown or code fences. Every single word and clue MUST be strictly from ${subjectDisplay} only.`;
 
-        if (!response.ok) {
-          try {
-            lastError = JSON.parse(raw)?.error?.message || `${model} returned ${response.status}`;
-          } catch {
-            lastError = `${model} returned ${response.status}`;
-          }
-          console.warn(`[crossword] ${model} failed:`, lastError);
-          continue;
-        }
+    const userPrompt = `Create a crossword puzzle with exactly ${wordCount} words, ALL strictly from ${subjectDisplay} for NEET/JEE.
 
-        const data = JSON.parse(raw);
-        const text = data.choices?.[0]?.message?.content?.trim() || "";
+CRITICAL RULES:
+1. ALL words and clues must be from ${subjectDisplay} ONLY
+2. Do NOT include any words or clues from Physics, Chemistry, Biology, or Mathematics other than ${subjectDisplay}
+3. Words should be important ${subjectDisplay} terms: ${topicHints}
+4. Each word: 4–12 characters, uppercase, only A-Z letters (no spaces, hyphens)
+5. Clue must clearly indicate it is a ${subjectDisplay} concept
 
-        // Strip markdown fences
-        const stripped = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-
-        // Extract JSON array
-        const match = stripped.match(/\[[\s\S]*\]/);
-        if (!match) {
-          lastError = `${model}: No JSON array in response`;
-          console.warn(`[crossword] ${lastError}. Preview:`, text.slice(0, 200));
-          continue;
-        }
-
-        let words: any[];
-        try {
-          words = JSON.parse(match[0]);
-        } catch {
-          lastError = `${model}: JSON parse failed`;
-          continue;
-        }
-
-        // Validate
-        const valid = words.filter(
-          (w: any) =>
-            w.word &&
-            typeof w.word === "string" &&
-            /^[A-Z]{4,10}$/.test(w.word.trim()) &&
-            w.clue &&
-            typeof w.clue === "string"
-        );
-
-        if (valid.length < 5) {
-          lastError = `${model}: Only ${valid.length} valid words`;
-          continue;
-        }
-
-        console.log(`[crossword] Success with ${model}, ${valid.length} words`);
-        return NextResponse.json({ words: valid });
-
-      } catch (err: any) {
-        lastError = `${model}: ${err.message}`;
-        continue;
-      }
+Return ONLY this JSON (no markdown, no backticks):
+{
+  "subject": "${subjectDisplay}",
+  "words": [
+    {
+      "word": "EXAMPLE",
+      "clue": "${subjectDisplay} clue: definition or hint",
+      "topic": "specific ${subjectDisplay} chapter/topic"
     }
+  ]
+}`;
 
-    return NextResponse.json(
-      { error: `All models failed. Last: ${lastError}` },
-      { status: 502 }
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://vidhyasaathi.online",
+          "X-Title": "VidyaSaathi",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-flash-1.5",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.3, // lower temp = more deterministic subject adherence
+          max_tokens: 3000,
+        }),
+      }
     );
 
-  } catch (err: any) {
-    console.error("[crossword] Fatal error:", err);
-    return NextResponse.json({ error: err.message || "Internal server error" }, { status: 500 });
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("OpenRouter crossword error:", errText);
+      return NextResponse.json(
+        { error: "AI service unavailable. Please try again." },
+        { status: 502 }
+      );
+    }
+
+    const aiData = await response.json();
+    const rawContent =
+      aiData?.choices?.[0]?.message?.content || "";
+
+    // Strip markdown fences
+    const cleaned = rawContent
+      .replace(/```json\s*/gi, "")
+      .replace(/```\s*/gi, "")
+      .trim();
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("Crossword JSON parse error:", e);
+      console.error("Raw:", rawContent.slice(0, 500));
+      return NextResponse.json(
+        { error: "Failed to generate crossword. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    if (!parsed.words || !Array.isArray(parsed.words)) {
+      return NextResponse.json(
+        { error: "Invalid crossword data. Please try again." },
+        { status: 500 }
+      );
+    }
+
+    // Post-process: filter out any words that snuck in from wrong subjects
+    const subjectKeywords = getSubjectKeywords(normalizedSubject);
+    const otherSubjectKeywords = getOtherSubjectKeywords(normalizedSubject);
+
+    let filteredWords = parsed.words.filter((w: any) => {
+      const clue = (w.clue || "").toLowerCase();
+      const topic = (w.topic || "").toLowerCase();
+      // Reject if clue/topic contains strong signals of wrong subject
+      return !otherSubjectKeywords.some(
+        (kw) => clue.includes(kw) || topic.includes(kw)
+      );
+    });
+
+    // If too many filtered out, just use what we have
+    if (filteredWords.length < 5) {
+      filteredWords = parsed.words;
+    }
+
+    // Clean words: uppercase, letters only
+    filteredWords = filteredWords.map((w: any) => ({
+      ...w,
+      word: (w.word || "").toUpperCase().replace(/[^A-Z]/g, ""),
+    })).filter((w: any) => w.word.length >= 4);
+
+    return NextResponse.json({
+      success: true,
+      crossword: {
+        subject: subjectDisplay,
+        words: filteredWords,
+      },
+    });
+  } catch (error: any) {
+    console.error("Crossword generation error:", error);
+    return NextResponse.json(
+      { error: "Server error. Please try again." },
+      { status: 500 }
+    );
   }
+}
+
+function getSubjectKeywords(subject: string): string[] {
+  const map: Record<string, string[]> = {
+    biology: ["cell", "gene", "dna", "rna", "enzyme", "tissue", "organ", "species", "ecology", "photosynthesis", "mitosis", "meiosis"],
+    physics: ["force", "velocity", "acceleration", "momentum", "wave", "optics", "current", "voltage", "resistance", "quantum"],
+    chemistry: ["atom", "molecule", "bond", "reaction", "acid", "base", "salt", "orbital", "polymer", "catalyst"],
+    mathematics: ["derivative", "integral", "matrix", "vector", "probability", "trigonometry", "calculus", "algebra"],
+  };
+  return map[subject] || [];
+}
+
+function getOtherSubjectKeywords(subject: string): string[] {
+  const all: Record<string, string[]> = {
+    biology: ["force", "velocity", "newton", "ohm", "watt", "joule", "coulomb", "derivative", "integral", "matrix", "orbital", "valence", "molarity"],
+    physics: ["cell", "dna", "rna", "gene", "enzyme", "photosynthesis", "mitosis", "meiosis", "molarity", "derivative", "integral"],
+    chemistry: ["force", "velocity", "newton", "cell", "dna", "mitosis", "derivative", "integral", "matrix"],
+    mathematics: ["cell", "dna", "rna", "force", "velocity", "newton", "molarity", "enzyme"],
+  };
+  return all[subject] || [];
 }
