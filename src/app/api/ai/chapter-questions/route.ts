@@ -24,7 +24,7 @@ Return ONLY this exact JSON (no markdown, no backticks):
         "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "google/gemini-2.0-flash-exp:free",
         max_tokens: 8000,
         temperature: 0.4,
         messages: [{ role: "user", content: prompt }],

@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "google/gemini-2.0-flash-exp:free",
         max_tokens: 3000,
         temperature: 0.3,
         messages: [{ role: "user", content: prompt }],

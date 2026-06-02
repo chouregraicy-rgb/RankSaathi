@@ -24,7 +24,7 @@ Rules: all 8 questions specific to "${chapter}" in ${subject}, mix 3 easy/3 medi
         "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "google/gemini-2.0-flash-exp:free",
         max_tokens: 3500,
         temperature: 0.4,
         messages: [{ role: "user", content: prompt }],
