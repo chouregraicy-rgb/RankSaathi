@@ -1,63 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
+import { createClient } from "@supabase/supabase-js";
 
 const razorpay = new Razorpay({
-  key_id:     process.env.RAZORPAY_KEY_ID!,
+  key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
 
-const PRICES: Record<string, number> = {
-  student_monthly:  99,
-  student_yearly:  799,
-  family_monthly:  149,
-  family_yearly:  1199,
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const PLANS: Record<string, { amount: number; name: string; duration_days: number; plan_type: string }> = {
+  student_monthly: { amount: 9900,   name: "Student Monthly",  duration_days: 30,  plan_type: "student" },
+  student_yearly:  { amount: 79900,  name: "Student Yearly",   duration_days: 365, plan_type: "student" },
+  family_monthly:  { amount: 14900,  name: "Family Monthly",   duration_days: 30,  plan_type: "family"  },
+  family_yearly:   { amount: 119900, name: "Family Yearly",    duration_days: 365, plan_type: "family"  },
 };
 
-const COUPONS: Record<string, number> = {
-  VIDYASAATHI2026: 100, // 100% off
-  TESTER7DAYS:     100,
-  LAUNCH50:         50, // 50% off
-};
+const DEMO_COUPON = "DEMO2025";
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan, userId, coupon } = await req.json();
+    const { plan_id, coupon_code, user_id } = await req.json();
 
-    if (!plan || !userId) {
-      return NextResponse.json({ error: "Missing plan or userId" }, { status: 400 });
+    if (!plan_id || !PLANS[plan_id]) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const baseAmount = PRICES[plan];
-    if (!baseAmount) {
-      return NextResponse.json({ error: "Invalid plan: " + plan }, { status: 400 });
-    }
+    const plan = PLANS[plan_id];
 
-    // Apply coupon discount
-    const discountPct = coupon ? (COUPONS[coupon.toUpperCase()] ?? 0) : 0;
-    const finalAmount = Math.round(baseAmount * (1 - discountPct / 100));
+    // ── Demo coupon → 100% off → activate directly, skip Razorpay ────────────
+    if (coupon_code?.toUpperCase().trim() === DEMO_COUPON) {
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("id, is_active")
+        .eq("code", DEMO_COUPON)
+        .single();
 
-    // Free order (100% coupon)
-    if (finalAmount === 0) {
-      return NextResponse.json({
-        orderId: `free_${Date.now()}`,
-        amount:  0,
-        free:    true,
+      if (!coupon?.is_active) {
+        return NextResponse.json({ error: "Demo code is not active" }, { status: 400 });
+      }
+
+      const demoEnd = new Date();
+      demoEnd.setDate(demoEnd.getDate() + 30);
+
+      await supabase.from("subscriptions").upsert({
+        user_id,
+        plan_id,
+        plan_type: plan.plan_type,
+        status: "active",
+        current_period_end: demoEnd.toISOString(),
+        coupon_id: coupon.id,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+
+      await supabase.from("payment_logs").insert({
+        user_id,
+        plan_id,
+        status: "demo",
+        coupon_code: DEMO_COUPON,
+        razorpay_order_id: null,
+        razorpay_payment_id: null,
       });
+
+      return NextResponse.json({ demo_activated: true, period_end: demoEnd.toISOString() });
     }
 
+    // ── Normal paid flow → create Razorpay order ─────────────────────────────
     const order = await razorpay.orders.create({
-      amount:   finalAmount * 100, // paise
+      amount: plan.amount,
       currency: "INR",
-      receipt:  `vs_${userId.slice(0, 8)}_${Date.now()}`,
-      notes:    { userId, plan },
+      receipt: `vs_${user_id?.slice(0, 8)}_${Date.now()}`,
+      notes: { plan_id, user_id: user_id || "" },
     });
 
     return NextResponse.json({
-      orderId: order.id,
-      amount:  finalAmount * 100, // paise for Razorpay modal
-      free:    false,
+      order_id: order.id,
+      amount: plan.amount,
+      currency: "INR",
+      key_id: process.env.RAZORPAY_KEY_ID,
+      plan_name: plan.name,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("create-order error:", err);
+    return NextResponse.json({ error: err.message || "Order creation failed" }, { status: 500 });
   }
 }

@@ -1,56 +1,39 @@
 "use client";
 
 import { useSubscription } from "@/hooks/useSubscription";
-import { Badge }  from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Crown, Clock, Zap } from "lucide-react";
+import { Crown, Clock, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export function SubscriptionBadge() {
-  const { subscription, isTrial, isPaid, loading, daysLeft } = useSubscription();
+export function SubscriptionBadge({ className }: { className?: string }) {
+  const { subscribed, status, plan_type, days_left } = useSubscription();
 
-  if (loading) return <div className="h-7 w-28 bg-muted animate-pulse rounded-full" />;
+  if (status === "loading") return null;
 
-  if (isPaid && subscription) {
+  if (status === "active") {
     return (
-      <div className="flex items-center gap-2">
-        <Badge className="bg-indigo-600 text-white gap-1.5 px-3 py-1">
-          <Crown className="w-3.5 h-3.5" />
-          {subscription.plan_name}
-        </Badge>
-        <span className="text-xs text-muted-foreground">
-          {daysLeft > 0 ? `${daysLeft}d left` : "Expires today"}
-        </span>
+      <div className={cn("flex items-center gap-1.5 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1", className)}>
+        <Crown className="w-3 h-3" />
+        {plan_type === "family" ? "Family" : "Student"} · {days_left}d left
       </div>
     );
   }
 
-  if (isTrial && subscription) {
+  if (status === "trial") {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="border-amber-400 text-amber-600 gap-1.5 px-3 py-1">
-          <Clock className="w-3.5 h-3.5" />
-          Free Trial
-        </Badge>
-        <span className="text-xs text-muted-foreground">
-          {daysLeft > 0 ? `${daysLeft}d left` : "Ends today"}
-        </span>
-        <Link href="/pricing">
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-indigo-600">
-            Upgrade
-          </Button>
-        </Link>
+      <div className={cn("flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1", className)}>
+        <Clock className="w-3 h-3" />
+        Trial · {days_left}d left
       </div>
     );
   }
 
   return (
-    <Link href="/pricing">
-      <Button size="sm" className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
-        <Zap className="w-3.5 h-3.5" />
+    <Link href="/student/pricing">
+      <div className={cn("flex items-center gap-1.5 text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-3 py-1 cursor-pointer hover:bg-indigo-500/20 transition-colors", className)}>
+        <AlertCircle className="w-3 h-3" />
         Upgrade to Pro
-      </Button>
+      </div>
     </Link>
   );
 }
-
