@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Check, Zap, Users, Loader2, ChevronRight, Shield, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 declare global {
   interface Window { Razorpay: any; }
@@ -15,12 +14,12 @@ const PLANS = {
   student: {
     icon: Zap,
     label: "Student",
-    color: "from-blue-500 to-cyan-400",
-    border: "border-blue-500/30",
-    glow: "shadow-blue-500/20",
+    colorClass: "from-blue-500 to-cyan-400",
+    borderClass: "border-blue-500/30",
+    shadowClass: "shadow-blue-500/20",
     badge: null,
-    monthly: { id: "student_monthly", price: 99,  period: "month" },
-    yearly:  { id: "student_yearly",  price: 799, period: "year", monthly_equiv: 66 },
+    monthly: { id: "student_monthly", price: 99,  period: "month", monthly_equiv: null as number | null },
+    yearly:  { id: "student_yearly",  price: 799, period: "year",  monthly_equiv: 66 as number | null  },
     features: [
       "AI Doubt Solver (unlimited)",
       "Chapter Summaries — all subjects",
@@ -34,12 +33,12 @@ const PLANS = {
   family: {
     icon: Users,
     label: "Family",
-    color: "from-violet-500 to-purple-400",
-    border: "border-violet-500/30",
-    glow: "shadow-violet-500/20",
+    colorClass: "from-violet-500 to-purple-400",
+    borderClass: "border-violet-500/30",
+    shadowClass: "shadow-violet-500/20",
     badge: "Most Popular",
-    monthly: { id: "family_monthly", price: 149,  period: "month" },
-    yearly:  { id: "family_yearly",  price: 1199, period: "year", monthly_equiv: 100 },
+    monthly: { id: "family_monthly", price: 149,  period: "month", monthly_equiv: null as number | null },
+    yearly:  { id: "family_yearly",  price: 1199, period: "year",  monthly_equiv: 100 as number | null },
     features: [
       "Everything in Student plan",
       "Parent dashboard access",
@@ -55,9 +54,6 @@ const PLANS = {
 type PlanKey = "student" | "family";
 type BillingCycle = "monthly" | "yearly";
 
-// Secret: click the page title 5 times to reveal the demo coupon field
-const DEMO_CLICK_COUNT = 5;
-
 function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.Razorpay) return resolve(true);
@@ -70,27 +66,31 @@ function loadRazorpay(): Promise<boolean> {
 }
 
 export default function PricingPage() {
-  const { data: session } = useSession();
   const router = useRouter();
 
-  const [billing, setBilling] = useState<BillingCycle>("yearly");
-  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
-  const [payLoading, setPayLoading] = useState(false);
-  const [payError, setPayError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  // Auth — get user from Supabase directly
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setCurrentUser(data.user));
+  }, []);
 
-  // Hidden demo coupon state
-  const [logoClicks, setLogoClicks] = useState(0);
+  const [billing, setBilling]             = useState<BillingCycle>("yearly");
+  const [selectedPlan, setSelectedPlan]   = useState<PlanKey | null>(null);
+  const [payLoading, setPayLoading]       = useState(false);
+  const [payError, setPayError]           = useState("");
+  const [successMsg, setSuccessMsg]       = useState("");
+
+  // Hidden demo coupon — revealed after 5 title clicks
+  const [logoClicks, setLogoClicks]       = useState(0);
   const [showDemoField, setShowDemoField] = useState(false);
-  const [demoCoupon, setDemoCoupon] = useState("");
-  const [demoActive, setDemoActive] = useState(false);
-
-  const user = session?.user as any;
+  const [demoCoupon, setDemoCoupon]       = useState("");
+  const [demoActive, setDemoActive]       = useState(false);
 
   function handleLogoClick() {
     const next = logoClicks + 1;
     setLogoClicks(next);
-    if (next >= DEMO_CLICK_COUNT) setShowDemoField(true);
+    if (next >= 5) setShowDemoField(true);
   }
 
   async function applyDemoCoupon() {
@@ -102,7 +102,10 @@ export default function PricingPage() {
     const res = await fetch("/api/coupon/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coupon_code: demoCoupon, plan_id: PLANS[selectedPlan][billing].id }),
+      body: JSON.stringify({
+        coupon_code: demoCoupon,
+        plan_id: PLANS[selectedPlan][billing].id,
+      }),
     });
     const data = await res.json();
     if (data.valid && data.final_amount === 0) {
@@ -113,7 +116,7 @@ export default function PricingPage() {
   }
 
   async function handleCheckout(planKey: PlanKey) {
-    if (!user) { router.push("/auth/signin"); return; }
+    if (!currentUser) { router.push("/auth/signin"); return; }
 
     setSelectedPlan(planKey);
     setPayError("");
@@ -127,7 +130,11 @@ export default function PricingPage() {
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: planId, coupon_code: couponToSend, user_id: user.id }),
+        body: JSON.stringify({
+          plan_id: planId,
+          coupon_code: couponToSend,
+          user_id: currentUser.id,
+        }),
       });
       const orderData = await orderRes.json();
 
@@ -137,7 +144,7 @@ export default function PricingPage() {
         return;
       }
 
-      // Demo coupon → 100% off → activated directly, no Razorpay popup
+      // Demo coupon → activated directly, no Razorpay popup
       if (orderData.demo_activated) {
         setSuccessMsg(`✅ Demo access activated for ${PLANS[planKey].label} plan!`);
         setPayLoading(false);
@@ -159,14 +166,21 @@ export default function PricingPage() {
         name: "VidyaSaathi",
         description: orderData.plan_name,
         order_id: orderData.order_id,
-        prefill: { name: user.name || "", email: user.email || "" },
+        prefill: {
+          name: currentUser.user_metadata?.full_name || "",
+          email: currentUser.email || "",
+        },
         theme: { color: "#6366f1" },
         modal: { ondismiss: () => setPayLoading(false) },
         handler: async (response: any) => {
           const verifyRes = await fetch("/api/razorpay/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, user_id: user.id, plan_id: planId }),
+            body: JSON.stringify({
+              ...response,
+              user_id: currentUser.id,
+              plan_id: planId,
+            }),
           });
           const verifyData = await verifyRes.json();
           if (verifyData.success) {
@@ -206,14 +220,17 @@ export default function PricingPage() {
             Crack NEET &amp; JEE with AI-powered preparation. Cancel anytime.
           </p>
 
-          {/* Hidden demo coupon — only appears after 5 title clicks */}
+          {/* Hidden demo field — 5 title clicks to reveal */}
           {showDemoField && (
             <div className="mt-5 flex items-center justify-center gap-2">
               <input
                 type="text"
                 placeholder="Demo code"
                 value={demoCoupon}
-                onChange={(e) => { setDemoCoupon(e.target.value.toUpperCase()); setDemoActive(false); }}
+                onChange={(e) => {
+                  setDemoCoupon(e.target.value.toUpperCase());
+                  setDemoActive(false);
+                }}
                 className="bg-[#111118] border border-white/10 text-white text-sm px-3 py-1.5 rounded-lg font-mono w-36 focus:outline-none focus:border-indigo-500/50"
               />
               <button
@@ -238,17 +255,17 @@ export default function PricingPage() {
             <button
               key={cycle}
               onClick={() => setBilling(cycle)}
-              className={cn(
+              className={[
                 "px-5 py-2 rounded-full text-sm font-medium transition-all capitalize flex items-center gap-2",
-                billing === cycle ? "bg-white text-black" : "text-gray-400 hover:text-white"
-              )}
+                billing === cycle ? "bg-white text-black" : "text-gray-400 hover:text-white",
+              ].join(" ")}
             >
               {cycle}
               {cycle === "yearly" && (
-                <span className={cn(
+                <span className={[
                   "text-xs px-2 py-0.5 rounded-full font-semibold",
-                  billing === "yearly" ? "bg-green-500 text-white" : "bg-green-500/20 text-green-400"
-                )}>
+                  billing === "yearly" ? "bg-green-500 text-white" : "bg-green-500/20 text-green-400",
+                ].join(" ")}>
                   Save 33%
                 </span>
               )}
@@ -269,11 +286,13 @@ export default function PricingPage() {
               <div
                 key={planKey}
                 onClick={() => setSelectedPlan(planKey)}
-                className={cn(
+                className={[
                   "relative rounded-2xl border p-6 cursor-pointer transition-all duration-200 bg-[#111118] hover:bg-[#14141e]",
-                  isSelected ? `${plan.border} shadow-lg ${plan.glow}` : "border-white/5",
-                  plan.badge ? "ring-1 ring-violet-500/30" : ""
-                )}
+                  isSelected
+                    ? `${plan.borderClass} shadow-lg ${plan.shadowClass}`
+                    : "border-white/5",
+                  plan.badge ? "ring-1 ring-violet-500/30" : "",
+                ].join(" ")}
               >
                 {plan.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -284,7 +303,7 @@ export default function PricingPage() {
                 )}
 
                 <div className="flex items-start justify-between mb-4">
-                  <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center", plan.color)}>
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${plan.colorClass} flex items-center justify-center`}>
                     <Icon className="w-5 h-5 text-white" />
                   </div>
                   {isSelected && (
@@ -310,8 +329,8 @@ export default function PricingPage() {
                   )}
                 </div>
 
-                {"monthly_equiv" in cycle && !showFree && (
-                  <p className="text-xs text-green-400 mb-2">= ₹{(cycle as any).monthly_equiv}/month</p>
+                {cycle.monthly_equiv && !showFree && (
+                  <p className="text-xs text-green-400 mb-2">= ₹{cycle.monthly_equiv}/month</p>
                 )}
 
                 <ul className="space-y-2 mb-6 mt-3">
@@ -324,10 +343,7 @@ export default function PricingPage() {
                 </ul>
 
                 <Button
-                  className={cn(
-                    "w-full font-semibold transition-all text-white border-0",
-                    `bg-gradient-to-r ${plan.color} hover:opacity-90`
-                  )}
+                  className={`w-full font-semibold transition-all text-white border-0 bg-gradient-to-r ${plan.colorClass} hover:opacity-90`}
                   onClick={(e) => { e.stopPropagation(); handleCheckout(planKey); }}
                   disabled={payLoading && isSelected}
                 >

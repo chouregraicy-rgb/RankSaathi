@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 
 export type SubscriptionStatus = "none" | "active" | "expired" | "loading";
 
@@ -15,21 +15,34 @@ export interface SubscriptionInfo {
 }
 
 export function useSubscription() {
-  const { data: session } = useSession();
+  const [userId, setUserId] = useState<string | null>(null);
   const [info, setInfo] = useState<SubscriptionInfo>({ subscribed: false, status: "loading" });
 
+  // Get current user from Supabase
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
+
   const fetchStatus = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!userId) {
+      setInfo({ subscribed: false, status: "none" });
+      return;
+    }
     try {
-      const res = await fetch(`/api/razorpay/subscription-status?user_id=${(session.user as any).id}`);
+      const res = await fetch(`/api/razorpay/subscription-status?user_id=${userId}`);
       const data = await res.json();
       setInfo({ ...data, status: data.status || "none" });
     } catch {
       setInfo({ subscribed: false, status: "none" });
     }
-  }, [session?.user?.id]);
+  }, [userId]);
 
-  useEffect(() => { fetchStatus(); }, [fetchStatus]);
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
 
   return { ...info, refresh: fetchStatus };
 }
