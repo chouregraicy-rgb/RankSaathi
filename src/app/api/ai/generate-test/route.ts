@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         "X-Title": "VidyaSaathi",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp:free",
+        model: "meta-llama/llama-4-scout:free",
         max_tokens: 8000,
         temperature: 0.4,
         messages: [{ role: "user", content: prompt }],
