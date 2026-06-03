@@ -1,47 +1,93 @@
-// src/app/api/ai/pyq/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: Request) {
-  const OR_URL = "https://openrouter.ai/api/v1/chat/completions";
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) return NextResponse.json({ error: "AI service not configured." }, { status: 500 });
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-  const { chapter, subject } = await request.json();
+const FREE_MODELS = [
+  "meta-llama/llama-4-scout:free",
+  "deepseek/deepseek-r1:free",
+  "qwen/qwen3-coder:free",
+  "mistralai/mistral-7b-instruct:free",
+];
 
-  const prompt = `You are an expert NEET/JEE question bank curator with 20 years experience.
-Generate 8 previous year exam style questions for "${chapter}" from ${subject} for NEET UG / JEE Main students.
-Return ONLY valid JSON — no markdown, no backticks:
-{"pyqQuestions":[{"id":1,"question":"Full question text","options":{"A":"first option","B":"second option","C":"third option","D":"fourth option"},"correct":"A","year":"NEET 2022","explanation":"Detailed explanation mentioning concept used."}]}
-Rules: all 8 questions specific to "${chapter}" in ${subject}, mix 3 easy/3 medium/2 hard, year from NEET 2017-2024 or JEE Main 2019-2023, correct is A/B/C/D only.`;
+async function callOpenRouter(prompt: string): Promise<string> {
+  let lastError: Error | null = null;
 
+  for (const model of FREE_MODELS) {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://vidhyasaathi.online",
+          "X-Title": "VidyaSaathi",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 3000,
+          temperature: 0.5,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        lastError = new Error(err?.error?.message || `HTTP ${res.status}`);
+        continue;
+      }
+
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty response");
+      return content;
+    } catch (err: any) {
+      lastError = err;
+      continue;
+    }
+  }
+
+  throw lastError || new Error("All models failed");
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const response = await fetch(OR_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://vidhyasaathi.online",
-        "X-Title": "VidyaSaathi",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp:free",
-        max_tokens: 3500,
-        temperature: 0.4,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
+    const { subject, chapter, year, exam = "NEET", count = 10 } = await request.json();
 
-    if (!response.ok) throw new Error(await response.text());
-    const data = await response.json();
-    const raw = data.choices?.[0]?.message?.content ?? "";
-    const cleaned = raw.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
-    const start = cleaned.indexOf("{"); const end = cleaned.lastIndexOf("}");
+    if (!subject || !chapter) {
+      return NextResponse.json({ error: "Subject and chapter are required" }, { status: 400 });
+    }
+
+    const yearFilter = year ? `from year ${year}` : "from past 10 years (2014-2024)";
+
+    const prompt = `Generate ${count} Previous Year Questions (PYQ) style MCQs ${yearFilter} for ${exam}.
+Subject: ${subject}, Chapter: ${chapter}
+
+Make questions similar in style and difficulty to actual ${exam} previous year papers.
+
+Return ONLY a valid JSON array, no extra text:
+[
+  {
+    "id": 1,
+    "question": "Question text?",
+    "options": ["A", "B", "C", "D"],
+    "correctAnswer": 0,
+    "explanation": "Detailed explanation",
+    "year": 2023,
+    "exam": "${exam}"
+  }
+]`;
+
+    const content = await callOpenRouter(prompt);
+
+    const cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+    const start = cleaned.indexOf("[");
+    const end = cleaned.lastIndexOf("]");
     if (start === -1 || end === -1) throw new Error("No JSON in response");
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    if (!parsed.pyqQuestions || !Array.isArray(parsed.pyqQuestions)) throw new Error("Missing pyqQuestions array");
-    return NextResponse.json(parsed);
+
+    const questions = JSON.parse(cleaned.slice(start, end + 1));
+    return NextResponse.json({ questions });
   } catch (error: any) {
-    console.error("PYQ API error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("PYQ error:", error.message);
+    return NextResponse.json({ error: "Could not load questions. Please try again." }, { status: 500 });
   }
 }
