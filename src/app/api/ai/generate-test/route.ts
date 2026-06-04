@@ -1,27 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-// Free model fallback chain — if first fails, tries next
-const FREE_MODELS = [
-  "meta-llama/llama-4-scout:free",
-  "deepseek/deepseek-r1:free",
-  "qwen/qwen3-coder:free",
-  "mistralai/mistral-7b-instruct:free",
+// Groq free models — fast and reliable
+const MODELS = [
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+  "gemma2-9b-it",
 ];
 
-async function callOpenRouter(prompt: string): Promise<string> {
+async function callGroq(prompt: string): Promise<string> {
   let lastError: Error | null = null;
-
-  for (const model of FREE_MODELS) {
+  for (const model of MODELS) {
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const res = await fetch(GROQ_URL, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://vidhyasaathi.online",
-          "X-Title": "VidyaSaathi",
         },
         body: JSON.stringify({
           model,
@@ -30,87 +27,65 @@ async function callOpenRouter(prompt: string): Promise<string> {
           temperature: 0.7,
         }),
       });
-
       if (!res.ok) {
         const err = await res.json();
-        console.error(`OpenRouter model ${model} failed:`, err);
         lastError = new Error(err?.error?.message || `HTTP ${res.status}`);
-        continue; // try next model
+        continue;
       }
-
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content;
-      if (!content) throw new Error("Empty response from model");
+      if (!content) throw new Error("Empty response");
       return content;
     } catch (err: any) {
       lastError = err;
       continue;
     }
   }
-
   throw lastError || new Error("All models failed");
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { subject, chapter, type, questionCount = 10, exam = "NEET" } = body;
+    const { subject, chapter, type, questionCount = 10, exam = "NEET" } = await request.json();
+    if (!subject || !chapter) return NextResponse.json({ error: "Subject and chapter required" }, { status: 400 });
 
     console.log("Generate test:", { type, subject, chapter, exam, questionCount });
 
-    if (!subject || !chapter) {
-      return NextResponse.json({ error: "Subject and chapter are required" }, { status: 400 });
-    }
-
     const prompt = `You are an expert ${exam} exam question creator.
-
 Generate ${questionCount} multiple choice questions for:
 - Subject: ${subject}
 - Chapter: ${chapter}
 - Exam: ${exam}
-- Type: ${type || "chapter"}
 
 Requirements:
-- Each question must have exactly 4 options (A, B, C, D)
+- Each question must have exactly 4 options
 - One correct answer per question
-- Include a brief explanation for the correct answer
-- Questions should be at ${exam} difficulty level
-- Focus on conceptual understanding and application
+- Include a brief explanation
+- ${exam} difficulty level
 
-Return ONLY a valid JSON array in this exact format, no extra text:
+Return ONLY a valid JSON array, no extra text:
 [
   {
     "id": 1,
-    "question": "Question text here?",
+    "question": "Question text?",
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correctAnswer": 0,
-    "explanation": "Brief explanation of why this is correct",
+    "explanation": "Why this is correct",
     "subject": "${subject}",
     "chapter": "${chapter}"
   }
 ]
-
 correctAnswer is the index (0-3) of the correct option.`;
 
-    const content = await callOpenRouter(prompt);
-
-    // Parse JSON from response
-    const cleaned = content
-      .replace(/```json\s*/gi, "")
-      .replace(/```\s*/gi, "")
-      .trim();
-
+    const content = await callGroq(prompt);
+    const cleaned = content.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
     const start = cleaned.indexOf("[");
     const end = cleaned.lastIndexOf("]");
     if (start === -1 || end === -1) throw new Error("No JSON array in response");
-
     const questions = JSON.parse(cleaned.slice(start, end + 1));
     return NextResponse.json({ questions });
   } catch (error: any) {
     console.error("Generate test error:", error.message);
-    return NextResponse.json(
-      { error: "Could not generate test. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Could not generate test. Please try again." }, { status: 500 });
   }
 }
