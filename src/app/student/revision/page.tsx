@@ -168,7 +168,13 @@ export default function RevisionPage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setSummary(data);
+      const s = data.summary ?? data;
+      setSummary({
+        keyPoints: s.keyPoints ?? [],
+        formulas: (s.formulas ?? []).map((f: any) => typeof f === "string" ? f : `${f.name}: ${f.formula}`),
+        examTips: s.examTips ?? [],
+        commonMistakes: s.commonMistakes ?? [],
+      });
     } catch { setSummary(null); }
     finally  { setLoadingSummary(false); }
   }
@@ -202,7 +208,13 @@ export default function RevisionPage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setNotesData(data);
+      const s = data.summary ?? data;
+      setNotesData({
+        keyPoints: s.keyPoints ?? [],
+        formulas: (s.formulas ?? []).map((f: any) => typeof f === "string" ? f : `${f.name}: ${f.formula}`),
+        examTips: s.examTips ?? [],
+        commonMistakes: s.commonMistakes ?? [],
+      });
     } catch { setNotesData(null); }
     finally  { setLoadingNotes(false); }
   }
@@ -220,8 +232,19 @@ export default function RevisionPage() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      if (!data.pyqQuestions || data.pyqQuestions.length === 0) throw new Error("No questions returned");
-      setPyqQuestions(data.pyqQuestions);
+      const pyqs = data.pyqQuestions ?? data.questions ?? [];
+      if (!pyqs.length) throw new Error("No questions returned");
+      const normalized = pyqs.map((q: any, i: number) => ({
+        ...q,
+        id: q.id ?? i + 1,
+        question: q.question ?? q.question_text ?? "",
+        options: Array.isArray(q.options)
+          ? { A: q.options[0], B: q.options[1], C: q.options[2], D: q.options[3] }
+          : q.options,
+        correct: q.correct ?? ["A","B","C","D"][q.correctAnswer ?? 0],
+        year: q.year?.toString() ?? "",
+      }));
+      setPyqQuestions(normalized);
     } catch (err: any) {
       console.error("PYQ fetch error:", err.message);
       setPyqError(err.message ?? "Failed to load questions");
