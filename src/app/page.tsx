@@ -158,28 +158,198 @@ const FEAT_ICONS = [
   <svg key="5" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
 ];
 
+// ─── Razorpay loader ─────────────────────────────────────────────────────────
+declare global { interface Window { Razorpay: any; } }
+function loadRazorpay(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+}
+
+// Plan options for the planner
+const PLANNER_PLANS = [
+  { id: "student_monthly", label: "Student Monthly", price: 99,  amount: 9900  },
+  { id: "student_yearly",  label: "Student Yearly",  price: 799, amount: 79900 },
+  { id: "family_monthly",  label: "Family Monthly",  price: 149, amount: 14900 },
+  { id: "family_yearly",   label: "Family Yearly",   price: 1199,amount: 119900},
+];
+
+// ─── PDF Generator ────────────────────────────────────────────────────────────
+async function generateAndDownloadPDF(planner: any) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const W = 210; const M = 15; const CW = W - M * 2;
+
+  // Header
+  doc.setFillColor(249, 115, 22);
+  doc.rect(0, 0, W, 28, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18); doc.setFont("helvetica", "bold");
+  doc.text("VidyaSaathi Study Planner", M, 12);
+  doc.setFontSize(10); doc.setFont("helvetica", "normal");
+  doc.text(`${planner.exam} Preparation · ${planner.studentName}`, M, 20);
+  doc.setFontSize(8);
+  doc.text("vidhyasaathi.online · contact@globalwebsaas.org", M, 26);
+
+  let y = 36;
+
+  const checkPage = (needed = 20) => {
+    if (y + needed > 280) { doc.addPage(); y = 15; }
+  };
+
+  // Monthly plans
+  for (const month of planner.months || []) {
+    checkPage(50);
+    doc.setFillColor(255, 247, 237);
+    doc.roundedRect(M, y, CW, 8, 2, 2, "F");
+    doc.setTextColor(194, 65, 12);
+    doc.setFontSize(11); doc.setFont("helvetica", "bold");
+    doc.text(`${month.month} — ${month.focus}`, M + 3, y + 5.5);
+    y += 11;
+
+    const subjects = [
+      { label: "Physics", items: month.physics || [] },
+      { label: "Chemistry", items: month.chemistry || [] },
+      { label: "Biology", items: month.biology || [] },
+      ...(month.mathematics ? [{ label: "Mathematics", items: month.mathematics }] : []),
+    ];
+
+    for (const subj of subjects) {
+      checkPage(15);
+      doc.setTextColor(37, 99, 235);
+      doc.setFontSize(9); doc.setFont("helvetica", "bold");
+      doc.text(subj.label + ":", M + 2, y);
+      y += 4;
+      doc.setTextColor(55, 65, 81);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+      for (const item of subj.items.slice(0, 4)) {
+        checkPage(5);
+        const lines = doc.splitTextToSize(`• ${item}`, CW - 8);
+        doc.text(lines, M + 5, y);
+        y += lines.length * 4;
+      }
+    }
+
+    if (month.tip) {
+      checkPage(10);
+      doc.setFillColor(240, 253, 244);
+      doc.roundedRect(M, y, CW, 8, 1, 1, "F");
+      doc.setTextColor(22, 163, 74);
+      doc.setFontSize(8); doc.setFont("helvetica", "italic");
+      const tipLines = doc.splitTextToSize(`💡 ${month.tip}`, CW - 6);
+      doc.text(tipLines, M + 3, y + 5);
+      y += 10;
+    }
+    y += 4;
+  }
+
+  // General Tips
+  checkPage(30);
+  doc.setFillColor(249, 115, 22);
+  doc.rect(M, y, CW, 7, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10); doc.setFont("helvetica", "bold");
+  doc.text("General Study Tips", M + 3, y + 5);
+  y += 10;
+  doc.setTextColor(55, 65, 81); doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+  for (const tip of planner.generalTips || []) {
+    checkPage(6);
+    const lines = doc.splitTextToSize(`✓ ${tip}`, CW - 4);
+    doc.text(lines, M + 2, y);
+    y += lines.length * 4.5;
+  }
+
+  // Footer on last page
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFillColor(249, 115, 22);
+    doc.rect(0, 287, W, 10, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.text(`VidyaSaathi · India's AI-powered NEET & JEE prep · Page ${i}/${pageCount}`, M, 293);
+  }
+
+  doc.save(`VidyaSaathi_StudyPlanner_${planner.studentName.replace(/\s+/g, "_")}.pdf`);
+}
+
 // ─── Lead Form ────────────────────────────────────────────────────────────────
 function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
   const [form, setForm] = useState<LeadForm>({ name: "", email: "", phone: "", course: "" });
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [selectedPlan, setSelectedPlan] = useState(PLANNER_PLANS[0]);
+  const [showPlans, setShowPlans] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "paying" | "generating" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.phone || !form.course) return;
-    setStatus("loading");
+    setStatus("paying");
     setErrorMsg("");
+
     try {
-      const res = await fetch("/api/leads", {
+      // 1. Save lead
+      await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, source }),
       });
-      if (!res.ok) throw new Error("Failed");
-      setStatus("success");
-    } catch {
+
+      // 2. Create Razorpay order
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_id: selectedPlan.id, user_id: "guest_" + Date.now() }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) throw new Error(orderData.error || "Order creation failed");
+
+      // 3. Open Razorpay
+      const loaded = await loadRazorpay();
+      if (!loaded) throw new Error("Payment gateway failed to load");
+
+      const rzp = new window.Razorpay({
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: "INR",
+        name: "VidyaSaathi",
+        description: `Study Planner PDF — ${selectedPlan.label}`,
+        order_id: orderData.order_id,
+        prefill: { name: form.name, email: form.email, contact: "+91" + form.phone },
+        theme: { color: "#f97316" },
+        modal: { ondismiss: () => setStatus("idle") },
+        handler: async (response: any) => {
+          // 4. Payment success → generate PDF
+          setStatus("generating");
+          try {
+            const plannerRes = await fetch("/api/planner", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: form.name, exam: form.course, email: form.email }),
+            });
+            const plannerData = await plannerRes.json();
+            if (!plannerRes.ok) throw new Error(plannerData.error);
+            await generateAndDownloadPDF(plannerData.planner);
+            setStatus("success");
+          } catch {
+            setErrorMsg("Payment received! PDF generation failed. Email us at contact@globalwebsaas.org");
+            setStatus("error");
+          }
+        },
+      });
+      rzp.on("payment.failed", () => {
+        setErrorMsg("Payment failed. Please try again.");
+        setStatus("error");
+      });
+      rzp.open();
+    } catch (err: any) {
       setStatus("error");
-      setErrorMsg("Something went wrong. Please try again.");
+      setErrorMsg(err.message || "Something went wrong. Please try again.");
     }
   };
 
@@ -191,8 +361,9 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="font-bold text-green-800 text-lg mb-1">{t.successTitle}</h3>
-        <p className="text-green-700 text-sm mb-4">{t.successDesc} <strong>{form.email}</strong></p>
+        <h3 className="font-bold text-green-800 text-lg mb-1">PDF Downloaded! 🎉</h3>
+        <p className="text-green-700 text-sm mb-1">Your 12-month study planner is ready.</p>
+        <p className="text-green-700 text-sm mb-4">Check your Downloads folder.</p>
         <Link href="/auth" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md">
           {t.startBtn}
         </Link>
@@ -220,10 +391,40 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
         <input type="tel" placeholder={t.phonePh} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required pattern="[6-9][0-9]{9}"
           className="flex-1 px-4 py-3 rounded-r-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" />
       </div>
+      {/* Plan selector */}
+      <div className="border border-gray-200 rounded-xl p-3 bg-gray-50">
+        <p className="text-xs font-semibold text-gray-600 mb-2">Select your plan:</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {PLANNER_PLANS.map((plan) => (
+            <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan)}
+              className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all text-left ${selectedPlan.id === plan.id ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 bg-white text-gray-600 hover:border-orange-300"}`}>
+              <span className="font-bold">₹{plan.price}</span>
+              <span className="block text-[10px] opacity-70">{plan.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {errorMsg && <p className="text-red-500 text-xs">{errorMsg}</p>}
-      <button type="submit" disabled={status === "loading"}
+      <button type="submit" disabled={status === "loading" || status === "paying" || status === "generating"}
         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
-        {status === "loading" ? (
+        {status === "paying" ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Opening payment...
+          </span>
+        ) : status === "generating" ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            Generating your PDF...
+          </span>
+        ) : status === "loading" ? (
           <span className="flex items-center justify-center gap-2">
             <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -231,7 +432,7 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
             </svg>
             {t.sending}
           </span>
-        ) : t.submitBtn}
+        ) : `Pay ₹${selectedPlan.price} & Get PDF →`}
       </button>
       <p className="text-xs text-gray-400 text-center">{t.noSpam}</p>
     </form>
@@ -326,7 +527,7 @@ export default function LandingPage() {
                   <p className="text-gray-500 text-sm mb-4">{t.formSub}</p>
                   <LeadCaptureForm source="hero" t={t} />
                 </div>
-                <div className="absolute -top-3 -right-3 bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">{t.freeBadge}</div>
+                <div className="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">From ₹99</div>
               </div>
             </div>
           </div>
