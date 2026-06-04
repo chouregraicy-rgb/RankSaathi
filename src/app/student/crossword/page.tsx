@@ -1,6 +1,6 @@
 "use client";
 
-// src/app/student/crossword/page.tsx
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Trophy, BookOpen, CheckCircle2 } from "lucide-react";
+import { RefreshCw, Trophy, BookOpen, CheckCircle2, ArrowLeft } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────
 interface CrosswordWord { word: string; clue: string; topic?: string; }
@@ -148,6 +147,7 @@ function buildGrid(words: CrosswordWord[]): { grid: Cell[][]; placed: PlacedWord
 
 // ── Component ──────────────────────────────────────────
 export default function CrosswordPage() {
+  const router = useRouter();
   const [subject, setSubject] = useState<string>("biology");
   const [chapter, setChapter] = useState<string>(CHAPTERS["biology"][0]);
   const [loading, setLoading] = useState(false);
@@ -177,14 +177,26 @@ export default function CrosswordPage() {
       const res = await fetch("/api/crossword/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject: subj, chapter: chap, wordCount: 12 }),
+        body: JSON.stringify({ subject: subj, chapter: chap }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || "Failed to generate crossword");
-      const words: CrosswordWord[] = data.crossword.words;
+
+      if (!res.ok) throw new Error(data.error || "Failed to generate crossword");
+
+      // ✅ Fixed: API returns { words: [...] } directly
+      const rawWords: any[] = data.words || data.crossword?.words || [];
+      if (!rawWords.length) throw new Error("No words returned. Please try again.");
+
+      const words: CrosswordWord[] = rawWords.map((w: any) => ({
+        word: w.word,
+        clue: w.clue,
+        topic: w.topic,
+      }));
+
       const { grid: newGrid, placed } = buildGrid(words);
       setGrid(newGrid);
       setPlacedWords(placed);
+
       const initAnswers: Record<string, string> = {};
       placed.forEach((pw) => {
         for (let i = 0; i < pw.word.length; i++) {
@@ -246,7 +258,17 @@ export default function CrosswordPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header — matches app dark theme */}
+
+      {/* ── Back button ── */}
+      <button
+        onClick={() => router.push("/student/dashboard")}
+        className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Dashboard
+      </button>
+
+      {/* ── Header ── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Crossword</h1>
@@ -316,8 +338,16 @@ export default function CrosswordPage() {
 
       {/* Error */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-900/30 border border-red-700/50 text-red-400 text-sm">
-          {error}
+        <div className="p-4 rounded-xl bg-red-900/30 border border-red-700/50 text-red-400 text-sm flex items-center justify-between gap-4">
+          <span>{error}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => generateCrossword(subject, chapter)}
+            className="border-red-700 text-red-400 hover:bg-red-900/30 shrink-0"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" /> Retry
+          </Button>
         </div>
       )}
 

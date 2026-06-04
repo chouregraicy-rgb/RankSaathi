@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { useRouter } from "next/navigation";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
