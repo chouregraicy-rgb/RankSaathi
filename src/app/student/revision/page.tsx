@@ -94,6 +94,7 @@ interface SummaryData {
   formulas: string[];
   examTips: string[];
   commonMistakes: string[];
+  quickRevision?: string;
 }
 
 interface Question {
@@ -174,6 +175,7 @@ export default function RevisionPage() {
         formulas: (s.formulas ?? []).map((f: any) => typeof f === "string" ? f : `${f.name}: ${f.formula}`),
         examTips: s.examTips ?? [],
         commonMistakes: s.commonMistakes ?? [],
+        quickRevision: s.quickRevision ?? "",
       });
     } catch { setSummary(null); }
     finally  { setLoadingSummary(false); }
@@ -214,6 +216,7 @@ export default function RevisionPage() {
         formulas: (s.formulas ?? []).map((f: any) => typeof f === "string" ? f : `${f.name}: ${f.formula}`),
         examTips: s.examTips ?? [],
         commonMistakes: s.commonMistakes ?? [],
+        quickRevision: s.quickRevision ?? "",
       });
     } catch { setNotesData(null); }
     finally  { setLoadingNotes(false); }
