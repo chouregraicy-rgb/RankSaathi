@@ -55,14 +55,18 @@ function AuthForm() {
       return;
     }
     const r = (data.user?.user_metadata?.role as string) ?? "student";
-    // Also check public.users table for role
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", data.user!.id)
-      .single();
-    const finalRole = profile?.role ?? r;
-    router.replace(redirectTo || `/${finalRole}/dashboard`);
+    // Check public.users table for most accurate role
+    try {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", data.user!.id)
+        .single();
+      const finalRole = profile?.role ?? r;
+      window.location.href = redirectTo || `/${finalRole}/dashboard`;
+    } catch {
+      window.location.href = redirectTo || `/${r}/dashboard`;
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -86,7 +90,7 @@ function AuthForm() {
       setLoading(false);
       return;
     }
-    router.replace(redirectTo || `/${role}/dashboard`);
+    window.location.href = redirectTo || `/${role}/dashboard`;
   };
 
   return (

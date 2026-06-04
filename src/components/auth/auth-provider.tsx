@@ -9,6 +9,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
 
   useEffect(() => {
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const u = session.user;
@@ -27,23 +28,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
+    // Listen for auth changes — only update store, NO redirect here
+    // Redirects are handled by the login page itself
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const u = session.user;
-        const role = (u.user_metadata?.role as any) ?? "student";
         setUser({
           id:         u.id,
           email:      u.email ?? "",
-          role,
+          role:       (u.user_metadata?.role as any) ?? "student",
           full_name:  u.user_metadata?.full_name ?? "",
           avatar_url: u.user_metadata?.avatar_url ?? null,
           phone:      u.phone ?? null,
           created_at: u.created_at,
         });
-        // Redirect to dashboard after login
-        if (_event === "SIGNED_IN") {
-          window.location.href = `/${role}/dashboard`;
-        }
       } else {
         reset();
       }

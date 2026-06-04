@@ -88,15 +88,18 @@ export function Sidebar({ role }: SidebarProps) {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       if (!authUser) return;
+      try {
       const { data } = await supabase
         .from("subscriptions")
-        .select("plan_id, status, expires_at")
+        .select("plan_id, status, current_period_end")
         .eq("user_id", authUser.id)
-        .eq("status", "active")
         .maybeSingle();
-      if (data && new Date(data.expires_at) > new Date()) {
-        setPlanId(data.plan_id);
-      } else {
+      if (data?.status === "active" && data.current_period_end && new Date(data.current_period_end) > new Date()) {
+          setPlanId(data.plan_id);
+        } else {
+          setPlanId("free");
+        }
+      } catch {
         setPlanId("free");
       }
     });
