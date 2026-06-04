@@ -183,6 +183,7 @@ interface Question {
   question: string;
   options: {A:string;B:string;C:string;D:string};
   correct: string;
+  correctAnswer?: number;
   explanation: string;
 }
 
@@ -234,7 +235,14 @@ export default function TestsPage() {
       });
       const data = await res.json();
       if(data.error) throw new Error(data.error);
-      setQuestions(data.questions);
+      const normalized = data.questions.map((q: any, i: number) => ({
+        ...q,
+        id: q.id ?? i + 1,
+        question: q.question ?? q.question_text ?? "",
+        options: q.options ?? { A: q.option_a, B: q.option_b, C: q.option_c, D: q.option_d },
+        correct: q.correct ?? ["A","B","C","D"][q.correctAnswer ?? 0],
+      }));
+      setQuestions(normalized);
       setStage("attempt");
     } catch {
       setStage("list");
@@ -302,7 +310,7 @@ export default function TestsPage() {
                     answers[q.id]===opt?"bg-primary text-primary-foreground":"bg-muted")}>
                     {opt}
                   </span>
-                  <span className="mt-0.5">{q.options[opt]}</span>
+                  <span className="mt-0.5">{Array.isArray(q.options) ? q.options[["A","B","C","D"].indexOf(opt)] : (q.options as any)[opt]}</span>
                 </button>
               ))}
             </div>
@@ -375,7 +383,7 @@ export default function TestsPage() {
                       opt===q.correct?"bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 font-semibold":
                       opt===sa&&wr?"bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200":"text-muted-foreground")}>
                       <span className="font-bold flex-shrink-0">{opt}.</span>
-                      <span className="flex-1">{q.options[opt]}</span>
+                      <span className="flex-1">{Array.isArray(q.options) ? q.options[["A","B","C","D"].indexOf(opt)] : (q.options as any)[opt]}</span>
                       {opt===q.correct&&<CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0"/>}
                     </div>
                   ))}
