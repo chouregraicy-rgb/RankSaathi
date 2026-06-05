@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, Brain,
   BarChart3, Calendar, Bell, Settings, LogOut,
   ChevronLeft, Users, FileQuestion,
-  ClipboardList, Menu, X, MessageCircle, Trophy, Puzzle
+  ClipboardList, Menu, X, MessageCircle, Trophy, Puzzle, GitBranch
 } from "lucide-react";
 import { cn } from "@/utils";
 import { createClient } from "@/lib/supabase/client";
