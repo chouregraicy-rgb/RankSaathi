@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Clock, Target, BookOpen, TrendingUp, Zap, ArrowRight,
   Play, MapPin, Navigation, Loader2, Shield, Flame,
-  BatteryLow, BatteryMedium, BatteryFull,
+  BatteryLow, BatteryMedium, BatteryFull, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
@@ -96,13 +96,55 @@ export default function StudentDashboard() {
   const [realName, setRealName]             = useState<string>("Student");
   const [student, setStudent]               = useState<Student | null>(null);
 
-  // Location state — untouched from working version
+  // Location state
   const [locationStatus, setLocationStatus] = useState<"idle"|"sharing"|"error"|"success">("idle");
   const [locationLabel, setLocationLabel]   = useState("");
   const [lastShared, setLastShared]         = useState<string|null>(null);
   const [isSharing, setIsSharing]           = useState(false);
   const [batteryLevel, setBatteryLevel]     = useState<number | null>(null);
   const autoShareRef = useRef<NodeJS.Timeout|null>(null);
+
+  // ── 5-tap hidden demo coupon state ────────────────────────
+  const [tapCount, setTapCount]           = useState(0);
+  const [showCoupon, setShowCoupon]       = useState(false);
+  const [couponInput, setCouponInput]     = useState("");
+  const [couponMsg, setCouponMsg]         = useState<{ text: string; ok: boolean } | null>(null);
+  const [demoActive, setDemoActive]       = useState(false);
+  const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTitleTap = () => {
+    const next = tapCount + 1;
+    setTapCount(next);
+    // Reset tap count after 2 seconds of inactivity
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => setTapCount(0), 2000);
+    if (next >= 5) {
+      setTapCount(0);
+      setShowCoupon(true);
+      setCouponInput("");
+      setCouponMsg(null);
+    }
+  };
+
+  const handleCouponSubmit = async () => {
+    if (couponInput.trim().toUpperCase() !== "DEMO2025") {
+      setCouponMsg({ text: "Invalid code. Try again.", ok: false });
+      return;
+    }
+    // Grant session-level free access
+    setDemoActive(true);
+    setShowCoupon(false);
+    setCouponMsg(null);
+    // Store in sessionStorage so it persists across page navigations in this session
+    sessionStorage.setItem("demo_access", "true");
+  };
+
+  // Check sessionStorage on mount
+  useEffect(() => {
+    if (sessionStorage.getItem("demo_access") === "true") {
+      setDemoActive(true);
+    }
+  }, []);
 
   // Battery level
   useEffect(() => {
@@ -114,7 +156,7 @@ export default function StudentDashboard() {
     }
   }, []);
 
-  // ✅ Fetch real user ID and name
+  // Fetch real user ID and name
   useEffect(() => {
     const fetchRealUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -132,7 +174,7 @@ export default function StudentDashboard() {
     fetchRealUser();
   }, []);
 
-  // ✅ Load student profile from DB
+  // Load student profile from DB
   useEffect(() => {
     async function loadData() {
       if (!realUserId) return;
@@ -143,7 +185,7 @@ export default function StudentDashboard() {
     loadData();
   }, [realUserId]);
 
-  // ✅ Geocode helper
+  // Geocode helper
   async function getLocationLabel(lat: number, lng: number): Promise<string> {
     try {
       const res = await fetch(
@@ -159,7 +201,7 @@ export default function StudentDashboard() {
     } catch { return "Unknown Area"; }
   }
 
-  // ✅ Share location — uses auth user ID (matches student_locations FK → public.users)
+  // Share location
   const shareLocation = useCallback(async (auto = false) => {
     if (!navigator.geolocation) { setLocationStatus("error"); return; }
     if (!realUserId) { setLocationStatus("error"); return; }
@@ -183,16 +225,17 @@ export default function StudentDashboard() {
               speed:         speed ?? null,
             }),
           });
-          const result = await res.json();
-          if (!res.ok) throw new Error(result.error);
-          setLocationStatus("success");
-          setLastShared(
-            new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
-          );
-        } catch (err) {
-          console.error("Share location error:", err);
+          if (res.ok) {
+            setLocationStatus("success");
+            setLastShared(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
+          } else {
+            setLocationStatus("error");
+          }
+        } catch {
           setLocationStatus("error");
-        } finally { setIsSharing(false); }
+        } finally {
+          setIsSharing(false);
+        }
       },
       (err) => {
         console.error("Geolocation error:", err);
@@ -216,7 +259,7 @@ export default function StudentDashboard() {
     <DashboardLayout role="student" title="Dashboard">
       <div className="space-y-5">
 
-        {/* Welcome banner */}
+        {/* Welcome banner with 5-tap trigger on name */}
         <div className="rounded-2xl bg-gradient-to-r from-brand-600 to-brand-800 p-5 text-white relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white" />
@@ -224,7 +267,18 @@ export default function StudentDashboard() {
           </div>
           <div className="relative">
             <p className="text-brand-100 text-sm font-medium">Good morning 👋</p>
-            <h2 className="font-display font-bold text-2xl mt-0.5">{firstName}</h2>
+            {/* Tap this h2 five times to reveal demo coupon */}
+            <h2
+              className="font-display font-bold text-2xl mt-0.5 cursor-default select-none"
+              onClick={handleTitleTap}
+            >
+              {firstName}
+              {demoActive && (
+                <span className="ml-2 text-xs font-normal bg-white/20 px-2 py-0.5 rounded-full align-middle">
+                  Demo ✓
+                </span>
+              )}
+            </h2>
             {student?.exam_type && student.exam_type.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {student.exam_type.map(e => (
@@ -238,7 +292,60 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* ✅ Location sharing card — untouched working logic */}
+        {/* ── Hidden demo coupon modal ─────────────────────────── */}
+        {showCoupon && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCoupon(false)} />
+            <div className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-6 space-y-4">
+              <button
+                type="button"
+                onClick={() => setShowCoupon(false)}
+                className="absolute top-4 right-4 p-1 rounded-md hover:bg-accent text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="text-center space-y-1">
+                <p className="text-2xl">🎟️</p>
+                <p className="font-semibold text-base">Enter Demo Code</p>
+                <p className="text-xs text-muted-foreground">Enter your access code to unlock a free demo session</p>
+              </div>
+              <input
+                autoFocus
+                type="text"
+                value={couponInput}
+                onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponMsg(null); }}
+                onKeyDown={e => e.key === "Enter" && handleCouponSubmit()}
+                placeholder="Enter code"
+                className="w-full px-4 py-2.5 rounded-lg bg-background border border-border text-sm font-mono tracking-widest text-center outline-none focus:border-primary transition-colors"
+              />
+              {couponMsg && (
+                <p className={cn("text-xs text-center font-medium", couponMsg.ok ? "text-green-500" : "text-red-500")}>
+                  {couponMsg.text}
+                </p>
+              )}
+              <Button className="w-full" onClick={handleCouponSubmit}>
+                Activate Demo Access
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Demo active banner */}
+        {demoActive && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 text-sm font-medium">
+            <span>✅</span>
+            <span>Demo access active — all features unlocked for this session.</span>
+            <button
+              type="button"
+              className="ml-auto text-xs underline opacity-70 hover:opacity-100"
+              onClick={() => { setDemoActive(false); sessionStorage.removeItem("demo_access"); }}
+            >
+              Deactivate
+            </button>
+          </div>
+        )}
+
+        {/* Location sharing card */}
         <Card className={cn("border-2 transition-colors",
           locationStatus === "success" ? "border-green-500/30 bg-green-500/5" :
           locationStatus === "error"   ? "border-red-500/30 bg-red-500/5" : "border-border")}>
@@ -290,7 +397,7 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
 
-        {/* ✅ Real stats from DB */}
+        {/* Real stats from DB */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Study Streak"
@@ -338,7 +445,7 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Empty state cards for future features */}
+        {/* Empty state cards */}
         <div className="grid lg:grid-cols-2 gap-4">
           <EmptyCard title="Study Hours — Last 7 Days" icon={Clock} />
           <EmptyCard title="Test Scores — Last 7 Days" icon={Target} />
