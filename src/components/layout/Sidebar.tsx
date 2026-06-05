@@ -83,18 +83,23 @@ export function Sidebar({ role }: SidebarProps) {
   const settingsHref = SETTINGS_HREF[role];
 
   // Fetch current subscription plan
+  // FIX: select both expires_at and current_period_end — use whichever is set
   useEffect(() => {
     if (role !== "student") return;
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
       if (!authUser) return;
       try {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("plan_id, status, current_period_end")
-        .eq("user_id", authUser.id)
-        .maybeSingle();
-      if (data?.status === "active" && data.current_period_end && new Date(data.current_period_end) > new Date()) {
+        const { data } = await supabase
+          .from("subscriptions")
+          .select("plan_id, status, current_period_end, expires_at")
+          .eq("user_id", authUser.id)
+          .maybeSingle();
+
+        // Accept either expiry column — handles both old and new rows
+        const expiry = data?.current_period_end || data?.expires_at;
+
+        if (data?.status === "active" && expiry && new Date(expiry) > new Date()) {
           setPlanId(data.plan_id);
         } else {
           setPlanId("free");
