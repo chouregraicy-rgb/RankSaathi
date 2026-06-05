@@ -401,6 +401,273 @@ export const BIOLOGY_DIAGRAMS: Record<string, DiagramData> = {
 </svg>`,
   },
 
+  // ── DIGESTIVE SYSTEM ─────────────────────────────────────────────────────
+  "Digestion & Absorption": {
+    title: "Human Alimentary Canal",
+    description: "Schematic diagram of the human digestive system showing organs and glands",
+    labels: ["Mouth & Teeth", "Oesophagus", "Stomach", "Small Intestine", "Large Intestine", "Liver", "Pancreas", "Rectum"],
+    svg: `<svg viewBox="0 0 460 520" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <!-- Mouth -->
+  <ellipse cx="230" cy="35" rx="38" ry="20" fill="#ffcdd2" stroke="#c62828" stroke-width="2"/>
+  <text x="207" y="39" font-size="10" fill="#c62828" font-weight="bold">Mouth</text>
+  <!-- Teeth indication -->
+  <rect x="198" y="25" width="8" height="8" rx="2" fill="white" stroke="#c62828" stroke-width="1"/>
+  <rect x="210" y="25" width="8" height="8" rx="2" fill="white" stroke="#c62828" stroke-width="1"/>
+  <rect x="248" y="25" width="8" height="8" rx="2" fill="white" stroke="#c62828" stroke-width="1"/>
+  <rect x="260" y="25" width="8" height="8" rx="2" fill="white" stroke="#c62828" stroke-width="1"/>
+  <!-- Oesophagus -->
+  <rect x="218" y="55" width="24" height="70" rx="10" fill="#ef9a9a" stroke="#c62828" stroke-width="2"/>
+  <line x1="230" y1="55" x2="230" y2="125" stroke="#c62828" stroke-width="1" stroke-dasharray="3,2"/>
+  <!-- Label oesophagus -->
+  <line x1="242" y1="90" x2="310" y2="80" stroke="#c62828" stroke-width="1"/>
+  <text x="312" y="78" font-size="10" fill="#c62828" font-weight="bold">Oesophagus</text>
+  <!-- Stomach -->
+  <path d="M200,125 Q160,135 155,165 Q148,200 165,225 Q185,248 220,250 Q255,252 268,235 Q285,215 282,185 Q278,155 260,135 Q242,122 200,125Z"
+    fill="#ffccbc" stroke="#e64a19" stroke-width="2.5"/>
+  <text x="192" y="195" font-size="10" fill="#e64a19" font-weight="bold">Stomach</text>
+  <!-- Rugae lines in stomach -->
+  <path d="M168,165 Q195,158 225,165" fill="none" stroke="#e64a19" stroke-width="1" opacity="0.5"/>
+  <path d="M163,185 Q193,178 226,185" fill="none" stroke="#e64a19" stroke-width="1" opacity="0.5"/>
+  <path d="M165,205 Q196,198 228,205" fill="none" stroke="#e64a19" stroke-width="1" opacity="0.5"/>
+  <!-- Small intestine (coiled) -->
+  <path d="M245,245 Q290,250 295,275 Q300,305 270,315 Q240,325 220,310 Q195,295 200,268 Q205,248 230,248"
+    fill="none" stroke="#ff7043" stroke-width="12" stroke-linecap="round"/>
+  <path d="M200,268 Q185,280 188,308 Q192,335 220,342 Q250,348 270,335 Q295,318 292,290"
+    fill="none" stroke="#ff8a65" stroke-width="11" stroke-linecap="round"/>
+  <path d="M292,310 Q305,330 295,358 Q282,380 255,385 Q228,388 212,372 Q195,355 200,330"
+    fill="none" stroke="#ff7043" stroke-width="12" stroke-linecap="round"/>
+  <text x="222" y="302" font-size="9" fill="white" font-weight="bold">Small</text>
+  <text x="218" y="314" font-size="9" fill="white" font-weight="bold">Intestine</text>
+  <!-- Large intestine -->
+  <path d="M200,390 Q170,395 155,420 Q148,445 165,465 Q188,482 220,480 Q255,478 285,465 Q310,448 315,420 Q318,395 295,385 Q270,375 245,385"
+    fill="none" stroke="#8d6e63" stroke-width="16" stroke-linecap="round"/>
+  <text x="198" y="440" font-size="9" fill="white" font-weight="bold">Large Intestine</text>
+  <!-- Rectum -->
+  <rect x="218" y="475" width="24" height="35" rx="10" fill="#a1887f" stroke="#6d4c41" stroke-width="2"/>
+  <text x="250" y="498" font-size="9" fill="#6d4c41" font-weight="bold">Rectum</text>
+  <!-- Liver -->
+  <path d="M300,130 Q355,128 375,155 Q390,178 378,205 Q362,228 330,228 Q305,225 295,205 Q285,182 300,155Z"
+    fill="#ef9a9a" stroke="#b71c1c" stroke-width="2"/>
+  <text x="320" y="182" font-size="10" fill="#b71c1c" font-weight="bold">Liver</text>
+  <!-- Gall bladder -->
+  <ellipse cx="358" cy="230" rx="18" ry="12" fill="#c5e1a5" stroke="#558b2f" stroke-width="1.5"/>
+  <text x="340" y="248" font-size="8" fill="#558b2f">Gall Bladder</text>
+  <!-- Pancreas -->
+  <path d="M145,230 Q175,222 210,228 Q195,245 165,252 Q145,250 145,230Z"
+    fill="#ffe0b2" stroke="#e65100" stroke-width="2"/>
+  <text x="145" y="243" font-size="9" fill="#e65100" font-weight="bold">Pancreas</text>
+  <!-- Bile duct -->
+  <line x1="330" y1="228" x2="282" y2="250" stroke="#558b2f" stroke-width="2"/>
+  <!-- Pancreatic duct -->
+  <line x1="195" y1="240" x2="252" y2="252" stroke="#e65100" stroke-width="2"/>
+  <!-- Labels left -->
+  <line x1="155" y1="175" x2="90" y2="155" stroke="#e64a19" stroke-width="1"/>
+  <text x="20" y="152" font-size="10" fill="#e64a19" font-weight="bold">Stomach</text>
+</svg>`,
+  },
+
+  // ── BREATHING ────────────────────────────────────────────────────────────
+  "Breathing & Exchange of Gases": {
+    title: "Human Respiratory System",
+    description: "Lungs, trachea, bronchi and alveoli structure",
+    labels: ["Nasal Cavity", "Trachea", "Bronchus", "Bronchioles", "Alveoli", "Diaphragm", "Right Lung", "Left Lung"],
+    svg: `<svg viewBox="0 0 460 420" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <!-- Nasal cavity -->
+  <path d="M195,20 Q230,15 265,20 Q270,35 265,50 Q230,55 195,50 Q190,35 195,20Z" fill="#ffcdd2" stroke="#c62828" stroke-width="2"/>
+  <text x="198" y="38" font-size="9" fill="#c62828" font-weight="bold">Nasal Cavity</text>
+  <!-- Pharynx/larynx -->
+  <rect x="215" y="55" width="30" height="30" rx="8" fill="#ef9a9a" stroke="#c62828" stroke-width="1.5"/>
+  <text x="200" y="62" font-size="8" fill="#c62828">Larynx</text>
+  <!-- Trachea -->
+  <rect x="220" y="85" width="20" height="55" rx="8" fill="#bbdefb" stroke="#1565c0" stroke-width="2"/>
+  <!-- Tracheal rings -->
+  <line x1="220" y1="98" x2="240" y2="98" stroke="#1565c0" stroke-width="2"/>
+  <line x1="220" y1="110" x2="240" y2="110" stroke="#1565c0" stroke-width="2"/>
+  <line x1="220" y1="122" x2="240" y2="122" stroke="#1565c0" stroke-width="2"/>
+  <line x1="220" y1="134" x2="240" y2="134" stroke="#1565c0" stroke-width="2"/>
+  <text x="245" y="115" font-size="10" fill="#1565c0" font-weight="bold">Trachea</text>
+  <!-- Left bronchus -->
+  <path d="M220,140 Q185,145 160,160" fill="none" stroke="#1565c0" stroke-width="8" stroke-linecap="round"/>
+  <!-- Right bronchus -->
+  <path d="M240,140 Q275,145 300,160" fill="none" stroke="#1565c0" stroke-width="8" stroke-linecap="round"/>
+  <!-- Left lung -->
+  <path d="M80,160 Q60,185 62,230 Q65,280 90,320 Q115,355 155,360 Q190,362 210,340 Q228,318 225,280 Q222,240 210,205 Q195,170 175,160 Q140,150 80,160Z"
+    fill="#ffcdd2" stroke="#e57373" stroke-width="2.5" opacity="0.85"/>
+  <text x="118" y="270" font-size="12" fill="#c62828" font-weight="bold">Left</text>
+  <text x="115" y="285" font-size="12" fill="#c62828" font-weight="bold">Lung</text>
+  <!-- Right lung -->
+  <path d="M380,160 Q400,185 398,230 Q395,280 370,320 Q345,355 305,360 Q270,362 250,340 Q232,318 235,280 Q238,240 250,205 Q265,170 285,160 Q320,150 380,160Z"
+    fill="#ffcdd2" stroke="#e57373" stroke-width="2.5" opacity="0.85"/>
+  <text x="300" y="270" font-size="12" fill="#c62828" font-weight="bold">Right</text>
+  <text x="300" y="285" font-size="12" fill="#c62828" font-weight="bold">Lung</text>
+  <!-- Bronchioles in lungs -->
+  <path d="M160,165 Q148,200 142,240 Q138,270 145,300" fill="none" stroke="#ef9a9a" stroke-width="3"/>
+  <path d="M160,165 Q162,210 158,250 Q155,278 160,308" fill="none" stroke="#ef9a9a" stroke-width="2.5"/>
+  <path d="M160,165 Q175,200 175,240 Q174,272 168,305" fill="none" stroke="#ef9a9a" stroke-width="2.5"/>
+  <path d="M300,165 Q310,200 315,240 Q318,270 312,300" fill="none" stroke="#ef9a9a" stroke-width="3"/>
+  <path d="M300,165 Q296,210 298,250 Q300,278 296,308" fill="none" stroke="#ef9a9a" stroke-width="2.5"/>
+  <path d="M300,165 Q285,200 283,240 Q282,272 288,305" fill="none" stroke="#ef9a9a" stroke-width="2.5"/>
+  <!-- Alveoli cluster -->
+  <circle cx="145" cy="310" r="12" fill="#ffebee" stroke="#e57373" stroke-width="1.5"/>
+  <circle cx="165" cy="318" r="12" fill="#ffebee" stroke="#e57373" stroke-width="1.5"/>
+  <circle cx="155" cy="328" r="12" fill="#ffebee" stroke="#e57373" stroke-width="1.5"/>
+  <text x="92" y="342" font-size="9" fill="#c62828" font-weight="bold">Alveoli</text>
+  <!-- Diaphragm -->
+  <path d="M60,375 Q150,360 230,365 Q310,360 400,375 Q390,390 230,385 Q70,390 60,375Z"
+    fill="#a5d6a7" stroke="#388e3c" stroke-width="2"/>
+  <text x="190" y="383" font-size="10" fill="#1b5e20" font-weight="bold">Diaphragm</text>
+  <!-- Labels -->
+  <line x1="80" y1="190" x2="40" y2="175" stroke="#e57373" stroke-width="1"/>
+  <text x="2" y="172" font-size="10" fill="#c62828" font-weight="bold">Left Lung</text>
+</svg>`,
+  },
+
+  // ── HUMAN EYE ────────────────────────────────────────────────────────────
+  "Sensory Reception — The Eye": {
+    title: "Structure of the Human Eye",
+    description: "Cross-section of human eye showing cornea, lens, retina and optic nerve",
+    labels: ["Cornea", "Lens", "Retina", "Optic Nerve", "Iris", "Pupil", "Vitreous Humour", "Sclera"],
+    svg: `<svg viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <!-- Sclera (white of eye) -->
+  <ellipse cx="210" cy="190" rx="175" ry="155" fill="white" stroke="#bdbdbd" stroke-width="4"/>
+  <!-- Choroid (dark layer) -->
+  <ellipse cx="210" cy="190" rx="162" ry="142" fill="#3e2723" opacity="0.7"/>
+  <!-- Vitreous humour -->
+  <ellipse cx="218" cy="193" rx="140" ry="122" fill="#e3f2fd" stroke="none"/>
+  <!-- Retina -->
+  <ellipse cx="210" cy="190" rx="155" ry="135" fill="none" stroke="#ff8a65" stroke-width="6"/>
+  <!-- Cornea (front transparent dome) -->
+  <path d="M38,150 Q10,190 38,230" fill="none" stroke="#90caf9" stroke-width="10" stroke-linecap="round"/>
+  <path d="M38,150 Q52,190 38,230" fill="#e3f2fd" stroke="#90caf9" stroke-width="3" opacity="0.5"/>
+  <!-- Aqueous humour -->
+  <path d="M38,160 Q65,190 38,220" fill="#e3f2fd" opacity="0.6"/>
+  <!-- Iris -->
+  <circle cx="95" cy="190" r="52" fill="#5c4033" stroke="#3e2723" stroke-width="3"/>
+  <circle cx="95" cy="190" r="52" fill="none" stroke="#795548" stroke-width="1" stroke-dasharray="4,3"/>
+  <!-- Pupil -->
+  <circle cx="95" cy="190" r="22" fill="black"/>
+  <!-- Lens -->
+  <ellipse cx="130" cy="190" rx="28" ry="48" fill="#e1f5fe" stroke="#0288d1" stroke-width="2.5" opacity="0.85"/>
+  <text x="112" y="194" font-size="9" fill="#0288d1" font-weight="bold">Lens</text>
+  <!-- Ciliary body -->
+  <path d="M85,142 Q98,120 120,138" fill="none" stroke="#5d4037" stroke-width="5"/>
+  <path d="M85,238 Q98,260 120,242" fill="none" stroke="#5d4037" stroke-width="5"/>
+  <!-- Suspensory ligaments -->
+  <line x1="100" y1="145" x2="120" y2="152" stroke="#795548" stroke-width="1.5"/>
+  <line x1="100" y1="155" x2="122" y2="162" stroke="#795548" stroke-width="1.5"/>
+  <line x1="100" y1="225" x2="122" y2="218" stroke="#795548" stroke-width="1.5"/>
+  <line x1="100" y1="235" x2="120" y2="228" stroke="#795548" stroke-width="1.5"/>
+  <!-- Fovea centralis (yellow spot) -->
+  <circle cx="295" cy="190" r="10" fill="#fdd835" stroke="#f9a825" stroke-width="2"/>
+  <text x="298" y="175" font-size="8" fill="#f9a825" font-weight="bold">Fovea</text>
+  <!-- Blind spot -->
+  <circle cx="355" cy="195" r="10" fill="#bdbdbd" stroke="#9e9e9e" stroke-width="2"/>
+  <text x="340" y="218" font-size="8" fill="#757575">Blind Spot</text>
+  <!-- Optic nerve -->
+  <rect x="375" y="178" width="80" height="25" rx="12" fill="#ffd54f" stroke="#f9a825" stroke-width="2"/>
+  <text x="382" y="194" font-size="10" fill="#e65100" font-weight="bold">Optic Nerve</text>
+  <!-- Labels -->
+  <line x1="38" y1="175" x2="15" y2="140" stroke="#90caf9" stroke-width="1"/>
+  <text x="2" y="136" font-size="10" fill="#1565c0" font-weight="bold">Cornea</text>
+  <line x1="95" y1="138" x2="80" y2="100" stroke="#795548" stroke-width="1"/>
+  <text x="52" y="96" font-size="10" fill="#5d4037" font-weight="bold">Iris</text>
+  <line x1="95" y1="168" x2="75" y2="140" stroke="#000" stroke-width="1"/>
+  <text x="38" y="136" font-size="10" fill="black" font-weight="bold">Pupil</text>
+  <line x1="210" y1="55" x2="210" y2="30" stroke="#ff8a65" stroke-width="1"/>
+  <text x="170" y="26" font-size="10" fill="#e64a19" font-weight="bold">Retina</text>
+  <line x1="50" y1="190" x2="25" y2="190" stroke="#bdbdbd" stroke-width="1"/>
+  <text x="2" y="194" font-size="9" fill="#757575" font-weight="bold">Sclera</text>
+  <line x1="210" y1="330" x2="210" y2="355" stroke="#1565c0" stroke-width="1"/>
+  <text x="145" y="368" font-size="10" fill="#0d47a1" font-weight="bold">Vitreous Humour</text>
+</svg>`,
+  },
+
+  // ── DNA ──────────────────────────────────────────────────────────────────
+  "Molecular Basis of Inheritance": {
+    title: "DNA Double Helix Structure",
+    description: "Watson-Crick model showing base pairs, sugar-phosphate backbone and major/minor grooves",
+    labels: ["Phosphate Group", "Deoxyribose Sugar", "Adenine-Thymine", "Guanine-Cytosine", "Major Groove", "Minor Groove", "Hydrogen Bonds"],
+    svg: `<svg viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
+  <!-- Left backbone -->
+  <path d="M120,20 Q80,60 120,100 Q160,140 120,180 Q80,220 120,260 Q160,300 120,340 Q80,380 120,420 Q160,460 120,480"
+    fill="none" stroke="#1565c0" stroke-width="8" stroke-linecap="round"/>
+  <!-- Right backbone -->
+  <path d="M280,20 Q320,60 280,100 Q240,140 280,180 Q320,220 280,260 Q240,300 280,340 Q320,380 280,420 Q240,460 280,480"
+    fill="none" stroke="#c62828" stroke-width="8" stroke-linecap="round"/>
+  <!-- Base pairs - Adenine-Thymine (blue-green) -->
+  <rect x="130" y="58" width="40" height="12" rx="4" fill="#1565c0"/>
+  <rect x="230" y="58" width="40" height="12" rx="4" fill="#2e7d32"/>
+  <line x1="170" y1="64" x2="230" y2="64" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="192" y="56" font-size="8" fill="#1565c0">A</text>
+  <text x="218" y="56" font-size="8" fill="#2e7d32">T</text>
+  <!-- G-C pair -->
+  <rect x="145" y="108" width="40" height="12" rx="4" fill="#7b1fa2"/>
+  <rect x="215" y="108" width="40" height="12" rx="4" fill="#e65100"/>
+  <line x1="185" y1="114" x2="215" y2="114" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="196" y="106" font-size="8" fill="#7b1fa2">G</text>
+  <text x="210" y="106" font-size="8" fill="#e65100">C</text>
+  <!-- T-A pair -->
+  <rect x="130" y="158" width="40" height="12" rx="4" fill="#2e7d32"/>
+  <rect x="230" y="158" width="40" height="12" rx="4" fill="#1565c0"/>
+  <line x1="170" y1="164" x2="230" y2="164" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="192" y="156" font-size="8" fill="#2e7d32">T</text>
+  <text x="218" y="156" font-size="8" fill="#1565c0">A</text>
+  <!-- C-G pair -->
+  <rect x="145" y="208" width="40" height="12" rx="4" fill="#e65100"/>
+  <rect x="215" y="208" width="40" height="12" rx="4" fill="#7b1fa2"/>
+  <line x1="185" y1="214" x2="215" y2="214" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="196" y="206" font-size="8" fill="#e65100">C</text>
+  <text x="210" y="206" font-size="8" fill="#7b1fa2">G</text>
+  <!-- A-T pair -->
+  <rect x="130" y="258" width="40" height="12" rx="4" fill="#1565c0"/>
+  <rect x="230" y="258" width="40" height="12" rx="4" fill="#2e7d32"/>
+  <line x1="170" y1="264" x2="230" y2="264" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="192" y="256" font-size="8" fill="#1565c0">A</text>
+  <text x="218" y="256" font-size="8" fill="#2e7d32">T</text>
+  <!-- G-C pair -->
+  <rect x="145" y="308" width="40" height="12" rx="4" fill="#7b1fa2"/>
+  <rect x="215" y="308" width="40" height="12" rx="4" fill="#e65100"/>
+  <line x1="185" y1="314" x2="215" y2="314" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="196" y="306" font-size="8" fill="#7b1fa2">G</text>
+  <text x="210" y="306" font-size="8" fill="#e65100">C</text>
+  <!-- A-T pair -->
+  <rect x="130" y="358" width="40" height="12" rx="4" fill="#2e7d32"/>
+  <rect x="230" y="358" width="40" height="12" rx="4" fill="#1565c0"/>
+  <line x1="170" y1="364" x2="230" y2="364" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="192" y="356" font-size="8" fill="#2e7d32">T</text>
+  <text x="218" y="356" font-size="8" fill="#1565c0">A</text>
+  <!-- C-G -->
+  <rect x="145" y="408" width="40" height="12" rx="4" fill="#e65100"/>
+  <rect x="215" y="408" width="40" height="12" rx="4" fill="#7b1fa2"/>
+  <line x1="185" y1="414" x2="215" y2="414" stroke="#ffd54f" stroke-width="2" stroke-dasharray="4,2"/>
+  <text x="196" y="406" font-size="8" fill="#e65100">C</text>
+  <text x="210" y="406" font-size="8" fill="#7b1fa2">G</text>
+  <!-- Labels -->
+  <line x1="120" y1="40" x2="60" y2="25" stroke="#1565c0" stroke-width="1"/>
+  <text x="2" y="22" font-size="10" fill="#1565c0" font-weight="bold">Phosphate</text>
+  <text x="2" y="34" font-size="10" fill="#1565c0" font-weight="bold">backbone</text>
+  <line x1="280" y1="40" x2="340" y2="25" stroke="#c62828" stroke-width="1"/>
+  <text x="342" y="22" font-size="10" fill="#c62828" font-weight="bold">Sugar</text>
+  <text x="342" y="34" font-size="10" fill="#c62828" font-weight="bold">backbone</text>
+  <line x1="200" y1="64" x2="350" y2="80" stroke="#ffd54f" stroke-width="1"/>
+  <text x="352" y="84" font-size="9" fill="#f9a825" font-weight="bold">H-bonds</text>
+  <!-- Major groove arrow -->
+  <text x="10" y="140" font-size="9" fill="#388e3c" font-weight="bold">Major</text>
+  <text x="10" y="152" font-size="9" fill="#388e3c" font-weight="bold">Groove</text>
+  <text x="10" y="240" font-size="9" fill="#0288d1" font-weight="bold">Minor</text>
+  <text x="10" y="252" font-size="9" fill="#0288d1" font-weight="bold">Groove</text>
+  <!-- Legend -->
+  <rect x="310" y="200" width="12" height="8" rx="2" fill="#1565c0"/>
+  <text x="325" y="208" font-size="8" fill="#1565c0">A - Adenine</text>
+  <rect x="310" y="215" width="12" height="8" rx="2" fill="#2e7d32"/>
+  <text x="325" y="223" font-size="8" fill="#2e7d32">T - Thymine</text>
+  <rect x="310" y="230" width="12" height="8" rx="2" fill="#7b1fa2"/>
+  <text x="325" y="238" font-size="8" fill="#7b1fa2">G - Guanine</text>
+  <rect x="310" y="245" width="12" height="8" rx="2" fill="#e65100"/>
+  <text x="325" y="253" font-size="8" fill="#e65100">C - Cytosine</text>
+</svg>`,
+  },
+
 };
 
 // Map chapter keywords to diagram keys
@@ -411,12 +678,15 @@ export function findDiagram(chapter: string): DiagramData | null {
   // Keyword matching
   const ch = chapter.toLowerCase();
   if (ch.includes("cell") && !ch.includes("cell cycle")) return BIOLOGY_DIAGRAMS["Cell — The Unit of Life"];
-  if (ch.includes("neural") || ch.includes("neuron") || ch.includes("nervous")) return BIOLOGY_DIAGRAMS["Neural Control & Coordination"];
+  if (ch.includes("neural") || ch.includes("neuron") || ch.includes("nervous") || ch.includes("eye") || ch.includes("ear")) return BIOLOGY_DIAGRAMS["Neural Control & Coordination"];
   if (ch.includes("circulation") || ch.includes("heart") || ch.includes("blood")) return BIOLOGY_DIAGRAMS["Body Fluids & Circulation"];
   if (ch.includes("excret") || ch.includes("kidney") || ch.includes("nephron")) return BIOLOGY_DIAGRAMS["Excretory Products & Elimination"];
   if (ch.includes("photosynthesis") || ch.includes("chloroplast")) return BIOLOGY_DIAGRAMS["Photosynthesis"];
   if (ch.includes("anatomy") && ch.includes("plant") || ch.includes("dicot") || ch.includes("monocot")) return BIOLOGY_DIAGRAMS["Anatomy of Flowering Plants"];
   if (ch.includes("biomolecule") || ch.includes("mitochondria")) return BIOLOGY_DIAGRAMS["Biomolecules"];
+  if (ch.includes("digest") || ch.includes("absorpt") || ch.includes("alimentary")) return BIOLOGY_DIAGRAMS["Digestion & Absorption"];
+  if (ch.includes("breath") || ch.includes("lung") || ch.includes("respirat") || ch.includes("alveol")) return BIOLOGY_DIAGRAMS["Breathing & Exchange of Gases"];
+  if (ch.includes("dna") || ch.includes("molecular") || ch.includes("inheritance") || ch.includes("gene")) return BIOLOGY_DIAGRAMS["Molecular Basis of Inheritance"];
 
   return null;
 }
