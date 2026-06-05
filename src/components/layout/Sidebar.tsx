@@ -31,6 +31,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { href: "/student/ranking",    label: "My Ranking",   icon: Trophy },
     { href: "/student/analytics",  label: "Analytics",    icon: BarChart3 },
     { href: "/student/crossword",  label: "Crossword",    icon: Puzzle },
+    { href: "/student/mindmap", label: "Mind Map", icon: GitBranch },
   ],
   parent: [
     { href: "/parent/dashboard",   label: "Dashboard",    icon: LayoutDashboard },
