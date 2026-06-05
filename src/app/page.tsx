@@ -588,7 +588,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/auth"
+                  <Link href="student/auth"
                     className={`block w-full text-center font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg ${idx === 1 ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-gray-900 hover:bg-gray-700 text-white"}`}>
                     {plan.cta}
                   </Link>
