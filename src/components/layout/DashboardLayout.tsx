@@ -62,6 +62,8 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
           phone: authUser.phone ?? null,
           full_name: profile?.full_name ?? authUser.user_metadata?.full_name ?? "",
           role: profile?.role ?? role,
+          avatar_url: authUser.user_metadata?.avatar_url ?? null,
+          created_at: authUser.created_at ?? "",
         });
       } catch {
         // Fallback — use auth metadata only
@@ -71,6 +73,8 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
           phone: authUser.phone ?? null,
           full_name: authUser.user_metadata?.full_name ?? "",
           role: role,
+          avatar_url: authUser.user_metadata?.avatar_url ?? null,
+          created_at: authUser.created_at ?? "",
         });
       } finally {
         setLoading(false);
