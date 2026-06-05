@@ -1,10 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { Bell, Search, X, BookOpen, Zap, Play, BarChart2, Calendar, Users, Puzzle } from "lucide-react";
 import type { UserRole } from "@/types";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/store/authStore";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,6 +38,45 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
   const [searchQuery, setSearchQuery] = useState("");
   const [bellOpen, setBellOpen]       = useState(false);
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
+
+  const { setUser, setLoading } = useAuthStore();
+
+  // ── Hydrate auth store with user profile from public.users ──
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      if (!authUser) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("id, role, full_name")
+          .eq("id", authUser.id)
+          .maybeSingle();
+
+        setUser({
+          id: authUser.id,
+          email: authUser.email ?? "",
+          phone: authUser.phone ?? null,
+          full_name: profile?.full_name ?? authUser.user_metadata?.full_name ?? "",
+          role: profile?.role ?? role,
+        });
+      } catch {
+        // Fallback — use auth metadata only
+        setUser({
+          id: authUser.id,
+          email: authUser.email ?? "",
+          phone: authUser.phone ?? null,
+          full_name: authUser.user_metadata?.full_name ?? "",
+          role: role,
+        });
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [role, setUser, setLoading]);
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
