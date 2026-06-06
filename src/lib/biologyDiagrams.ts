@@ -8,6 +8,122 @@ export interface DiagramData {
   description: string;
 }
 
+// Wikimedia image URLs for real biology diagrams
+export const WIKIMEDIA_DIAGRAMS: Record<string, { title: string; url: string; description: string; labels: string[]; credit: string }> = {
+
+  "Cell — The Unit of Life": {
+    title: "Animal Cell Structure",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Animal_Cell.svg/1200px-Animal_Cell.svg.png",
+    description: "Detailed animal cell showing all major organelles as per NCERT Biology",
+    labels: ["Nucleus", "Mitochondria", "Golgi Apparatus", "Endoplasmic Reticulum", "Cell Membrane", "Ribosome", "Lysosome", "Cytoplasm"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Photosynthesis": {
+    title: "Chloroplast Structure",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Simple_diagram_of_a_chloroplast.svg/1200px-Simple_diagram_of_a_chloroplast.svg.png",
+    description: "Cross-section of chloroplast showing thylakoid, grana, stroma and double membrane",
+    labels: ["Outer Membrane", "Inner Membrane", "Thylakoid", "Grana", "Stroma", "Stroma Lamellae"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Biomolecules": {
+    title: "Mitochondria Structure",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Mitochondrion_structure.svg/1200px-Mitochondrion_structure.svg.png",
+    description: "Cross-section of mitochondria showing cristae, matrix, inner and outer membranes",
+    labels: ["Outer Membrane", "Inner Membrane", "Cristae", "Matrix", "Intermembrane Space", "Ribosome", "DNA"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Body Fluids & Circulation": {
+    title: "Human Heart — Internal Structure",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Diagram_of_the_human_heart_%28cropped%29.svg/1200px-Diagram_of_the_human_heart_%28cropped%29.svg.png",
+    description: "Four-chambered human heart showing atria, ventricles, valves and major blood vessels",
+    labels: ["Right Atrium", "Left Atrium", "Right Ventricle", "Left Ventricle", "Aorta", "Pulmonary Artery", "Tricuspid Valve", "Bicuspid Valve"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Excretory Products & Elimination": {
+    title: "Human Kidney — Longitudinal Section",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Kidney_section.jpg/800px-Kidney_section.jpg",
+    description: "Longitudinal section of human kidney showing cortex, medulla, pelvis and ureter",
+    labels: ["Cortex", "Medulla", "Renal Pelvis", "Ureter", "Pyramid", "Renal Artery", "Renal Vein"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Neural Control & Coordination": {
+    title: "Structure of the Human Eye",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Schematic_diagram_of_the_human_eye_en.svg/1200px-Schematic_diagram_of_the_human_eye_en.svg.png",
+    description: "Cross-section of human eye showing cornea, lens, retina, optic nerve and chambers",
+    labels: ["Cornea", "Lens", "Retina", "Optic Nerve", "Iris", "Pupil", "Vitreous Humour", "Sclera"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Anatomy of Flowering Plants": {
+    title: "T.S. of Dicot Stem",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Dicot_stem_labeled.svg/800px-Dicot_stem_labeled.svg.png",
+    description: "Transverse section of dicot stem showing epidermis, cortex, vascular bundles and pith",
+    labels: ["Epidermis", "Cortex", "Endodermis", "Pericycle", "Xylem", "Phloem", "Pith"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Digestion & Absorption": {
+    title: "Human Digestive System",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Digestive_system_diagram_en.svg/800px-Digestive_system_diagram_en.svg.png",
+    description: "Complete human alimentary canal from mouth to rectum with accessory glands",
+    labels: ["Mouth", "Oesophagus", "Stomach", "Small Intestine", "Large Intestine", "Liver", "Pancreas", "Rectum"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Breathing & Exchange of Gases": {
+    title: "Human Respiratory System",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Respiratory_system_complete_en.svg/800px-Respiratory_system_complete_en.svg.png",
+    description: "Human lungs, trachea, bronchi, bronchioles and alveoli structure",
+    labels: ["Nasal Cavity", "Trachea", "Bronchus", "Bronchioles", "Alveoli", "Diaphragm", "Left Lung", "Right Lung"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Molecular Basis of Inheritance": {
+    title: "DNA Double Helix",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/DNA_Structure%2BKey%2BLabelled.pn_NoBB.png/800px-DNA_Structure%2BKey%2BLabelled.pn_NoBB.png",
+    description: "Watson-Crick DNA double helix model showing base pairs and sugar-phosphate backbone",
+    labels: ["Adenine-Thymine", "Guanine-Cytosine", "Phosphate Group", "Deoxyribose Sugar", "Hydrogen Bonds", "Major Groove", "Minor Groove"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Structural Organisation in Animals": {
+    title: "Earthworm — External & Internal Structure",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Earthworm_anatomy.svg/1200px-Earthworm_anatomy.svg.png",
+    description: "Longitudinal section of earthworm showing segments, setae, and internal organs",
+    labels: ["Mouth", "Pharynx", "Oesophagus", "Crop", "Gizzard", "Intestine", "Setae", "Clitellum"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Locomotion & Movement": {
+    title: "Human Skeletal System",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Human_skeleton_front_en.svg/600px-Human_skeleton_front_en.svg.png",
+    description: "Human skeleton showing major bones, joints and skeletal structure",
+    labels: ["Skull", "Vertebral Column", "Rib Cage", "Femur", "Tibia", "Humerus", "Radius", "Ulna"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Human Reproduction": {
+    title: "Female Reproductive System",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Scheme_female_reproductive_system-en.svg/800px-Scheme_female_reproductive_system-en.svg.png",
+    description: "Female reproductive organs showing ovary, fallopian tube, uterus and vagina",
+    labels: ["Ovary", "Fallopian Tube", "Uterus", "Cervix", "Vagina", "Endometrium", "Follicle"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+
+  "Principles of Inheritance": {
+    title: "Monohybrid Cross — Mendel's Experiment",
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mendelian_inheritance_-_pea_colour.svg/800px-Mendelian_inheritance_-_pea_colour.svg.png",
+    description: "Punnett square showing monohybrid cross and 3:1 phenotypic ratio",
+    labels: ["Dominant Allele", "Recessive Allele", "F1 Generation", "F2 Generation", "Phenotype Ratio", "Genotype"],
+    credit: "Wikimedia Commons (CC BY-SA)",
+  },
+};
+
 export const BIOLOGY_DIAGRAMS: Record<string, DiagramData> = {
 
   // ── CELL ─────────────────────────────────────────────────────────────────
@@ -523,7 +639,7 @@ export const BIOLOGY_DIAGRAMS: Record<string, DiagramData> = {
   },
 
   // ── HUMAN EYE ────────────────────────────────────────────────────────────
-  "Sensory Reception — The Eye": {
+  "Neural Control — Eye" : {
     title: "Structure of the Human Eye",
     description: "Cross-section of human eye showing cornea, lens, retina and optic nerve",
     labels: ["Cornea", "Lens", "Retina", "Optic Nerve", "Iris", "Pupil", "Vitreous Humour", "Sclera"],
@@ -670,13 +786,37 @@ export const BIOLOGY_DIAGRAMS: Record<string, DiagramData> = {
 
 };
 
+// Convert Wikimedia data to DiagramData format with image tag
+function wikimediaToSvg(w: typeof WIKIMEDIA_DIAGRAMS[string]): DiagramData {
+  return {
+    title: w.title,
+    description: w.description,
+    labels: w.labels,
+    svg: `<svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg">
+  <image href="${w.url}" x="0" y="0" width="600" height="400" preserveAspectRatio="xMidYMid meet"/>
+  <text x="2" y="418" font-size="8" fill="#999" font-family="Arial">${w.credit}</text>
+</svg>`,
+  };
+}
+
 // Map chapter keywords to diagram keys
 export function findDiagram(chapter: string): DiagramData | null {
-  // Exact match first
+  // Check Wikimedia first (real images)
+  if (WIKIMEDIA_DIAGRAMS[chapter]) return wikimediaToSvg(WIKIMEDIA_DIAGRAMS[chapter]);
+
+  // Keyword match for Wikimedia
+  const ch = chapter.toLowerCase();
+  const wikiMatch = Object.entries(WIKIMEDIA_DIAGRAMS).find(([key]) => {
+    const k = key.toLowerCase();
+    return ch.includes(k.substring(0, 8)) || k.includes(ch.substring(0, 8));
+  });
+  if (wikiMatch) return wikimediaToSvg(wikiMatch[1]);
+
+  // Exact match SVG fallback
   if (BIOLOGY_DIAGRAMS[chapter]) return BIOLOGY_DIAGRAMS[chapter];
 
   // Keyword matching
-  const ch = chapter.toLowerCase();
+  
   if (ch.includes("cell") && !ch.includes("cell cycle")) return BIOLOGY_DIAGRAMS["Cell — The Unit of Life"];
   if (ch.includes("neural") || ch.includes("neuron") || ch.includes("nervous") || ch.includes("eye") || ch.includes("ear")) return BIOLOGY_DIAGRAMS["Neural Control & Coordination"];
   if (ch.includes("circulation") || ch.includes("heart") || ch.includes("blood")) return BIOLOGY_DIAGRAMS["Body Fluids & Circulation"];

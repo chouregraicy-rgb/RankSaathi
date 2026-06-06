@@ -95,20 +95,40 @@ function BiologyDiagram({ chapter, fallback, color }: {
   fallback?: MindMapData["diagram"];
   color: string;
 }) {
+  const [imgError, setImgError] = useState(false);
   const preDrawn = findDiagram(chapter);
 
   if (preDrawn) {
+    // Extract image URL from svg string if it's a Wikimedia image
+    const urlMatch = preDrawn.svg.match(/href="([^"]+)"/);
+    const imageUrl = urlMatch?.[1];
+
     return (
-      <div className="rounded-2xl border border-emerald-500/20 bg-[#0a0f0a] p-4 space-y-3">
-        <p className="text-sm font-semibold text-emerald-400">📊 {preDrawn.title}</p>
-        <div
-          className="w-full rounded-xl overflow-hidden bg-white"
-          dangerouslySetInnerHTML={{ __html: preDrawn.svg }}
-        />
-        <p className="text-xs text-muted-foreground italic text-center">{preDrawn.description}</p>
+      <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
+        <p className="text-sm font-semibold text-emerald-700">📊 {preDrawn.title}</p>
+        {imageUrl && !imgError ? (
+          <div className="relative w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={preDrawn.title}
+              className="w-full max-h-96 object-contain rounded-xl"
+              onError={() => setImgError(true)}
+            />
+            <p className="text-xs text-gray-400 mt-2 italic text-center">
+              {preDrawn.description} · Wikimedia Commons (CC BY-SA)
+            </p>
+          </div>
+        ) : (
+          // SVG fallback if image fails to load
+          <div
+            className="w-full rounded-xl overflow-hidden bg-white"
+            dangerouslySetInnerHTML={{ __html: preDrawn.svg }}
+          />
+        )}
         <div className="flex flex-wrap gap-2">
           {preDrawn.labels.map((l) => (
-            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
               {l}
             </span>
           ))}
