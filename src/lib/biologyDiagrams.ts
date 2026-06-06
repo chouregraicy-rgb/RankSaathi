@@ -2,6 +2,8 @@
 // Pre-drawn realistic SVG diagrams for top NEET Biology chapters
 
 export interface DiagramData {
+  imageUrl?: string;
+  credit?: string;
   title: string;
   svg: string;
   labels: string[];
@@ -639,7 +641,7 @@ export const BIOLOGY_DIAGRAMS: Record<string, DiagramData> = {
   },
 
   // ── HUMAN EYE ────────────────────────────────────────────────────────────
-  "Neural Control — Eye" : {
+  "Neural Control — Eye": {
     title: "Structure of the Human Eye",
     description: "Cross-section of human eye showing cornea, lens, retina and optic nerve",
     labels: ["Cornea", "Lens", "Retina", "Optic Nerve", "Iris", "Pupil", "Vitreous Humour", "Sclera"],
@@ -792,10 +794,9 @@ function wikimediaToSvg(w: typeof WIKIMEDIA_DIAGRAMS[string]): DiagramData {
     title: w.title,
     description: w.description,
     labels: w.labels,
-    svg: `<svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg">
-  <image href="${w.url}" x="0" y="0" width="600" height="400" preserveAspectRatio="xMidYMid meet"/>
-  <text x="2" y="418" font-size="8" fill="#999" font-family="Arial">${w.credit}</text>
-</svg>`,
+    imageUrl: w.url,
+    credit: w.credit,
+    svg: "", // imageUrl takes priority in component
   };
 }
 

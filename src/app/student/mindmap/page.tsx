@@ -99,9 +99,7 @@ function BiologyDiagram({ chapter, fallback, color }: {
   const preDrawn = findDiagram(chapter);
 
   if (preDrawn) {
-    // Extract image URL from svg string if it's a Wikimedia image
-    const urlMatch = preDrawn.svg.match(/href="([^"]+)"/);
-    const imageUrl = urlMatch?.[1];
+    const imageUrl = preDrawn.imageUrl;
 
     return (
       <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
@@ -112,11 +110,13 @@ function BiologyDiagram({ chapter, fallback, color }: {
             <img
               src={imageUrl}
               alt={preDrawn.title}
-              className="w-full max-h-96 object-contain rounded-xl"
+              className="w-full max-h-[500px] object-contain rounded-xl bg-white"
               onError={() => setImgError(true)}
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
             />
             <p className="text-xs text-gray-400 mt-2 italic text-center">
-              {preDrawn.description} · Wikimedia Commons (CC BY-SA)
+              {preDrawn.description} · {preDrawn.credit ?? "Wikimedia Commons (CC BY-SA)"}
             </p>
           </div>
         ) : (
