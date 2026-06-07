@@ -1,6 +1,6 @@
 /**
  * POST /api/trial/activate
- * Called once after signup. Inserts a 7-day trial row into `subscriptions`.
+ * Called once after signup. Inserts a 3-day trial row into `subscriptions`.
  * Uses your actual column names: plan_id, expires_at (not ends_at).
  * No-ops if the user already has any subscription row.
  */
@@ -13,7 +13,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 3;
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,20 +35,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ skipped: true, message: "Already has subscription" });
     }
 
-    // Insert 7-day trial
+    // Insert 3-day trial
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + TRIAL_DAYS);
 
     const { error: insertErr } = await supabase.from("subscriptions").insert({
       user_id:    user.id,
-      plan_id:    "trial",             // ← your column is plan_id
+      plan_id:    "trial",
       payment_id: null,
       order_id:   null,
       amount:     0,
       status:     "active",
       started_at: now.toISOString(),
-      expires_at: expiresAt.toISOString(),  // ← your column is expires_at
+      expires_at: expiresAt.toISOString(),
     });
 
     if (insertErr) {
