@@ -94,22 +94,22 @@ export default function PricingPage() {
   }
 
   async function applyDemoCoupon() {
-    if (!demoCoupon.trim() || !selectedPlan) {
-      setPayError("Select a plan first, then apply the code.");
-      return;
-    }
+    if (!demoCoupon.trim()) return;
     setPayError("");
+    // Validate against any plan — use student_monthly as default check
+    const checkPlanId = selectedPlan ? PLANS[selectedPlan][billing].id : "student_monthly";
     const res = await fetch("/api/coupon/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        coupon_code: demoCoupon,
-        plan_id: PLANS[selectedPlan][billing].id,
+        coupon_code: demoCoupon.trim().toUpperCase(),
+        plan_id: checkPlanId,
       }),
     });
     const data = await res.json();
     if (data.valid && data.final_amount === 0) {
       setDemoActive(true);
+      setPayError("");
     } else {
       setPayError(data.error || "Invalid demo code.");
     }
@@ -222,27 +222,32 @@ export default function PricingPage() {
 
           {/* Hidden demo field — 5 title clicks to reveal */}
           {showDemoField && (
-            <div className="mt-5 flex items-center justify-center gap-2">
-              <input
-                type="text"
-                placeholder="Demo code"
-                value={demoCoupon}
-                onChange={(e) => {
-                  setDemoCoupon(e.target.value.toUpperCase());
-                  setDemoActive(false);
-                }}
-                className="bg-[#111118] border border-white/10 text-white text-sm px-3 py-1.5 rounded-lg font-mono w-36 focus:outline-none focus:border-indigo-500/50"
-              />
-              <button
-                onClick={applyDemoCoupon}
-                disabled={!demoCoupon}
-                className="text-xs px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 transition-colors disabled:opacity-40"
-              >
-                Apply
-              </button>
+            <div className="mt-5 flex flex-col items-center gap-2">
+              <p className="text-xs text-indigo-400/70">Enter your demo access code</p>
+              <div className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Demo code"
+                  value={demoCoupon}
+                  onChange={(e) => {
+                    setDemoCoupon(e.target.value.toUpperCase());
+                    setDemoActive(false);
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && applyDemoCoupon()}
+                  className="bg-[#111118] border border-indigo-500/30 text-white text-sm px-3 py-1.5 rounded-lg font-mono w-40 focus:outline-none focus:border-indigo-500 tracking-widest text-center"
+                />
+                <button
+                  onClick={applyDemoCoupon}
+                  disabled={!demoCoupon}
+                  className="text-xs px-4 py-1.5 rounded-lg bg-indigo-500/30 text-indigo-300 hover:bg-indigo-500/50 transition-colors disabled:opacity-40 font-semibold"
+                >
+                  Apply
+                </button>
+              </div>
               {demoActive && (
-                <span className="text-xs text-green-400 flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Demo active
+                <span className="text-xs text-green-400 flex items-center gap-1 font-semibold">
+                  <Check className="w-3 h-3" /> Demo access activated! Select a plan below.
                 </span>
               )}
             </div>
