@@ -587,7 +587,7 @@ export default function MindMapPage() {
             {/* Important topics */}
             <div className="bg-[#0a0a12] border border-white/5 rounded-xl p-4">
               <p className="text-xs text-white/30 font-semibold uppercase tracking-wider mb-3">
-                <Star className="inline h-3 w-3 mr-1" />Important for NEET/JEE
+                <Star className="inline h-3 w-3 mr-1" />Important for {isBiology ? "NEET" : "NEET/JEE"}
               </p>
               <div className="flex flex-wrap gap-2">
                 {mindmap.importantTopics.map((t) => (

@@ -82,6 +82,378 @@ const REAL_IMAGES: Record<string, DiagramData> = {
 // ── FULL SVG FALLBACKS (shown if real image fails) ────────────────────────────
 const SVG_FALLBACKS: Record<string, DiagramData> = {
 
+  "Animal Kingdom": {
+    title: "Animal Kingdom — Classification Chart",
+    description: "Major phyla of Kingdom Animalia with key characteristics",
+    labels: ["Porifera", "Cnidaria", "Platyhelminthes", "Nematoda", "Annelida", "Arthropoda", "Mollusca", "Echinodermata", "Chordata"],
+    svg: `<svg viewBox="0 0 620 480" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<!-- Title -->
+<rect x="160" y="10" width="300" height="36" rx="10" fill="#1b5e20"/>
+<text x="310" y="33" text-anchor="middle" font-size="14" fill="white" font-weight="bold">Kingdom Animalia</text>
+<!-- Root line -->
+<line x1="310" y1="46" x2="310" y2="70" stroke="#388e3c" stroke-width="2"/>
+<!-- Two branches: Invertebrata / Vertebrata -->
+<line x1="310" y1="70" x2="150" y2="70" stroke="#388e3c" stroke-width="2"/>
+<line x1="310" y1="70" x2="490" y2="70" stroke="#388e3c" stroke-width="2"/>
+<!-- Invertebrata box -->
+<rect x="70" y="70" width="160" height="30" rx="8" fill="#2e7d32"/>
+<text x="150" y="90" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Invertebrata</text>
+<!-- Vertebrata box -->
+<rect x="410" y="70" width="160" height="30" rx="8" fill="#1565c0"/>
+<text x="490" y="90" text-anchor="middle" font-size="12" fill="white" font-weight="bold">Vertebrata (Chordata)</text>
+
+<!-- Invertebrate phyla lines -->
+<line x1="150" y1="100" x2="150" y2="120" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="30" y1="120" x2="270" y2="120" stroke="#388e3c" stroke-width="1.5"/>
+<!-- Phyla vertical lines -->
+<line x1="30"  y1="120" x2="30"  y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="80"  y1="120" x2="80"  y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="130" y1="120" x2="130" y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="180" y1="120" x2="180" y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="230" y1="120" x2="230" y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="280" y1="120" x2="280" y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="330" y1="120" x2="330" y2="140" stroke="#388e3c" stroke-width="1.5"/>
+<line x1="380" y1="120" x2="380" y2="140" stroke="#388e3c" stroke-width="1.5"/>
+
+<!-- Phyla boxes row -->
+<!-- Porifera -->
+<rect x="2"   y="140" width="58" height="28" rx="6" fill="#66bb6a"/>
+<text x="31"  y="158" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Porifera</text>
+<!-- Cnidaria -->
+<rect x="52"  y="140" width="58" height="28" rx="6" fill="#26a69a"/>
+<text x="81"  y="158" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Cnidaria</text>
+<!-- Platyhelminthes -->
+<rect x="102" y="140" width="58" height="28" rx="6" fill="#ef5350"/>
+<text x="131" y="153" text-anchor="middle" font-size="8" fill="white" font-weight="bold">Platy-</text>
+<text x="131" y="163" text-anchor="middle" font-size="8" fill="white" font-weight="bold">helminthes</text>
+<!-- Nematoda -->
+<rect x="152" y="140" width="58" height="28" rx="6" fill="#ab47bc"/>
+<text x="181" y="158" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Nematoda</text>
+<!-- Annelida -->
+<rect x="202" y="140" width="58" height="28" rx="6" fill="#ff7043"/>
+<text x="231" y="158" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Annelida</text>
+<!-- Arthropoda -->
+<rect x="252" y="140" width="62" height="28" rx="6" fill="#f9a825"/>
+<text x="283" y="158" text-anchor="middle" font-size="9" fill="#1a1a1a" font-weight="bold">Arthropoda</text>
+<!-- Mollusca -->
+<rect x="302" y="140" width="58" height="28" rx="6" fill="#0288d1"/>
+<text x="331" y="158" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Mollusca</text>
+<!-- Echinodermata -->
+<rect x="352" y="140" width="60" height="28" rx="6" fill="#558b2f"/>
+<text x="382" y="153" text-anchor="middle" font-size="8" fill="white" font-weight="bold">Echino-</text>
+<text x="382" y="163" text-anchor="middle" font-size="8" fill="white" font-weight="bold">dermata</text>
+
+<!-- Key features rows for each phylum -->
+<!-- Porifera -->
+<rect x="2" y="178" width="58" height="60" rx="4" fill="#e8f5e9" stroke="#66bb6a" stroke-width="1"/>
+<text x="31" y="191" text-anchor="middle" font-size="7" fill="#1b5e20">Pores</text>
+<text x="31" y="202" text-anchor="middle" font-size="7" fill="#1b5e20">No tissue</text>
+<text x="31" y="213" text-anchor="middle" font-size="7" fill="#1b5e20">Spongilla</text>
+<text x="31" y="224" text-anchor="middle" font-size="7" fill="#1b5e20">Sycon</text>
+<text x="31" y="232" text-anchor="middle" font-size="8" fill="#388e3c" font-weight="bold">eg: Sponge</text>
+
+<!-- Cnidaria -->
+<rect x="52" y="178" width="58" height="60" rx="4" fill="#e0f2f1" stroke="#26a69a" stroke-width="1"/>
+<text x="81" y="191" text-anchor="middle" font-size="7" fill="#004d40">Cnidoblasts</text>
+<text x="81" y="202" text-anchor="middle" font-size="7" fill="#004d40">Radial sym</text>
+<text x="81" y="213" text-anchor="middle" font-size="7" fill="#004d40">Diploblastic</text>
+<text x="81" y="232" text-anchor="middle" font-size="8" fill="#00695c" font-weight="bold">eg: Hydra</text>
+
+<!-- Platyhelminthes -->
+<rect x="102" y="178" width="58" height="60" rx="4" fill="#ffebee" stroke="#ef5350" stroke-width="1"/>
+<text x="131" y="191" text-anchor="middle" font-size="7" fill="#b71c1c">Flat body</text>
+<text x="131" y="202" text-anchor="middle" font-size="7" fill="#b71c1c">Triploblastic</text>
+<text x="131" y="213" text-anchor="middle" font-size="7" fill="#b71c1c">Acoelomate</text>
+<text x="131" y="232" text-anchor="middle" font-size="8" fill="#c62828" font-weight="bold">eg: Tapeworm</text>
+
+<!-- Nematoda -->
+<rect x="152" y="178" width="58" height="60" rx="4" fill="#f3e5f5" stroke="#ab47bc" stroke-width="1"/>
+<text x="181" y="191" text-anchor="middle" font-size="7" fill="#4a148c">Round body</text>
+<text x="181" y="202" text-anchor="middle" font-size="7" fill="#4a148c">Pseudocoelom</text>
+<text x="181" y="213" text-anchor="middle" font-size="7" fill="#4a148c">Parasitic</text>
+<text x="181" y="232" text-anchor="middle" font-size="8" fill="#7b1fa2" font-weight="bold">eg: Ascaris</text>
+
+<!-- Annelida -->
+<rect x="202" y="178" width="58" height="60" rx="4" fill="#fbe9e7" stroke="#ff7043" stroke-width="1"/>
+<text x="231" y="191" text-anchor="middle" font-size="7" fill="#bf360c">Segmented</text>
+<text x="231" y="202" text-anchor="middle" font-size="7" fill="#bf360c">True coelom</text>
+<text x="231" y="213" text-anchor="middle" font-size="7" fill="#bf360c">Setae</text>
+<text x="231" y="232" text-anchor="middle" font-size="8" fill="#e64a19" font-weight="bold">eg: Earthworm</text>
+
+<!-- Arthropoda -->
+<rect x="252" y="178" width="62" height="60" rx="4" fill="#fff8e1" stroke="#f9a825" stroke-width="1"/>
+<text x="283" y="191" text-anchor="middle" font-size="7" fill="#e65100">Jointed legs</text>
+<text x="283" y="202" text-anchor="middle" font-size="7" fill="#e65100">Exoskeleton</text>
+<text x="283" y="213" text-anchor="middle" font-size="7" fill="#e65100">Open circ.</text>
+<text x="283" y="232" text-anchor="middle" font-size="8" fill="#ef6c00" font-weight="bold">eg: Cockroach</text>
+
+<!-- Mollusca -->
+<rect x="302" y="178" width="58" height="60" rx="4" fill="#e3f2fd" stroke="#0288d1" stroke-width="1"/>
+<text x="331" y="191" text-anchor="middle" font-size="7" fill="#01579b">Soft body</text>
+<text x="331" y="202" text-anchor="middle" font-size="7" fill="#01579b">Mantle</text>
+<text x="331" y="213" text-anchor="middle" font-size="7" fill="#01579b">Shell present</text>
+<text x="331" y="232" text-anchor="middle" font-size="8" fill="#0277bd" font-weight="bold">eg: Octopus</text>
+
+<!-- Echinodermata -->
+<rect x="352" y="178" width="60" height="60" rx="4" fill="#f1f8e9" stroke="#558b2f" stroke-width="1"/>
+<text x="382" y="191" text-anchor="middle" font-size="7" fill="#33691e">Spiny skin</text>
+<text x="382" y="202" text-anchor="middle" font-size="7" fill="#33691e">Water vasc.</text>
+<text x="382" y="213" text-anchor="middle" font-size="7" fill="#33691e">Radial sym</text>
+<text x="382" y="232" text-anchor="middle" font-size="8" fill="#558b2f" font-weight="bold">eg: Starfish</text>
+
+<!-- Chordata column (Vertebrata) -->
+<line x1="490" y1="100" x2="490" y2="260" stroke="#1565c0" stroke-width="1.5"/>
+<!-- Classes -->
+<line x1="490" y1="145" x2="530" y2="145" stroke="#1565c0" stroke-width="1.5"/>
+<line x1="490" y1="185" x2="530" y2="185" stroke="#1565c0" stroke-width="1.5"/>
+<line x1="490" y1="220" x2="530" y2="220" stroke="#1565c0" stroke-width="1.5"/>
+<line x1="490" y1="255" x2="530" y2="255" stroke="#1565c0" stroke-width="1.5"/>
+<line x1="490" y1="290" x2="530" y2="290" stroke="#1565c0" stroke-width="1.5"/>
+
+<rect x="530" y="133" width="80" height="24" rx="6" fill="#1565c0"/>
+<text x="570" y="149" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Pisces 🐟</text>
+<text x="570" y="162" text-anchor="middle" font-size="8" fill="#90caf9">Cold-blooded, gills</text>
+
+<rect x="530" y="172" width="80" height="24" rx="6" fill="#0288d1"/>
+<text x="570" y="188" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Amphibia 🐸</text>
+<text x="570" y="201" text-anchor="middle" font-size="8" fill="#b3e5fc">Dual life</text>
+
+<rect x="530" y="208" width="80" height="24" rx="6" fill="#00838f"/>
+<text x="570" y="224" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Reptilia 🦎</text>
+<text x="570" y="237" text-anchor="middle" font-size="8" fill="#b2ebf2">Scales, dry skin</text>
+
+<rect x="530" y="243" width="80" height="24" rx="6" fill="#6a1b9a"/>
+<text x="570" y="259" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Aves 🐦</text>
+<text x="570" y="272" text-anchor="middle" font-size="8" fill="#e1bee7">Feathers, warm</text>
+
+<rect x="530" y="278" width="80" height="24" rx="6" fill="#4527a0"/>
+<text x="570" y="294" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Mammalia 🦁</text>
+<text x="570" y="307" text-anchor="middle" font-size="8" fill="#d1c4e9">Hair, mammary</text>
+
+<!-- NEET tip box -->
+<rect x="10" y="315" width="600" height="50" rx="8" fill="#fff3e0" stroke="#f57f17" stroke-width="1.5"/>
+<text x="310" y="333" text-anchor="middle" font-size="10" fill="#e65100" font-weight="bold">⭐ NEET Key Points</text>
+<text x="310" y="348" text-anchor="middle" font-size="9" fill="#bf360c">Arthropoda = largest phylum · Notochord = defining feature of Chordata</text>
+<text x="310" y="360" text-anchor="middle" font-size="9" fill="#bf360c">Protostomes: Annelida/Arthropoda/Mollusca · Deuterostomes: Echinodermata/Chordata</text>
+
+<!-- Legend -->
+<rect x="10" y="370" width="600" height="30" rx="6" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1"/>
+<text x="310" y="388" text-anchor="middle" font-size="9" fill="#424242">Symmetry: Porifera=Asymmetric · Cnidaria/Echinoderm=Radial · Rest=Bilateral</text>
+</svg>`,
+  },
+
+  "Biological Classification": {
+    title: "Five Kingdom Classification",
+    description: "Whittaker's Five Kingdom system with key features",
+    labels: ["Monera", "Protista", "Fungi", "Plantae", "Animalia"],
+    svg: `<svg viewBox="0 0 580 400" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<rect x="200" y="8" width="180" height="34" rx="10" fill="#37474f"/>
+<text x="290" y="30" text-anchor="middle" font-size="13" fill="white" font-weight="bold">5 Kingdom Classification</text>
+<text x="290" y="44" text-anchor="middle" font-size="9" fill="#90a4ae">(R.H. Whittaker, 1969)</text>
+<!-- Five kingdom boxes -->
+<!-- Monera -->
+<rect x="10" y="60" width="100" height="200" rx="10" fill="#e53935" opacity="0.9"/>
+<text x="60" y="80" text-anchor="middle" font-size="11" fill="white" font-weight="bold">Monera</text>
+<line x1="20" y1="86" x2="100" y2="86" stroke="white" stroke-width="0.5" opacity="0.5"/>
+<text x="60" y="100" text-anchor="middle" font-size="8" fill="white">Prokaryotic</text>
+<text x="60" y="113" text-anchor="middle" font-size="8" fill="white">No nuclear</text>
+<text x="60" y="126" text-anchor="middle" font-size="8" fill="white">membrane</text>
+<text x="60" y="145" text-anchor="middle" font-size="8" fill="#ffcdd2">Unicellular</text>
+<text x="60" y="158" text-anchor="middle" font-size="8" fill="#ffcdd2">Autotrophic/</text>
+<text x="60" y="171" text-anchor="middle" font-size="8" fill="#ffcdd2">Heterotrophic</text>
+<text x="60" y="192" text-anchor="middle" font-size="9" fill="white" font-weight="bold">eg:</text>
+<text x="60" y="205" text-anchor="middle" font-size="8" fill="#ffebee">Bacteria</text>
+<text x="60" y="218" text-anchor="middle" font-size="8" fill="#ffebee">Cyanobacteria</text>
+<text x="60" y="231" text-anchor="middle" font-size="8" fill="#ffebee">Mycoplasma</text>
+<!-- Protista -->
+<rect x="120" y="60" width="100" height="200" rx="10" fill="#f57c00" opacity="0.9"/>
+<text x="170" y="80" text-anchor="middle" font-size="11" fill="white" font-weight="bold">Protista</text>
+<line x1="130" y1="86" x2="210" y2="86" stroke="white" stroke-width="0.5" opacity="0.5"/>
+<text x="170" y="100" text-anchor="middle" font-size="8" fill="white">Eukaryotic</text>
+<text x="170" y="113" text-anchor="middle" font-size="8" fill="white">Unicellular</text>
+<text x="170" y="126" text-anchor="middle" font-size="8" fill="white">Aquatic</text>
+<text x="170" y="145" text-anchor="middle" font-size="8" fill="#ffe0b2">Autotrophic/</text>
+<text x="170" y="158" text-anchor="middle" font-size="8" fill="#ffe0b2">Heterotrophic</text>
+<text x="170" y="171" text-anchor="middle" font-size="8" fill="#ffe0b2">Both modes</text>
+<text x="170" y="192" text-anchor="middle" font-size="9" fill="white" font-weight="bold">eg:</text>
+<text x="170" y="205" text-anchor="middle" font-size="8" fill="#fff3e0">Amoeba</text>
+<text x="170" y="218" text-anchor="middle" font-size="8" fill="#fff3e0">Euglena</text>
+<text x="170" y="231" text-anchor="middle" font-size="8" fill="#fff3e0">Diatoms</text>
+<!-- Fungi -->
+<rect x="230" y="60" width="100" height="200" rx="10" fill="#7b1fa2" opacity="0.9"/>
+<text x="280" y="80" text-anchor="middle" font-size="11" fill="white" font-weight="bold">Fungi</text>
+<line x1="240" y1="86" x2="320" y2="86" stroke="white" stroke-width="0.5" opacity="0.5"/>
+<text x="280" y="100" text-anchor="middle" font-size="8" fill="white">Eukaryotic</text>
+<text x="280" y="113" text-anchor="middle" font-size="8" fill="white">Heterotrophic</text>
+<text x="280" y="126" text-anchor="middle" font-size="8" fill="white">Saprophytic</text>
+<text x="280" y="145" text-anchor="middle" font-size="8" fill="#e1bee7">Cell wall:</text>
+<text x="280" y="158" text-anchor="middle" font-size="8" fill="#e1bee7">Chitin</text>
+<text x="280" y="171" text-anchor="middle" font-size="8" fill="#e1bee7">Hyphae/</text>
+<text x="280" y="184" text-anchor="middle" font-size="8" fill="#e1bee7">Mycelium</text>
+<text x="280" y="200" text-anchor="middle" font-size="9" fill="white" font-weight="bold">eg:</text>
+<text x="280" y="213" text-anchor="middle" font-size="8" fill="#f3e5f5">Rhizopus</text>
+<text x="280" y="226" text-anchor="middle" font-size="8" fill="#f3e5f5">Penicillium</text>
+<text x="280" y="239" text-anchor="middle" font-size="8" fill="#f3e5f5">Mushroom</text>
+<!-- Plantae -->
+<rect x="340" y="60" width="100" height="200" rx="10" fill="#2e7d32" opacity="0.9"/>
+<text x="390" y="80" text-anchor="middle" font-size="11" fill="white" font-weight="bold">Plantae</text>
+<line x1="350" y1="86" x2="430" y2="86" stroke="white" stroke-width="0.5" opacity="0.5"/>
+<text x="390" y="100" text-anchor="middle" font-size="8" fill="white">Eukaryotic</text>
+<text x="390" y="113" text-anchor="middle" font-size="8" fill="white">Autotrophic</text>
+<text x="390" y="126" text-anchor="middle" font-size="8" fill="white">Multicellular</text>
+<text x="390" y="145" text-anchor="middle" font-size="8" fill="#c8e6c9">Cell wall:</text>
+<text x="390" y="158" text-anchor="middle" font-size="8" fill="#c8e6c9">Cellulose</text>
+<text x="390" y="171" text-anchor="middle" font-size="8" fill="#c8e6c9">Chlorophyll</text>
+<text x="390" y="184" text-anchor="middle" font-size="8" fill="#c8e6c9">present</text>
+<text x="390" y="200" text-anchor="middle" font-size="9" fill="white" font-weight="bold">eg:</text>
+<text x="390" y="213" text-anchor="middle" font-size="8" fill="#e8f5e9">Algae</text>
+<text x="390" y="226" text-anchor="middle" font-size="8" fill="#e8f5e9">Bryophyta</text>
+<text x="390" y="239" text-anchor="middle" font-size="8" fill="#e8f5e9">Angiosperms</text>
+<!-- Animalia -->
+<rect x="450" y="60" width="110" height="200" rx="10" fill="#1565c0" opacity="0.9"/>
+<text x="505" y="80" text-anchor="middle" font-size="11" fill="white" font-weight="bold">Animalia</text>
+<line x1="460" y1="86" x2="550" y2="86" stroke="white" stroke-width="0.5" opacity="0.5"/>
+<text x="505" y="100" text-anchor="middle" font-size="8" fill="white">Eukaryotic</text>
+<text x="505" y="113" text-anchor="middle" font-size="8" fill="white">Heterotrophic</text>
+<text x="505" y="126" text-anchor="middle" font-size="8" fill="white">Multicellular</text>
+<text x="505" y="145" text-anchor="middle" font-size="8" fill="#bbdefb">No cell wall</text>
+<text x="505" y="158" text-anchor="middle" font-size="8" fill="#bbdefb">No chlorophyll</text>
+<text x="505" y="171" text-anchor="middle" font-size="8" fill="#bbdefb">Holotrophic</text>
+<text x="505" y="184" text-anchor="middle" font-size="8" fill="#bbdefb">nutrition</text>
+<text x="505" y="200" text-anchor="middle" font-size="9" fill="white" font-weight="bold">eg:</text>
+<text x="505" y="213" text-anchor="middle" font-size="8" fill="#e3f2fd">Insects</text>
+<text x="505" y="226" text-anchor="middle" font-size="8" fill="#e3f2fd">Fish, Birds</text>
+<text x="505" y="239" text-anchor="middle" font-size="8" fill="#e3f2fd">Mammals</text>
+
+<!-- Comparison row -->
+<rect x="10" y="272" width="560" height="28" rx="6" fill="#eceff1" stroke="#90a4ae" stroke-width="1"/>
+<text x="10" y="272" font-size="0"> </text>
+<text x="60"  y="290" text-anchor="middle" font-size="8" fill="#b71c1c" font-weight="bold">No nucleus</text>
+<text x="170" y="290" text-anchor="middle" font-size="8" fill="#e65100" font-weight="bold">Simple nucleus</text>
+<text x="280" y="290" text-anchor="middle" font-size="8" fill="#6a1b9a" font-weight="bold">Chitin wall</text>
+<text x="390" y="290" text-anchor="middle" font-size="8" fill="#1b5e20" font-weight="bold">Cellulose wall</text>
+<text x="505" y="290" text-anchor="middle" font-size="8" fill="#0d47a1" font-weight="bold">No cell wall</text>
+
+<!-- NEET tip -->
+<rect x="10" y="310" width="560" height="40" rx="8" fill="#fff8e1" stroke="#fbc02d" stroke-width="1.5"/>
+<text x="290" y="327" text-anchor="middle" font-size="10" fill="#e65100" font-weight="bold">⭐ NEET Key — Virus not included in 5 kingdoms (non-living outside host)</text>
+<text x="290" y="343" text-anchor="middle" font-size="9" fill="#bf360c">Lichens = Fungi + Algae symbiosis · Mycoplasma = smallest living cell (no cell wall)</text>
+
+<!-- Complexity arrow -->
+<line x1="10" y1="360" x2="570" y2="360" stroke="#78909c" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="290" y="375" text-anchor="middle" font-size="9" fill="#546e7a">← Simple (Prokaryotic) ————————— Complexity increases ————————— Complex (Eukaryotic) →</text>
+</svg>`,
+  },
+
+  "Plant Kingdom": {
+    title: "Plant Kingdom — Classification",
+    description: "Major divisions of Plant Kingdom from Algae to Angiosperms",
+    labels: ["Algae (Thallophyta)", "Bryophyta", "Pteridophyta", "Gymnosperms", "Angiosperms"],
+    svg: `<svg viewBox="0 0 580 420" xmlns="http://www.w3.org/2000/svg" font-family="Arial,sans-serif">
+<rect x="190" y="8" width="200" height="32" rx="10" fill="#1b5e20"/>
+<text x="290" y="29" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Kingdom Plantae</text>
+<!-- Arrow showing evolution -->
+<line x1="60" y1="55" x2="540" y2="55" stroke="#388e3c" stroke-width="2"/>
+<polygon points="540,50 550,55 540,60" fill="#388e3c"/>
+<text x="290" y="52" text-anchor="middle" font-size="8" fill="#388e3c">Evolution (Simple → Complex)</text>
+<!-- 5 Division boxes -->
+<!-- Algae -->
+<rect x="10" y="65" width="105" height="220" rx="10" fill="#0097a7"/>
+<text x="62" y="84" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Algae</text>
+<text x="62" y="96" text-anchor="middle" font-size="8" fill="#e0f7fa">(Thallophyta)</text>
+<line x1="18" y1="101" x2="107" y2="101" stroke="white" stroke-width="0.5" opacity="0.4"/>
+<text x="62" y="114" text-anchor="middle" font-size="8" fill="white">No true root/</text>
+<text x="62" y="126" text-anchor="middle" font-size="8" fill="white">stem/leaf</text>
+<text x="62" y="138" text-anchor="middle" font-size="8" fill="#e0f7fa">Aquatic</text>
+<text x="62" y="150" text-anchor="middle" font-size="8" fill="#e0f7fa">Photosynthetic</text>
+<text x="62" y="165" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Types:</text>
+<text x="62" y="178" text-anchor="middle" font-size="8" fill="#b2ebf2">Chlorophyceae</text>
+<text x="62" y="190" text-anchor="middle" font-size="8" fill="#b2ebf2">(Green)</text>
+<text x="62" y="202" text-anchor="middle" font-size="8" fill="#b2ebf2">Phaeophyceae</text>
+<text x="62" y="214" text-anchor="middle" font-size="8" fill="#b2ebf2">(Brown)</text>
+<text x="62" y="226" text-anchor="middle" font-size="8" fill="#b2ebf2">Rhodophyceae</text>
+<text x="62" y="238" text-anchor="middle" font-size="8" fill="#b2ebf2">(Red)</text>
+<text x="62" y="255" text-anchor="middle" font-size="8" fill="white" font-weight="bold">eg: Ulva,</text>
+<text x="62" y="267" text-anchor="middle" font-size="8" fill="white">Spirogyra</text>
+<!-- Bryophyta -->
+<rect x="123" y="65" width="105" height="220" rx="10" fill="#388e3c"/>
+<text x="175" y="84" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Bryophyta</text>
+<text x="175" y="96" text-anchor="middle" font-size="8" fill="#c8e6c9">Amphibians</text>
+<line x1="131" y1="101" x2="220" y2="101" stroke="white" stroke-width="0.5" opacity="0.4"/>
+<text x="175" y="114" text-anchor="middle" font-size="8" fill="white">No vascular</text>
+<text x="175" y="126" text-anchor="middle" font-size="8" fill="white">tissue</text>
+<text x="175" y="138" text-anchor="middle" font-size="8" fill="#c8e6c9">Rhizoids</text>
+<text x="175" y="150" text-anchor="middle" font-size="8" fill="#c8e6c9">(not true roots)</text>
+<text x="175" y="165" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Types:</text>
+<text x="175" y="178" text-anchor="middle" font-size="8" fill="#a5d6a7">Liverworts</text>
+<text x="175" y="190" text-anchor="middle" font-size="8" fill="#a5d6a7">Hornworts</text>
+<text x="175" y="202" text-anchor="middle" font-size="8" fill="#a5d6a7">Mosses</text>
+<text x="175" y="255" text-anchor="middle" font-size="8" fill="white" font-weight="bold">eg: Funaria,</text>
+<text x="175" y="267" text-anchor="middle" font-size="8" fill="white">Marchantia</text>
+<!-- Pteridophyta -->
+<rect x="236" y="65" width="105" height="220" rx="10" fill="#558b2f"/>
+<text x="288" y="84" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Pteridophyta</text>
+<text x="288" y="96" text-anchor="middle" font-size="8" fill="#dcedc8">First vascular</text>
+<line x1="244" y1="101" x2="333" y2="101" stroke="white" stroke-width="0.5" opacity="0.4"/>
+<text x="288" y="114" text-anchor="middle" font-size="8" fill="white">True roots,</text>
+<text x="288" y="126" text-anchor="middle" font-size="8" fill="white">stem, leaves</text>
+<text x="288" y="138" text-anchor="middle" font-size="8" fill="#dcedc8">No seeds</text>
+<text x="288" y="150" text-anchor="middle" font-size="8" fill="#dcedc8">Spores present</text>
+<text x="288" y="165" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Types:</text>
+<text x="288" y="178" text-anchor="middle" font-size="8" fill="#f0f4c3">Psilopsida</text>
+<text x="288" y="190" text-anchor="middle" font-size="8" fill="#f0f4c3">Lycopsida</text>
+<text x="288" y="202" text-anchor="middle" font-size="8" fill="#f0f4c3">Sphenopsida</text>
+<text x="288" y="214" text-anchor="middle" font-size="8" fill="#f0f4c3">Pteropsida</text>
+<text x="288" y="255" text-anchor="middle" font-size="8" fill="white" font-weight="bold">eg: Fern,</text>
+<text x="288" y="267" text-anchor="middle" font-size="8" fill="white">Selaginella</text>
+<!-- Gymnosperms -->
+<rect x="349" y="65" width="105" height="220" rx="10" fill="#827717"/>
+<text x="401" y="84" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Gymnosperms</text>
+<text x="401" y="96" text-anchor="middle" font-size="8" fill="#f9fbe7">Naked seeds</text>
+<line x1="357" y1="101" x2="446" y2="101" stroke="white" stroke-width="0.5" opacity="0.4"/>
+<text x="401" y="114" text-anchor="middle" font-size="8" fill="white">Seeds not</text>
+<text x="401" y="126" text-anchor="middle" font-size="8" fill="white">enclosed in fruit</text>
+<text x="401" y="138" text-anchor="middle" font-size="8" fill="#f9fbe7">Perennial,</text>
+<text x="401" y="150" text-anchor="middle" font-size="8" fill="#f9fbe7">evergreen</text>
+<text x="401" y="165" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Cones:</text>
+<text x="401" y="178" text-anchor="middle" font-size="8" fill="#f0f4c3">Male = Pollen</text>
+<text x="401" y="190" text-anchor="middle" font-size="8" fill="#f0f4c3">Female = Ovule</text>
+<text x="401" y="255" text-anchor="middle" font-size="8" fill="white" font-weight="bold">eg: Pinus,</text>
+<text x="401" y="267" text-anchor="middle" font-size="8" fill="white">Cycas, Ginkgo</text>
+<!-- Angiosperms -->
+<rect x="462" y="65" width="108" height="220" rx="10" fill="#1b5e20"/>
+<text x="516" y="84" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Angiosperms</text>
+<text x="516" y="96" text-anchor="middle" font-size="8" fill="#c8e6c9">Enclosed seeds</text>
+<line x1="470" y1="101" x2="562" y2="101" stroke="white" stroke-width="0.5" opacity="0.4"/>
+<text x="516" y="114" text-anchor="middle" font-size="8" fill="white">Seeds enclosed</text>
+<text x="516" y="126" text-anchor="middle" font-size="8" fill="white">in fruit (ovary)</text>
+<text x="516" y="138" text-anchor="middle" font-size="8" fill="#c8e6c9">Flowers present</text>
+<text x="516" y="150" text-anchor="middle" font-size="8" fill="#c8e6c9">Most evolved</text>
+<text x="516" y="165" text-anchor="middle" font-size="9" fill="white" font-weight="bold">Types:</text>
+<text x="516" y="178" text-anchor="middle" font-size="8" fill="#a5d6a7">Monocots</text>
+<text x="516" y="190" text-anchor="middle" font-size="8" fill="#a5d6a7">(1 cotyledon)</text>
+<text x="516" y="202" text-anchor="middle" font-size="8" fill="#a5d6a7">Dicots</text>
+<text x="516" y="214" text-anchor="middle" font-size="8" fill="#a5d6a7">(2 cotyledons)</text>
+<text x="516" y="255" text-anchor="middle" font-size="8" fill="white" font-weight="bold">eg: Mango,</text>
+<text x="516" y="267" text-anchor="middle" font-size="8" fill="white">Wheat, Rose</text>
+
+<!-- Vascular tissue indicator -->
+<rect x="10" y="295" width="560" height="22" rx="6" fill="#e8eaf6" stroke="#5c6bc0" stroke-width="1"/>
+<text x="62"  y="310" text-anchor="middle" font-size="8" fill="#880e4f">✗ No vascular</text>
+<text x="175" y="310" text-anchor="middle" font-size="8" fill="#880e4f">✗ No vascular</text>
+<text x="288" y="310" text-anchor="middle" font-size="8" fill="#1b5e20">✓ Vascular</text>
+<text x="401" y="310" text-anchor="middle" font-size="8" fill="#1b5e20">✓ Vascular</text>
+<text x="516" y="310" text-anchor="middle" font-size="8" fill="#1b5e20">✓ Vascular</text>
+
+<!-- NEET tip -->
+<rect x="10" y="325" width="560" height="40" rx="8" fill="#fff3e0" stroke="#f57f17" stroke-width="1.5"/>
+<text x="290" y="342" text-anchor="middle" font-size="10" fill="#e65100" font-weight="bold">⭐ NEET Key Points</text>
+<text x="290" y="358" text-anchor="middle" font-size="9" fill="#bf360c">Embryophyta = Bryophyta+Pteridophyta+Gymnosperms+Angiosperms · Cryptogams = no seeds</text>
+
+<text x="290" y="390" text-anchor="middle" font-size="9" fill="#546e7a">Phanerogams (seed plants) = Gymnosperms + Angiosperms</text>
+</svg>`,
+  },
+
   "Cell — The Unit of Life": {
     title: "Animal Cell — Internal Structure",
     description: "Cross-section of a typical animal cell showing major organelles",
@@ -508,6 +880,9 @@ export function findDiagram(chapter: string): DiagramData | null {
   if (SVG_FALLBACKS[chapter]) return SVG_FALLBACKS[chapter];
 
   // 4. Keyword → SVG fallback
+  if (ch.includes("animal kingdom") || ch.includes("phyla") || ch.includes("animalia")) return SVG_FALLBACKS["Animal Kingdom"];
+  if (ch.includes("biological class") || ch.includes("five kingdom") || ch.includes("whittaker")) return SVG_FALLBACKS["Biological Classification"];
+  if (ch.includes("plant kingdom") || ch.includes("plantae") || ch.includes("bryophyt") || ch.includes("pteridophyt")) return SVG_FALLBACKS["Plant Kingdom"];
   if (ch.includes("anatomy") || ch.includes("dicot") || ch.includes("monocot")) return SVG_FALLBACKS["Anatomy of Flowering Plants"];
   if (ch.includes("biomolecule") || ch.includes("mitochondria")) return SVG_FALLBACKS["Biomolecules"];
 
