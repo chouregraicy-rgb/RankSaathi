@@ -18,7 +18,7 @@ const REAL_IMAGES: Record<string, DiagramData> = {
     title: "Structure of an Animal Cell",
     description: "3D model showing nucleus, mitochondria, golgi apparatus, ribosomes and cytoplasm",
     labels: ["Nucleus", "Nucleolus", "Mitochondria", "Golgi Apparatus", "Ribosomes", "Cytoplasm", "Centrioles", "Cell Membrane"],
-    imageUrl: BASE + "/cell.png.svg",
+    imageUrl: BASE + "/Celltypes.png.png",
     credit: "Wikipedia (CC BY-SA)", svg: "",
   },
   "Photosynthesis": {
