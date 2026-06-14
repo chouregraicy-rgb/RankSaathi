@@ -96,8 +96,10 @@ function BiologyDiagram({ chapter, fallback, color }: {
   color: string;
 }) {
   const [imgError, setImgError] = useState(false);
+  useEffect(() => { setImgError(false); }, [chapter]);
+  
+// ADD THIS LINE BELOW:
   const preDrawn = findDiagram(chapter);
-
   if (preDrawn) {
     const imageUrl = preDrawn.imageUrl;
 
