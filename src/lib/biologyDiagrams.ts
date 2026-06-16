@@ -12,70 +12,255 @@ export interface DiagramData {
 
 const BASE = "https://jrdpxdalwvmcffmfqajk.supabase.co/storage/v1/object/public/biology-diagrams";
 
-// ── REAL IMAGES hosted on Supabase Storage ────────────────────────────────────
+// ── REAL IMAGES: Supabase (primary) + Wikimedia Commons (CC BY-SA) ───────────
+const WIKI = "https://upload.wikimedia.org/wikipedia/commons";
 const REAL_IMAGES: Record<string, DiagramData> = {
+
+  // ── Supabase hosted ──────────────────────────────────────────────────────────
   "Cell — The Unit of Life": {
-    title: "Structure of an Animal Cell",
-    description: "3D model showing nucleus, mitochondria, golgi apparatus, ribosomes and cytoplasm",
+    title: "Eukaryotic vs Prokaryotic Cell",
+    description: "Comparison of eukaryotic and prokaryotic cell structure",
     labels: ["Nucleus", "Nucleolus", "Mitochondria", "Golgi Apparatus", "Ribosomes", "Cytoplasm", "Centrioles", "Cell Membrane"],
-    imageUrl: BASE + "/Celltypes.png.png",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/Celltypes.png.png", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Photosynthesis": {
     title: "Chloroplast Structure",
     description: "Cross-section of chloroplast showing thylakoid, grana and stroma",
     labels: ["Outer Membrane", "Inner Membrane", "Thylakoid", "Grana", "Stroma", "Stroma Lamellae"],
-    imageUrl: BASE + "/chloroplast.png.svg",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/chloroplast.png.svg", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Digestion & Absorption": {
     title: "Human Digestive System",
     description: "Complete human alimentary canal from mouth to rectum with accessory glands",
     labels: ["Mouth", "Oesophagus", "Stomach", "Small Intestine", "Large Intestine", "Liver", "Pancreas", "Rectum"],
-    imageUrl: BASE + "/digestion.png.svg",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/digestion.png.svg", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Molecular Basis of Inheritance": {
     title: "DNA Double Helix",
     description: "Watson-Crick DNA model showing base pairs and sugar-phosphate backbone",
     labels: ["Adenine-Thymine", "Guanine-Cytosine", "Phosphate Group", "Deoxyribose Sugar", "Hydrogen Bonds", "Major Groove"],
-    imageUrl: BASE + "/dna.png.jpg",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/dna.png.jpg", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Neural Control & Coordination": {
     title: "Structure of the Human Eye",
     description: "Cross-section of human eye showing cornea, lens, retina and optic nerve",
     labels: ["Cornea", "Lens", "Retina", "Optic Nerve", "Iris", "Pupil", "Vitreous Humour", "Sclera"],
-    imageUrl: BASE + "/eye.png.jpg",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/eye.png.jpg", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Body Fluids & Circulation": {
     title: "Human Heart — Internal Structure",
     description: "Four-chambered human heart showing atria, ventricles and valves",
     labels: ["Right Atrium", "Left Atrium", "Right Ventricle", "Left Ventricle", "Aorta", "Pulmonary Artery", "Tricuspid Valve", "Bicuspid Valve"],
-    imageUrl: BASE + "/heart.png.svg",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/heart.png.svg", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Excretory Products & Elimination": {
     title: "Human Kidney — Longitudinal Section",
     description: "Longitudinal section showing cortex, medulla, pelvis and ureter",
     labels: ["Cortex", "Medulla", "Renal Pelvis", "Ureter", "Pyramid", "Renal Artery", "Renal Vein"],
-    imageUrl: BASE + "/kindey.png.png",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/kindey.png.png", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Breathing & Exchange of Gases": {
     title: "Human Respiratory System",
     description: "Lungs, trachea, bronchi, bronchioles and alveoli structure",
     labels: ["Nasal Cavity", "Trachea", "Bronchus", "Bronchioles", "Alveoli", "Diaphragm", "Left Lung", "Right Lung"],
-    imageUrl: BASE + "/lungs.png.jpg",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/lungs.png.jpg", credit: "Wikimedia (CC BY-SA)", svg: "",
   },
   "Structural Organisation in Animals": {
     title: "Structure of a Neuron",
     description: "Multipolar neuron showing dendrites, cell body, axon and myelin sheath",
     labels: ["Dendrites", "Cell Body", "Nucleus", "Axon", "Myelin Sheath", "Node of Ranvier", "Axon Terminal"],
-    imageUrl: BASE + "/neuron.png.png",
-    credit: "Wikipedia (CC BY-SA)", svg: "",
+    imageUrl: BASE + "/neuron.png.png", credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+
+  // ── Wikimedia Commons images (CC BY-SA) ──────────────────────────────────────
+  "The Living World": {
+    title: "Biological Classification Hierarchy",
+    description: "Taxonomic hierarchy from Kingdom to Species with examples",
+    labels: ["Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"],
+    imageUrl: WIKI + "/thumb/a/a5/Biological_classification_L_Pengo_vflip.svg/600px-Biological_classification_L_Pengo_vflip.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Biological Classification": {
+    title: "Five Kingdom Classification",
+    description: "Whittaker's Five Kingdom system — Monera, Protista, Fungi, Plantae, Animalia",
+    labels: ["Monera", "Protista", "Fungi", "Plantae", "Animalia"],
+    imageUrl: WIKI + "/thumb/8/8e/Eukaryota_diversity_2.jpg/800px-Eukaryota_diversity_2.jpg",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Plant Kingdom": {
+    title: "Plant Kingdom Classification",
+    description: "Major divisions from Algae to Angiosperms showing evolutionary progression",
+    labels: ["Algae", "Bryophyta", "Pteridophyta", "Gymnosperms", "Angiosperms"],
+    imageUrl: WIKI + "/thumb/4/49/Land_plant_phylogeny.svg/800px-Land_plant_phylogeny.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Animal Kingdom": {
+    title: "Animal Kingdom Phylogenetic Tree",
+    description: "Major animal phyla from Porifera to Chordata with key characteristics",
+    labels: ["Porifera", "Cnidaria", "Platyhelminthes", "Annelida", "Arthropoda", "Mollusca", "Echinodermata", "Chordata"],
+    imageUrl: WIKI + "/thumb/7/7d/Animal_diversity_October_2020.jpg/800px-Animal_diversity_October_2020.jpg",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Morphology of Flowering Plants": {
+    title: "Parts of a Flowering Plant",
+    description: "Complete diagram of a flowering plant showing root, stem, leaf, flower and fruit",
+    labels: ["Root", "Stem", "Leaf", "Flower", "Fruit", "Seed", "Node", "Internode"],
+    imageUrl: WIKI + "/thumb/4/4e/Mature_flower_diagram.svg/600px-Mature_flower_diagram.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Anatomy of Flowering Plants": {
+    title: "Dicot vs Monocot Stem Cross Section",
+    description: "Internal anatomy of dicot and monocot stem showing vascular bundles",
+    labels: ["Epidermis", "Cortex", "Vascular Bundle", "Xylem", "Phloem", "Pith", "Endodermis"],
+    imageUrl: WIKI + "/thumb/d/da/Stem_cross_section.jpg/800px-Stem_cross_section.jpg",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Biomolecules": {
+    title: "Structure of DNA & Biomolecules",
+    description: "Key biomolecules — carbohydrates, proteins, lipids and nucleic acids",
+    labels: ["Glucose", "Amino Acid", "Fatty Acid", "Nucleotide", "Peptide Bond", "Glycosidic Bond"],
+    imageUrl: WIKI + "/thumb/e/e4/DNA_chemical_structure.svg/600px-DNA_chemical_structure.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Cell Cycle & Cell Division": {
+    title: "Mitosis & Meiosis",
+    description: "Stages of mitosis and meiosis showing chromosome behavior",
+    labels: ["Prophase", "Metaphase", "Anaphase", "Telophase", "Cytokinesis", "Interphase"],
+    imageUrl: WIKI + "/thumb/2/2f/Animal_cell_cycle-en.svg/800px-Animal_cell_cycle-en.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Transport in Plants": {
+    title: "Osmosis & Transport in Plants",
+    description: "Water transport through root hair, xylem and transpiration pull",
+    labels: ["Root Hair", "Cortex", "Xylem", "Phloem", "Stomata", "Osmosis", "Apoplast", "Symplast"],
+    imageUrl: WIKI + "/thumb/9/96/Osmosis_diagram.svg/800px-Osmosis_diagram.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Mineral Nutrition": {
+    title: "Nitrogen Fixation & Mineral Absorption",
+    description: "Nitrogen cycle and mineral ion absorption by plant roots",
+    labels: ["Nitrogen Fixation", "Nitrification", "Denitrification", "Ammonification", "Root Absorption"],
+    imageUrl: WIKI + "/thumb/a/a8/Nitrogen_Cycle.svg/800px-Nitrogen_Cycle.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Respiration in Plants": {
+    title: "Cellular Respiration Pathways",
+    description: "Glycolysis, Krebs cycle and oxidative phosphorylation in plant cells",
+    labels: ["Glycolysis", "Pyruvate", "Krebs Cycle", "ETC", "ATP", "NADH", "FADH2"],
+    imageUrl: WIKI + "/thumb/3/30/Cellular_respiration.svg/800px-Cellular_respiration.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Plant Growth & Development": {
+    title: "Plant Growth & Hormones",
+    description: "Sigmoid growth curve and effect of plant hormones on growth",
+    labels: ["Auxin", "Gibberellin", "Cytokinin", "Abscisic Acid", "Ethylene", "Apical Dominance"],
+    imageUrl: WIKI + "/thumb/7/7e/Auxin_and_phototropism.svg/600px-Auxin_and_phototropism.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Locomotion & Movement": {
+    title: "Skeletal Muscle Structure",
+    description: "Structure of skeletal muscle from organ to sarcomere level",
+    labels: ["Muscle Fibre", "Myofibril", "Sarcomere", "Actin", "Myosin", "Z-line", "H-zone"],
+    imageUrl: WIKI + "/thumb/5/52/Skeletal_muscle.jpg/800px-Skeletal_muscle.jpg",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Chemical Coordination": {
+    title: "Human Endocrine System",
+    description: "Major endocrine glands and their hormones",
+    labels: ["Hypothalamus", "Pituitary", "Thyroid", "Adrenal", "Pancreas", "Gonads", "Pineal"],
+    imageUrl: WIKI + "/thumb/1/18/Illu_endocrine_system.jpg/600px-Illu_endocrine_system.jpg",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Reproduction in Organisms": {
+    title: "Types of Reproduction",
+    description: "Asexual and sexual reproduction modes in organisms",
+    labels: ["Binary Fission", "Budding", "Fragmentation", "Sporulation", "Sexual Reproduction"],
+    imageUrl: WIKI + "/thumb/a/a7/Amoeba_binary_fission.svg/800px-Amoeba_binary_fission.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Sexual Reproduction in Flowering Plants": {
+    title: "Flower Structure & Pollination",
+    description: "Parts of a flower and double fertilization in angiosperms",
+    labels: ["Stamen", "Pistil", "Pollen", "Ovule", "Fertilization", "Endosperm", "Embryo"],
+    imageUrl: WIKI + "/thumb/4/4e/Mature_flower_diagram.svg/600px-Mature_flower_diagram.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Human Reproduction": {
+    title: "Human Reproductive System",
+    description: "Male and female reproductive organs with gametogenesis",
+    labels: ["Testes", "Ovary", "Fallopian Tube", "Uterus", "Sperm", "Ovum", "Fertilization"],
+    imageUrl: WIKI + "/thumb/5/5e/Spermatozoa_-_en.svg/800px-Spermatozoa_-_en.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Reproductive Health": {
+    title: "Reproductive Health & Contraception",
+    description: "Methods of contraception and STDs overview",
+    labels: ["Contraception", "IUD", "Barrier Methods", "Hormonal", "STDs", "MTP"],
+    imageUrl: WIKI + "/thumb/c/cd/Reproductive_system_diagram_-_female.png/600px-Reproductive_system_diagram_-_female.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Principles of Inheritance": {
+    title: "Mendelian Genetics & Dihybrid Cross",
+    description: "Monohybrid and dihybrid cross showing Mendel's laws",
+    labels: ["Dominant", "Recessive", "Homozygous", "Heterozygous", "Phenotype", "Genotype", "F1", "F2"],
+    imageUrl: WIKI + "/thumb/a/a2/Punnett_square_mendel_flowers.svg/600px-Punnett_square_mendel_flowers.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Evolution": {
+    title: "Darwin's Theory & Natural Selection",
+    description: "Tree of life and evidence of evolution from fossils to molecular biology",
+    labels: ["Natural Selection", "Variation", "Fitness", "Adaptation", "Speciation", "Fossil Record"],
+    imageUrl: WIKI + "/thumb/4/4b/Phylogenetic_tree.svg/800px-Phylogenetic_tree.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Human Health & Disease": {
+    title: "Immune System & Diseases",
+    description: "Human immune response, pathogens and common diseases",
+    labels: ["Antigen", "Antibody", "B-cell", "T-cell", "Pathogen", "Immunity", "Vaccination"],
+    imageUrl: WIKI + "/thumb/8/8e/Antibody.svg/600px-Antibody.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Microbes in Human Welfare": {
+    title: "Biogas Plant & Sewage Treatment",
+    description: "Biogas production process and sewage treatment stages",
+    labels: ["Anaerobic Digester", "Methanogens", "Biogas", "Slurry", "Sewage Treatment", "Activated Sludge"],
+    imageUrl: WIKI + "/thumb/f/f3/Biogas_plant_animation.gif/800px-Biogas_plant_animation.gif",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Biotechnology — Principles & Processes": {
+    title: "Recombinant DNA Technology",
+    description: "Gene cloning using restriction enzymes, vectors and host cells",
+    labels: ["Restriction Enzyme", "Vector", "Plasmid", "Recombinant DNA", "Host Cell", "Cloning", "PCR"],
+    imageUrl: WIKI + "/thumb/c/c0/Plasmid_%28english%29.svg/600px-Plasmid_%28english%29.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Biotechnology & Its Applications": {
+    title: "Bt Cotton & Insulin Production",
+    description: "Applications of biotechnology in agriculture and medicine",
+    labels: ["Bt Toxin", "Transgenic Plants", "Insulin", "Gene Therapy", "ELISA", "DNA Fingerprinting"],
+    imageUrl: WIKI + "/thumb/1/19/Genetic_engineering.svg/800px-Genetic_engineering.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Organisms & Populations": {
+    title: "Population Growth Curves",
+    description: "Logistic and exponential population growth with carrying capacity",
+    labels: ["Biotic Potential", "Carrying Capacity", "Logistic Growth", "J-curve", "S-curve", "Natality", "Mortality"],
+    imageUrl: WIKI + "/thumb/d/d9/Population_growth.svg/800px-Population_growth.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Ecosystem": {
+    title: "Ecosystem Energy Flow",
+    description: "Food chain, food web and energy flow through trophic levels",
+    labels: ["Producer", "Primary Consumer", "Secondary Consumer", "Decomposer", "Energy Flow", "Biomass"],
+    imageUrl: WIKI + "/thumb/f/f3/Aquatic_food_web.jpg/800px-Aquatic_food_web.jpg",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
+  },
+  "Biodiversity": {
+    title: "Biodiversity & Conservation",
+    description: "Types of biodiversity, hotspots and conservation methods",
+    labels: ["Species Diversity", "Genetic Diversity", "Ecosystem Diversity", "Hotspots", "In-situ", "Ex-situ"],
+    imageUrl: WIKI + "/thumb/2/2c/Biodiversity_hotspots_WWF.svg/800px-Biodiversity_hotspots_WWF.svg.png",
+    credit: "Wikimedia (CC BY-SA)", svg: "",
   },
 };
 
@@ -861,30 +1046,50 @@ const SVG_FALLBACKS: Record<string, DiagramData> = {
 
 // ── MAIN LOOKUP FUNCTION ──────────────────────────────────────────────────────
 export function findDiagram(chapter: string): DiagramData | null {
-  // 1. Exact real image match (Supabase hosted)
+  // 1. Exact real image match (Supabase + Wikimedia)
   if (REAL_IMAGES[chapter]) return REAL_IMAGES[chapter];
 
-  // 2. Keyword → real image
+  // 2. Keyword → real image (fuzzy match)
   const ch = chapter.toLowerCase();
+  if (ch.includes("living world") || ch.includes("taxonomy") || ch.includes("classification") && ch.includes("living")) return REAL_IMAGES["The Living World"];
+  if (ch.includes("biological class") || ch.includes("five kingdom") || ch.includes("whittaker")) return REAL_IMAGES["Biological Classification"];
+  if (ch.includes("plant kingdom") || ch.includes("bryophyt") || ch.includes("pteridophyt")) return REAL_IMAGES["Plant Kingdom"];
+  if (ch.includes("animal kingdom") || ch.includes("phyla") || ch.includes("animalia")) return REAL_IMAGES["Animal Kingdom"];
+  if (ch.includes("morphology") || ch.includes("flowering plant")) return REAL_IMAGES["Morphology of Flowering Plants"];
+  if (ch.includes("anatomy") || ch.includes("dicot") || ch.includes("monocot")) return REAL_IMAGES["Anatomy of Flowering Plants"];
+  if (ch.includes("structural organ") || ch.includes("earthworm")) return REAL_IMAGES["Structural Organisation in Animals"];
+  if (ch.includes("cell cycle") || ch.includes("cell division") || ch.includes("mitosis") || ch.includes("meiosis")) return REAL_IMAGES["Cell Cycle & Cell Division"];
   if (ch.includes("cell") && !ch.includes("cell cycle")) return REAL_IMAGES["Cell — The Unit of Life"];
-  if (ch.includes("neural") || ch.includes("neuron") || ch.includes("eye") || ch.includes("ear")) return REAL_IMAGES["Neural Control & Coordination"];
+  if (ch.includes("biomolecule") || ch.includes("protein") || ch.includes("carbohydrate")) return REAL_IMAGES["Biomolecules"];
+  if (ch.includes("transport") && ch.includes("plant")) return REAL_IMAGES["Transport in Plants"];
+  if (ch.includes("mineral") || ch.includes("nitrogen") || ch.includes("nutrition")) return REAL_IMAGES["Mineral Nutrition"];
+  if (ch.includes("photosynthesis") || ch.includes("chloroplast")) return REAL_IMAGES["Photosynthesis"];
+  if (ch.includes("respiration") && ch.includes("plant")) return REAL_IMAGES["Respiration in Plants"];
+  if (ch.includes("plant growth") || ch.includes("auxin") || ch.includes("gibberellin")) return REAL_IMAGES["Plant Growth & Development"];
+  if (ch.includes("digest") || ch.includes("absorpt") || ch.includes("alimentary")) return REAL_IMAGES["Digestion & Absorption"];
+  if (ch.includes("breath") || ch.includes("lung") || ch.includes("alveol")) return REAL_IMAGES["Breathing & Exchange of Gases"];
   if (ch.includes("circulation") || ch.includes("heart") || ch.includes("blood")) return REAL_IMAGES["Body Fluids & Circulation"];
   if (ch.includes("excret") || ch.includes("kidney") || ch.includes("nephron")) return REAL_IMAGES["Excretory Products & Elimination"];
-  if (ch.includes("photosynthesis") || ch.includes("chloroplast")) return REAL_IMAGES["Photosynthesis"];
-  if (ch.includes("digest") || ch.includes("absorpt") || ch.includes("alimentary")) return REAL_IMAGES["Digestion & Absorption"];
-  if (ch.includes("breath") || ch.includes("lung") || ch.includes("respirat") || ch.includes("alveol")) return REAL_IMAGES["Breathing & Exchange of Gases"];
+  if (ch.includes("locomotion") || ch.includes("movement") || ch.includes("muscle") || ch.includes("skeletal")) return REAL_IMAGES["Locomotion & Movement"];
+  if (ch.includes("neural") || ch.includes("neuron") || ch.includes("eye") || ch.includes("ear")) return REAL_IMAGES["Neural Control & Coordination"];
+  if (ch.includes("chemical coord") || ch.includes("endocrine") || ch.includes("hormone")) return REAL_IMAGES["Chemical Coordination"];
+  if (ch.includes("reproduction in org") || ch.includes("asexual")) return REAL_IMAGES["Reproduction in Organisms"];
+  if (ch.includes("sexual reprod") && ch.includes("plant")) return REAL_IMAGES["Sexual Reproduction in Flowering Plants"];
+  if (ch.includes("human reprod")) return REAL_IMAGES["Human Reproduction"];
+  if (ch.includes("reproductive health") || ch.includes("contraception")) return REAL_IMAGES["Reproductive Health"];
+  if (ch.includes("inheritance") || ch.includes("mendel") || ch.includes("genetics")) return REAL_IMAGES["Principles of Inheritance"];
   if (ch.includes("molecular") || ch.includes("dna") || ch.includes("double helix")) return REAL_IMAGES["Molecular Basis of Inheritance"];
-  if (ch.includes("structural organ") || ch.includes("earthworm")) return REAL_IMAGES["Structural Organisation in Animals"];
+  if (ch.includes("evolution") || ch.includes("darwin") || ch.includes("natural selection")) return REAL_IMAGES["Evolution"];
+  if (ch.includes("health") && ch.includes("disease")) return REAL_IMAGES["Human Health & Disease"];
+  if (ch.includes("microbe") || ch.includes("biogas") || ch.includes("sewage")) return REAL_IMAGES["Microbes in Human Welfare"];
+  if (ch.includes("biotechnology") && ch.includes("principle")) return REAL_IMAGES["Biotechnology — Principles & Processes"];
+  if (ch.includes("biotechnology") && ch.includes("applic")) return REAL_IMAGES["Biotechnology & Its Applications"];
+  if (ch.includes("organism") && ch.includes("population")) return REAL_IMAGES["Organisms & Populations"];
+  if (ch.includes("ecosystem") || ch.includes("food chain") || ch.includes("food web")) return REAL_IMAGES["Ecosystem"];
+  if (ch.includes("biodiversity") || ch.includes("conservation")) return REAL_IMAGES["Biodiversity"];
 
-  // 3. Exact SVG fallback
+  // 3. SVG fallbacks for complex diagrams
   if (SVG_FALLBACKS[chapter]) return SVG_FALLBACKS[chapter];
-
-  // 4. Keyword → SVG fallback
-  if (ch.includes("animal kingdom") || ch.includes("phyla") || ch.includes("animalia")) return SVG_FALLBACKS["Animal Kingdom"];
-  if (ch.includes("biological class") || ch.includes("five kingdom") || ch.includes("whittaker")) return SVG_FALLBACKS["Biological Classification"];
-  if (ch.includes("plant kingdom") || ch.includes("plantae") || ch.includes("bryophyt") || ch.includes("pteridophyt")) return SVG_FALLBACKS["Plant Kingdom"];
-  if (ch.includes("anatomy") || ch.includes("dicot") || ch.includes("monocot")) return SVG_FALLBACKS["Anatomy of Flowering Plants"];
-  if (ch.includes("biomolecule") || ch.includes("mitochondria")) return SVG_FALLBACKS["Biomolecules"];
 
   return null;
 }
