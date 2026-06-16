@@ -1045,48 +1045,57 @@ const SVG_FALLBACKS: Record<string, DiagramData> = {
 };
 
 // ── MAIN LOOKUP FUNCTION ──────────────────────────────────────────────────────
+function mergeWithSvg(data: DiagramData, chapter: string): DiagramData {
+  // If SVG is empty, try to get it from SVG_FALLBACKS
+  if (!data.svg || data.svg.trim().length < 10) {
+    const svgData = SVG_FALLBACKS[chapter];
+    if (svgData?.svg) return { ...data, svg: svgData.svg };
+  }
+  return data;
+}
+
 export function findDiagram(chapter: string): DiagramData | null {
-  // 1. Exact real image match (Supabase + Wikimedia)
-  if (REAL_IMAGES[chapter]) return REAL_IMAGES[chapter];
+  // 1. Exact match — merge with SVG fallback if needed
+  if (REAL_IMAGES[chapter]) return mergeWithSvg(REAL_IMAGES[chapter], chapter);
 
   // 2. Keyword → real image (fuzzy match)
   const ch = chapter.toLowerCase();
-  if (ch.includes("living world") || ch.includes("taxonomy") || ch.includes("classification") && ch.includes("living")) return REAL_IMAGES["The Living World"];
-  if (ch.includes("biological class") || ch.includes("five kingdom") || ch.includes("whittaker")) return REAL_IMAGES["Biological Classification"];
-  if (ch.includes("plant kingdom") || ch.includes("bryophyt") || ch.includes("pteridophyt")) return REAL_IMAGES["Plant Kingdom"];
-  if (ch.includes("animal kingdom") || ch.includes("phyla") || ch.includes("animalia")) return REAL_IMAGES["Animal Kingdom"];
-  if (ch.includes("morphology") || ch.includes("flowering plant")) return REAL_IMAGES["Morphology of Flowering Plants"];
-  if (ch.includes("anatomy") || ch.includes("dicot") || ch.includes("monocot")) return REAL_IMAGES["Anatomy of Flowering Plants"];
-  if (ch.includes("structural organ") || ch.includes("earthworm")) return REAL_IMAGES["Structural Organisation in Animals"];
-  if (ch.includes("cell cycle") || ch.includes("cell division") || ch.includes("mitosis") || ch.includes("meiosis")) return REAL_IMAGES["Cell Cycle & Cell Division"];
-  if (ch.includes("cell") && !ch.includes("cell cycle")) return REAL_IMAGES["Cell — The Unit of Life"];
-  if (ch.includes("biomolecule") || ch.includes("protein") || ch.includes("carbohydrate")) return REAL_IMAGES["Biomolecules"];
-  if (ch.includes("transport") && ch.includes("plant")) return REAL_IMAGES["Transport in Plants"];
-  if (ch.includes("mineral") || ch.includes("nitrogen") || ch.includes("nutrition")) return REAL_IMAGES["Mineral Nutrition"];
-  if (ch.includes("photosynthesis") || ch.includes("chloroplast")) return REAL_IMAGES["Photosynthesis"];
-  if (ch.includes("respiration") && ch.includes("plant")) return REAL_IMAGES["Respiration in Plants"];
-  if (ch.includes("plant growth") || ch.includes("auxin") || ch.includes("gibberellin")) return REAL_IMAGES["Plant Growth & Development"];
-  if (ch.includes("digest") || ch.includes("absorpt") || ch.includes("alimentary")) return REAL_IMAGES["Digestion & Absorption"];
-  if (ch.includes("breath") || ch.includes("lung") || ch.includes("alveol")) return REAL_IMAGES["Breathing & Exchange of Gases"];
-  if (ch.includes("circulation") || ch.includes("heart") || ch.includes("blood")) return REAL_IMAGES["Body Fluids & Circulation"];
-  if (ch.includes("excret") || ch.includes("kidney") || ch.includes("nephron")) return REAL_IMAGES["Excretory Products & Elimination"];
-  if (ch.includes("locomotion") || ch.includes("movement") || ch.includes("muscle") || ch.includes("skeletal")) return REAL_IMAGES["Locomotion & Movement"];
-  if (ch.includes("neural") || ch.includes("neuron") || ch.includes("eye") || ch.includes("ear")) return REAL_IMAGES["Neural Control & Coordination"];
-  if (ch.includes("chemical coord") || ch.includes("endocrine") || ch.includes("hormone")) return REAL_IMAGES["Chemical Coordination"];
-  if (ch.includes("reproduction in org") || ch.includes("asexual")) return REAL_IMAGES["Reproduction in Organisms"];
-  if (ch.includes("sexual reprod") && ch.includes("plant")) return REAL_IMAGES["Sexual Reproduction in Flowering Plants"];
-  if (ch.includes("human reprod")) return REAL_IMAGES["Human Reproduction"];
-  if (ch.includes("reproductive health") || ch.includes("contraception")) return REAL_IMAGES["Reproductive Health"];
-  if (ch.includes("inheritance") || ch.includes("mendel") || ch.includes("genetics")) return REAL_IMAGES["Principles of Inheritance"];
-  if (ch.includes("molecular") || ch.includes("dna") || ch.includes("double helix")) return REAL_IMAGES["Molecular Basis of Inheritance"];
-  if (ch.includes("evolution") || ch.includes("darwin") || ch.includes("natural selection")) return REAL_IMAGES["Evolution"];
-  if (ch.includes("health") && ch.includes("disease")) return REAL_IMAGES["Human Health & Disease"];
-  if (ch.includes("microbe") || ch.includes("biogas") || ch.includes("sewage")) return REAL_IMAGES["Microbes in Human Welfare"];
-  if (ch.includes("biotechnology") && ch.includes("principle")) return REAL_IMAGES["Biotechnology — Principles & Processes"];
-  if (ch.includes("biotechnology") && ch.includes("applic")) return REAL_IMAGES["Biotechnology & Its Applications"];
-  if (ch.includes("organism") && ch.includes("population")) return REAL_IMAGES["Organisms & Populations"];
-  if (ch.includes("ecosystem") || ch.includes("food chain") || ch.includes("food web")) return REAL_IMAGES["Ecosystem"];
-  if (ch.includes("biodiversity") || ch.includes("conservation")) return REAL_IMAGES["Biodiversity"];
+  if (ch.includes("living world") || ch.includes("taxonomy") || ch.includes("classification") && ch.includes("living")) return mergeWithSvg(REAL_IMAGES["The Living World"], "The Living World");
+  if (ch.includes("biological class") || ch.includes("five kingdom") || ch.includes("whittaker")) return mergeWithSvg(REAL_IMAGES["Biological Classification"], "Biological Classification");
+  if (ch.includes("plant kingdom") || ch.includes("bryophyt") || ch.includes("pteridophyt")) return mergeWithSvg(REAL_IMAGES["Plant Kingdom"], "Plant Kingdom");
+  if (ch.includes("animal kingdom") || ch.includes("phyla") || ch.includes("animalia")) return mergeWithSvg(REAL_IMAGES["Animal Kingdom"], "Animal Kingdom");
+  if (ch.includes("morphology") || ch.includes("flowering plant")) return mergeWithSvg(REAL_IMAGES["Morphology of Flowering Plants"], "Morphology of Flowering Plants");
+  if (ch.includes("anatomy") || ch.includes("dicot") || ch.includes("monocot")) return mergeWithSvg(REAL_IMAGES["Anatomy of Flowering Plants"], "Anatomy of Flowering Plants");
+  if (ch.includes("structural organ") || ch.includes("earthworm")) return mergeWithSvg(REAL_IMAGES["Structural Organisation in Animals"], "Structural Organisation in Animals");
+  if (ch.includes("cell cycle") || ch.includes("cell division") || ch.includes("mitosis") || ch.includes("meiosis")) return mergeWithSvg(REAL_IMAGES["Cell Cycle & Cell Division"], "Cell Cycle & Cell Division");
+  if (ch.includes("cell") && !ch.includes("cell cycle")) return mergeWithSvg(REAL_IMAGES["Cell — The Unit of Life"], "Cell — The Unit of Life");
+  if (ch.includes("biomolecule") || ch.includes("protein") || ch.includes("carbohydrate")) return mergeWithSvg(REAL_IMAGES["Biomolecules"], "Biomolecules");
+  if (ch.includes("transport") && ch.includes("plant")) return mergeWithSvg(REAL_IMAGES["Transport in Plants"], "Transport in Plants");
+  if (ch.includes("mineral") || ch.includes("nitrogen") || ch.includes("nutrition")) return mergeWithSvg(REAL_IMAGES["Mineral Nutrition"], "Mineral Nutrition");
+  if (ch.includes("photosynthesis") || ch.includes("chloroplast")) return mergeWithSvg(REAL_IMAGES["Photosynthesis"], "Photosynthesis");
+  if (ch.includes("respiration") && ch.includes("plant")) return mergeWithSvg(REAL_IMAGES["Respiration in Plants"], "Respiration in Plants");
+  if (ch.includes("plant growth") || ch.includes("auxin") || ch.includes("gibberellin")) return mergeWithSvg(REAL_IMAGES["Plant Growth & Development"], "Plant Growth & Development");
+  if (ch.includes("digest") || ch.includes("absorpt") || ch.includes("alimentary")) return mergeWithSvg(REAL_IMAGES["Digestion & Absorption"], "Digestion & Absorption");
+  if (ch.includes("breath") || ch.includes("lung") || ch.includes("alveol")) return mergeWithSvg(REAL_IMAGES["Breathing & Exchange of Gases"], "Breathing & Exchange of Gases");
+  if (ch.includes("circulation") || ch.includes("heart") || ch.includes("blood")) return mergeWithSvg(REAL_IMAGES["Body Fluids & Circulation"], "Body Fluids & Circulation");
+  if (ch.includes("excret") || ch.includes("kidney") || ch.includes("nephron")) return mergeWithSvg(REAL_IMAGES["Excretory Products & Elimination"], "Excretory Products & Elimination");
+  if (ch.includes("locomotion") || ch.includes("movement") || ch.includes("muscle") || ch.includes("skeletal")) return mergeWithSvg(REAL_IMAGES["Locomotion & Movement"], "Locomotion & Movement");
+  if (ch.includes("neural") || ch.includes("neuron") || ch.includes("eye") || ch.includes("ear")) return mergeWithSvg(REAL_IMAGES["Neural Control & Coordination"], "Neural Control & Coordination");
+  if (ch.includes("chemical coord") || ch.includes("endocrine") || ch.includes("hormone")) return mergeWithSvg(REAL_IMAGES["Chemical Coordination"], "Chemical Coordination");
+  if (ch.includes("reproduction in org") || ch.includes("asexual")) return mergeWithSvg(REAL_IMAGES["Reproduction in Organisms"], "Reproduction in Organisms");
+  if (ch.includes("sexual reprod") && ch.includes("plant")) return mergeWithSvg(REAL_IMAGES["Sexual Reproduction in Flowering Plants"], "Sexual Reproduction in Flowering Plants");
+  if (ch.includes("human reprod")) return mergeWithSvg(REAL_IMAGES["Human Reproduction"], "Human Reproduction");
+  if (ch.includes("reproductive health") || ch.includes("contraception")) return mergeWithSvg(REAL_IMAGES["Reproductive Health"], "Reproductive Health");
+  if (ch.includes("inheritance") || ch.includes("mendel") || ch.includes("genetics")) return mergeWithSvg(REAL_IMAGES["Principles of Inheritance"], "Principles of Inheritance");
+  if (ch.includes("molecular") || ch.includes("dna") || ch.includes("double helix")) return mergeWithSvg(REAL_IMAGES["Molecular Basis of Inheritance"], "Molecular Basis of Inheritance");
+  if (ch.includes("evolution") || ch.includes("darwin") || ch.includes("natural selection")) return mergeWithSvg(REAL_IMAGES["Evolution"], "Evolution");
+  if (ch.includes("health") && ch.includes("disease")) return mergeWithSvg(REAL_IMAGES["Human Health & Disease"], "Human Health & Disease");
+  if (ch.includes("microbe") || ch.includes("biogas") || ch.includes("sewage")) return mergeWithSvg(REAL_IMAGES["Microbes in Human Welfare"], "Microbes in Human Welfare");
+  if (ch.includes("biotechnology") && ch.includes("principle")) return mergeWithSvg(REAL_IMAGES["Biotechnology — Principles & Processes"], "Biotechnology — Principles & Processes");
+  if (ch.includes("biotechnology") && ch.includes("applic")) return mergeWithSvg(REAL_IMAGES["Biotechnology & Its Applications"], "Biotechnology & Its Applications");
+  if (ch.includes("organism") && ch.includes("population")) return mergeWithSvg(REAL_IMAGES["Organisms & Populations"], "Organisms & Populations");
+  if (ch.includes("ecosystem") || ch.includes("food chain") || ch.includes("food web")) return mergeWithSvg(REAL_IMAGES["Ecosystem"], "Ecosystem");
+  if (ch.includes("biodiversity") || ch.includes("conservation")) return mergeWithSvg(REAL_IMAGES["Biodiversity"], "Biodiversity");
 
   // 3. SVG fallbacks for complex diagrams
   if (SVG_FALLBACKS[chapter]) return SVG_FALLBACKS[chapter];

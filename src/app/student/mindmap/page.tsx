@@ -101,18 +101,16 @@ function BiologyDiagram({ chapter, fallback, color }: {
 // ADD THIS LINE BELOW:
   const preDrawn = findDiagram(chapter);
   if (preDrawn) {
-    // Route external URLs (Wikimedia) through imgproxy to bypass hotlink blocking
+    const hasSvg = preDrawn.svg && preDrawn.svg.trim().length > 10;
+    // Only use imageUrl when it's a Supabase URL (reliable) AND no SVG exists
     const rawUrl = preDrawn.imageUrl;
-    const imageUrl = rawUrl
-      ? rawUrl.includes("wikimedia.org")
-        ? `/api/imgproxy?url=${encodeURIComponent(rawUrl)}`
-        : rawUrl
-      : undefined;
+    const useImage = rawUrl && !hasSvg && !rawUrl.includes("wikimedia.org") && !imgError;
+    const imageUrl = useImage ? rawUrl : undefined;
 
     return (
       <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
         <p className="text-sm font-semibold text-emerald-700">📊 {preDrawn.title}</p>
-        {imageUrl && !imgError ? (
+        {imageUrl ? (
           <div className="relative w-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -127,13 +125,13 @@ function BiologyDiagram({ chapter, fallback, color }: {
               {preDrawn.description} · {preDrawn.credit ?? "Wikimedia Commons (CC BY-SA)"}
             </p>
           </div>
-        ) : (
-          // SVG fallback if image fails to load
+        ) : hasSvg ? (
+          // SVG primary — always works, no external dependency
           <div
             className="w-full rounded-xl overflow-hidden bg-white"
             dangerouslySetInnerHTML={{ __html: preDrawn.svg }}
           />
-        )}
+        ) : null}
         <div className="flex flex-wrap gap-2">
           {preDrawn.labels.map((l) => (
             <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
@@ -574,7 +572,7 @@ export default function MindMapPage() {
             {/* Important topics */}
             <div className="bg-[#0a0a12] border border-white/5 rounded-xl p-4">
               <p className="text-xs text-white/30 font-semibold uppercase tracking-wider mb-3">
-                <Star className="inline h-3 w-3 mr-1" />Important for NEET/JEE
+                <Star className="inline h-3 w-3 mr-1" />Important for {isBiology ? "NEET" : "NEET/JEE"}
               </p>
               <div className="flex flex-wrap gap-2">
                 {mindmap.importantTopics.map((t) => (
