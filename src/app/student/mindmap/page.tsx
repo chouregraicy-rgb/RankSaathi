@@ -101,7 +101,13 @@ function BiologyDiagram({ chapter, fallback, color }: {
 // ADD THIS LINE BELOW:
   const preDrawn = findDiagram(chapter);
   if (preDrawn) {
-    const imageUrl = preDrawn.imageUrl;
+    // Route external URLs (Wikimedia) through imgproxy to bypass hotlink blocking
+    const rawUrl = preDrawn.imageUrl;
+    const imageUrl = rawUrl
+      ? rawUrl.includes("wikimedia.org")
+        ? `/api/imgproxy?url=${encodeURIComponent(rawUrl)}`
+        : rawUrl
+      : undefined;
 
     return (
       <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
@@ -398,8 +404,7 @@ export default function MindMapPage() {
     "text-green-400 bg-green-500/10 border-green-500/20";
 
   const isBiology = subject === "Biology";
-  const hasPreDrawnDiagram = isBiology && !!chapter && !!findDiagram(chapter);
-  const showDiagramTab = isBiology && (mindmap || hasPreDrawnDiagram);
+  const showDiagramTab = isBiology && mindmap;
   const showFormulasTab = (subject === "Physics" || subject === "Mathematics") && mindmap && mindmap.keyFormulas.length > 0;
 
   const tabs = [
@@ -471,19 +476,6 @@ export default function MindMapPage() {
           </div>
         </div>
 
-        {/* Pre-generate diagram tab — show when Biology chapter selected before Generate */}
-        {!mindmap && !loading && hasPreDrawnDiagram && (
-          <div className="flex gap-1 p-1 bg-white/5 rounded-xl w-fit">
-            <button
-              onClick={() => setActivePanel("diagram")}
-              className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              style={{ backgroundColor: meta.color + "30", color: meta.color }}
-            >
-              Diagram
-            </button>
-          </div>
-        )}
-
         {/* Error */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>
@@ -498,11 +490,6 @@ export default function MindMapPage() {
               <p className="text-white/30 text-xs mt-1">Building nodes, formulas and diagrams</p>
             </div>
           </div>
-        )}
-
-        {/* Biology pre-drawn diagram — show before Generate if chapter selected */}
-        {!mindmap && !loading && hasPreDrawnDiagram && activePanel === "diagram" && (
-          <BiologyDiagram chapter={chapter} color={meta.color} />
         )}
 
         {/* Results */}
@@ -562,7 +549,7 @@ export default function MindMapPage() {
 
             {/* Biology Diagram */}
             {activePanel === "diagram" && showDiagramTab && (
-              <BiologyDiagram chapter={mindmap?.chapter ?? chapter} fallback={mindmap?.diagram} color={meta.color} />
+              <BiologyDiagram chapter={mindmap.chapter} fallback={mindmap.diagram} color={meta.color} />
             )}
 
             {/* Mnemonics */}
@@ -587,7 +574,7 @@ export default function MindMapPage() {
             {/* Important topics */}
             <div className="bg-[#0a0a12] border border-white/5 rounded-xl p-4">
               <p className="text-xs text-white/30 font-semibold uppercase tracking-wider mb-3">
-                <Star className="inline h-3 w-3 mr-1" />Important for {isBiology ? "NEET" : "NEET/JEE"}
+                <Star className="inline h-3 w-3 mr-1" />Important for NEET/JEE
               </p>
               <div className="flex flex-wrap gap-2">
                 {mindmap.importantTopics.map((t) => (
