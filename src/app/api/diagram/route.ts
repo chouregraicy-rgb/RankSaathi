@@ -66,20 +66,25 @@ SVG TECHNICAL RULES — FOLLOW EXACTLY:
 3. NO foreignObject, NO script, NO CSS classes, NO external references
 4. All colors as hex codes (#rrggbb) only
 5. Every <text> must have: x=, y=, font-size=, fill=, font-family="Arial,sans-serif"
-6. Make structures LARGE enough to see clearly (use most of the 700x560 space)
-7. Labels must be OUTSIDE the structure with a line pointing to the part
-8. Label lines: <line x1="..." y1="..." x2="..." y2="..." stroke="#333333" stroke-width="1"/>
+6. Make structures LARGE and REALISTIC (use path for organ shapes, not just circles)
+7. Labels OUTSIDE structure with pointer lines — NO asterisks, NO markdown, plain text only
+8. Label lines: <line x1="..." y1="..." x2="..." y2="..." stroke="#555555" stroke-width="1.2"/>
+
+CRITICAL — TEXT LABELS MUST BE PLAIN:
+- Write: <text>Nucleus</text> NOT <text>**Nucleus**</text>
+- Write: <text>Mitochondria</text> NOT <text>**Mitochondria**</text>
+- NEVER use **, *, _, or any markdown symbols inside SVG text tags
+- Labels should be clean plain words only
 
 QUALITY REQUIREMENTS:
-- Title at top center: font-size="16" font-weight="bold" fill="#1a1a2e"
-- Draw actual shapes (not just circles) — use path/ellipse for realistic organ shapes
-- Use gradient fills for 3D effect where appropriate
-- Color code different tissue types / regions
-- Add a yellow box at bottom with 2-3 NEET key facts
-- Minimum 10 clearly labeled parts
-- Label font-size: 11-12, part name in bold, short (1-3 words max per label)
+- Title at top center: font-size="15" font-weight="bold" fill="#1a1a2e"
+- Use realistic shapes: kidney bean for mitochondria, stack of discs for golgi, wavy lines for ER
+- Use gradient fills (linearGradient) for 3D/realistic look
+- Color code: cytoplasm=light green, nucleus=light blue, mitochondria=orange, golgi=purple
+- Bottom yellow box (#fffde7) with border: 2-3 NEET key facts as plain text
+- Minimum 10 labeled parts with pointer lines
 
-Return ONLY the SVG code, starting with <svg and ending with </svg>. No markdown, no explanation.`;
+Return ONLY raw SVG. Absolutely no markdown, no backticks, no explanation. Start directly with <svg`;
 }
 
 
@@ -118,6 +123,10 @@ export async function POST(req: NextRequest) {
 
     svg = svg.replace(/<script[\s\S]*?<\/script>/gi, "");
     svg = svg.replace(/on\w+="[^"]*"/gi, "");
+    // Strip markdown asterisks that LLM sometimes adds inside SVG text
+    svg = svg.replace(/\*\*([^*]+)\*\*/g, "$1");
+    svg = svg.replace(/\*([^*]+)\*/g, "$1");
+    svg = svg.replace(/__([^_]+)__/g, "$1");
 
     return NextResponse.json({ svg, chapter });
   } catch (err: any) {
