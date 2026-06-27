@@ -95,93 +95,96 @@ function BiologyDiagram({ chapter, fallback, color }: {
   fallback?: MindMapData["diagram"];
   color: string;
 }) {
-  const [imgError, setImgError] = useState(false);
-  useEffect(() => { setImgError(false); }, [chapter]);
-  
-// ADD THIS LINE BELOW:
-  const preDrawn = findDiagram(chapter);
-  if (preDrawn) {
-    const hasSvg = preDrawn.svg && preDrawn.svg.trim().length > 10;
-    // Only use imageUrl when it's a Supabase URL (reliable) AND no SVG exists
-    const rawUrl = preDrawn.imageUrl;
-    const useImage = rawUrl && !hasSvg && !rawUrl.includes("wikimedia.org") && !imgError;
-    const imageUrl = useImage ? rawUrl : undefined;
+  const [aiSvg, setAiSvg]         = useState<string>("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
+  const [generated, setGenerated] = useState("");
 
+  useEffect(() => {
+    setAiSvg("");
+    setError("");
+    setGenerated("");
+  }, [chapter]);
+
+  async function generateDiagram() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/diagram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chapter }),
+      });
+      const data = await res.json();
+      if (data.svg) {
+        setAiSvg(data.svg);
+        setGenerated(chapter);
+      } else {
+        setError(data.error || "Could not generate diagram");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (aiSvg && generated === chapter) {
     return (
       <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
-        <p className="text-sm font-semibold text-emerald-700">📊 {preDrawn.title}</p>
-        {imageUrl ? (
-          <div className="relative w-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt={preDrawn.title}
-              className="w-full max-h-[500px] object-contain rounded-xl bg-white"
-              onError={() => setImgError(true)}
-              crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
-            />
-            <p className="text-xs text-gray-400 mt-2 italic text-center">
-              {preDrawn.description} · {preDrawn.credit ?? "Wikimedia Commons (CC BY-SA)"}
-            </p>
-          </div>
-        ) : hasSvg ? (
-          // SVG primary — always works, no external dependency
-          <div
-            className="w-full rounded-xl overflow-hidden bg-white"
-            dangerouslySetInnerHTML={{ __html: preDrawn.svg }}
-          />
-        ) : null}
-        <div className="flex flex-wrap gap-2">
-          {preDrawn.labels.map((l) => (
-            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
-              {l}
-            </span>
-          ))}
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-emerald-700">📊 {chapter} — AI Diagram</p>
+          <button onClick={generateDiagram} disabled={loading} className="text-xs text-emerald-600 hover:text-emerald-700 underline">
+            Regenerate
+          </button>
         </div>
+        <div className="w-full rounded-xl overflow-hidden bg-white border border-gray-100"
+          dangerouslySetInnerHTML={{ __html: aiSvg }} />
+        <p className="text-xs text-gray-400 text-center italic">AI-generated NCERT-style diagram · {chapter}</p>
       </div>
     );
   }
 
-  // AI fallback generic diagram
-  if (!fallback) return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 text-center text-emerald-400/50 text-sm">
-      No diagram available for this chapter yet.
-    </div>
-  );
-
-  const labels = fallback.labels.slice(0, 6);
-  const positions = [
-    { x: 200, y: 80 }, { x: 340, y: 80 }, { x: 420, y: 180 },
-    { x: 340, y: 280 }, { x: 200, y: 280 }, { x: 120, y: 180 },
-  ];
-
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
-      <p className="text-sm font-semibold text-emerald-400">📊 {fallback.title}</p>
-      <svg viewBox="0 0 540 360" className="w-full max-h-72">
-        <ellipse cx="270" cy="180" rx="100" ry="80" fill={color} fillOpacity="0.15" stroke={color} strokeOpacity="0.4" strokeWidth="2"/>
-        <ellipse cx="270" cy="180" rx="40" ry="32" fill={color} fillOpacity="0.25" stroke={color} strokeOpacity="0.6" strokeWidth="1.5"/>
-        <text x="270" y="184" textAnchor="middle" fill={color} fontSize="11" fontWeight="600">Core</text>
-        {labels.map((label, i) => {
-          const pos = positions[i] || { x: 270, y: 180 };
-          const lineEnd = { x: 270 + (pos.x - 270) * 0.55, y: 180 + (pos.y - 180) * 0.55 };
-          return (
-            <g key={i}>
-              <line x1={lineEnd.x} y1={lineEnd.y} x2={pos.x} y2={pos.y} stroke={color} strokeOpacity="0.4" strokeWidth="1" strokeDasharray="3 2"/>
-              <circle cx={pos.x} cy={pos.y} r="5" fill={color} fillOpacity="0.6"/>
-              <rect x={pos.x - 50} y={pos.y - 28} width={100} height={22} rx="6" fill="#1a1a2e" stroke={color} strokeOpacity="0.3" strokeWidth="1"/>
-              <text x={pos.x} y={pos.y - 13} textAnchor="middle" fill="#e2e8f0" fontSize="9" fontWeight="500">
-                {label.length > 18 ? label.slice(0, 16) + "…" : label}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      <p className="text-xs text-muted-foreground italic text-center">{fallback.description}</p>
+    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 flex flex-col items-center gap-4">
+      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+        <span className="text-2xl">🔬</span>
+      </div>
+      <div className="text-center">
+        <p className="text-emerald-400 font-semibold text-sm mb-1">AI Diagram — {chapter}</p>
+        <p className="text-emerald-400/50 text-xs">Generate a detailed NCERT-style labeled diagram</p>
+      </div>
+      {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+      <button
+        onClick={generateDiagram}
+        disabled={loading}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-all disabled:opacity-60"
+      >
+        {loading ? (
+          <>
+            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Generating diagram...
+          </>
+        ) : <>✨ Generate Diagram</>}
+      </button>
+      <p className="text-xs text-emerald-400/30">Takes 5-10 seconds</p>
+      {fallback?.labels && fallback.labels.length > 0 && (
+        <div className="w-full pt-2 border-t border-emerald-500/10">
+          <p className="text-xs text-emerald-400/40 mb-2 text-center">Key parts in this diagram:</p>
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            {fallback.labels.map((l) => (
+              <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">{l}</span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 // ── FORMULA CARD ──────────────────────────────────────────────────────────────
 function FormulaCard({ label, formula, unit }: { label: string; formula: string; unit?: string }) {

@@ -245,19 +245,19 @@ export default function PricingPage() {
               {demoActive ? (
                 <>
                   <span className="text-5xl font-bold text-green-400">FREE</span>
-                  <span className="text-gray-500 line-through text-2xl">₹399</span>
+                  <span className="text-gray-500 line-through text-2xl">₹499</span>
                 </>
               ) : (
                 <>
                   <span className="text-gray-400 text-xl">₹</span>
-                  <span className="text-6xl font-bold bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">399</span>
+                  <span className="text-6xl font-bold bg-gradient-to-r from-white to-indigo-200 bg-clip-text text-transparent">499</span>
                 </>
               )}
             </div>
             <p className="text-gray-400 text-sm mt-1">One-time payment · No renewals ever</p>
             {!demoActive && (
               <p className="text-green-400 text-xs mt-1 font-medium">
-                🎉 Launch price — was ₹999
+                🎉 Launch price — was ₹1499
               </p>
             )}
           </div>
@@ -285,7 +285,7 @@ export default function PricingPage() {
             ) : (
               <Zap className="w-5 h-5 mr-2" />
             )}
-            {demoActive ? "Activate Free Access" : "Get Lifetime Access — ₹399"}
+            {demoActive ? "Activate Free Access" : "Get Lifetime Access — ₹499"}
           </Button>
 
           <p className="text-center text-xs text-gray-500 mt-3">
