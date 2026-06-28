@@ -7,6 +7,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useRouter } from "next/navigation";
 import { Lock, Download, BookOpen, Zap, Star, ChevronRight, FileText, Check } from "lucide-react";
 
+declare global { interface Window { Razorpay: any; } }
+
 // ── Google Drive — Single NEET folder (publicly shared) ──────────────────────
 const NEET_FOLDER_URL = "https://drive.google.com/drive/folders/1Ruhr6UeoBbAZCozpKlpHsL2zuyCsm7JN";
 
@@ -155,7 +157,7 @@ export default function ResourcesPage() {
   }
 
   if (loading) return (
-    <DashboardLayout role="student">
+    <DashboardLayout role="student" title="Study Resources">
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full"/>
       </div>
@@ -165,7 +167,7 @@ export default function ResourcesPage() {
   const currentSubject = PDF_RESOURCES.find(s => s.subject === activeTab)!;
 
   return (
-    <DashboardLayout role="student">
+    <DashboardLayout role="student" title="Study Resources">
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
         {/* Header */}
