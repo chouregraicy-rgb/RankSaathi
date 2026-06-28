@@ -1,451 +1,305 @@
+// src/app/pricing/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
-import { Check, Zap, Users, Building2, Sparkles, Tag, X } from "lucide-react";
+import Link from "next/link";
+import { Check, Zap, Shield, Star, Crown, ArrowLeft } from "lucide-react";
 
-const plans = [
-  {
-    id: "free",
-    name: "Free",
-    icon: Sparkles,
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    color: "from-slate-500 to-slate-700",
-    badge: null,
-    features: [
-      "5 AI doubt solutions/day",
-      "Basic test series",
-      "Community access",
-      "Basic analytics",
-    ],
-    cta: "Get Started Free",
-  },
-  {
-    id: "student",
-    name: "Student",
-    icon: Zap,
-    monthlyPrice: 99,
-    yearlyPrice: 799,
-    color: "from-violet-500 to-purple-700",
-    badge: "Most Popular",
-    features: [
-      "Unlimited AI doubt solving",
-      "Full NEET/JEE test series",
-      "Detailed performance analytics",
-      "Revision scheduler",
-      "Priority support",
-      "Offline access",
-    ],
-    cta: "Start Learning",
-  },
-  {
-    id: "family",
-    name: "Family",
-    icon: Users,
-    monthlyPrice: 149,
-    yearlyPrice: 1199,
-    color: "from-blue-500 to-cyan-600",
-    badge: "Best Value",
-    features: [
-      "Everything in Student",
-      "Parent dashboard",
-      "Live location tracking",
-      "Progress reports for parents",
-      "Up to 3 students",
-      "Family analytics",
-    ],
-    cta: "Get Family Plan",
-  },
-  {
-    id: "institution",
-    name: "Institution",
-    icon: Building2,
-    monthlyPrice: null,
-    yearlyPrice: null,
-    color: "from-amber-500 to-orange-600",
-    badge: "Enterprise",
-    features: [
-      "Everything in Family",
-      "Unlimited students",
-      "Admin dashboard",
-      "Custom branding",
-      "Bulk student import",
-      "Dedicated support",
-    ],
-    cta: "Contact Us",
-  },
-];
+declare global { interface Window { Razorpay: any; } }
 
-declare global {
-  interface Window { Razorpay: any; }
+function loadRazorpay(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
 }
 
-export default function PricingPage() {
-  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
-  const [loading, setLoading] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
-  const [couponCode, setCouponCode] = useState("");
-  const [coupon, setCoupon] = useState<any>(null);
-  const [couponError, setCouponError] = useState("");
-  const [couponLoading, setCouponLoading] = useState(false);
-  const router = useRouter();
+const FEATURES = [
+  "114 NEET PDFs — Biology, Chemistry, Physics (Class 11 + 12)",
+  "AI Doubt Solver (unlimited questions, 24/7)",
+  "Full Mock Tests — NEET + JEE pattern",
+  "Interactive Mind Maps — 38 Biology chapters",
+  "NCERT Diagram Library with NEET key facts",
+  "Performance Analytics & Weak Topic Targeting",
+  "Smart Revision — Flashcards + Crossword Puzzles",
+  "Parent Dashboard with Real-time Updates",
+  "Live Location Tracking for Parents",
+  "Study Community & Group Discussion",
+  "Revision Planner PDF Generator",
+  "All Future Updates — Free Forever",
+];
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+export default function PricingPage() {
+  const router = useRouter();
+  const [user, setUser]       = useState<any>(null);
+  const [paying, setPaying]   = useState(false);
+  const [error, setError]     = useState("");
+  const [success, setSuccess] = useState("");
+  const [coupon, setCoupon]   = useState("");
+  const [logoTaps, setLogoTaps] = useState(0);
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [couponActive, setCouponActive] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
+    const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
-  }, []);
+  function handleLogoTap() {
+    const n = logoTaps + 1;
+    setLogoTaps(n);
+    if (n >= 5) setShowCoupon(true);
+  }
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setCouponLoading(true);
+  async function applyCoupon() {
     setCouponError("");
-    setCoupon(null);
-    try {
-      const res = await fetch("/api/coupon/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, userId: user?.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) setCouponError(data.error);
-      else setCoupon(data);
-    } catch {
-      setCouponError("Failed to validate coupon");
-    } finally {
-      setCouponLoading(false);
+    const res = await fetch("/api/coupon/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coupon_code: coupon.toUpperCase(), plan_id: "lifetime" }),
+    });
+    const data = await res.json();
+    if (data.valid && data.final_amount === 0) {
+      setCouponActive(true);
+    } else {
+      setCouponError(data.error || "Invalid code");
     }
-  };
+  }
 
-  const removeCoupon = () => {
-    setCoupon(null);
-    setCouponCode("");
-    setCouponError("");
-  };
-
-  const getDiscountedPrice = (originalPrice: number) => {
-    if (!coupon) return originalPrice;
-    if (coupon.type === "full_free") return 0;
-    if (coupon.type === "percent") return Math.round(originalPrice * (1 - coupon.value / 100));
-    return originalPrice;
-  };
-
-  // Single function that calls verify-payment and always awaits the result
-  const writeSubscription = async (payload: object): Promise<boolean> => {
-    try {
-      const res = await fetch("/api/razorpay/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        alert("Activation failed: " + (data.error || "Unknown error"));
-        return false;
-      }
-      return true;
-    } catch (e: any) {
-      alert("Network error: " + e.message);
-      return false;
-    }
-  };
-
-  const handlePayment = async (planObj: (typeof plans)[0]) => {
-    if (planObj.id === "institution") {
-      window.location.href = "mailto:contact@globalwebsaas.org?subject=VidyaSaathi Institution Plan";
-      return;
-    }
-
-    if (!user) {
-      router.push("/auth?tab=login&redirect=/pricing");
-      return;
-    }
-
-    // plan key sent to API: "student_monthly", "student_yearly", "family_monthly", "family_yearly"
-    const planKey = planObj.id === "free"
-      ? "student_monthly"
-      : `${planObj.id}_${billing}`;
-
-    const originalAmount = billing === "monthly" ? planObj.monthlyPrice! : planObj.yearlyPrice!;
-
-    setLoading(planObj.id);
-
-    // ── Free tier ──────────────────────────────────────────────────────────
-    if (planObj.id === "free") {
-      const ok = await writeSubscription({
-        plan: planKey,
-        userId: user.id,
-        isFree: true,
-        razorpay_order_id: "free_" + Date.now(),
-        razorpay_payment_id: "free_" + Date.now(),
-        razorpay_signature: "free",
-      });
-      setLoading(null);
-      if (ok) router.push("/student/dashboard");
-      return;
-    }
-
-    // ── Trial-days coupon (e.g. TESTER3DAYS) ─────────────────────────────
-    if (coupon?.type === "trial_days") {
-      const ok = await writeSubscription({
-        plan: planKey,
-        userId: user.id,
-        isFree: true,
-        trialDays: coupon.value,
-        coupon: coupon.code,
-        razorpay_order_id: "trial_" + Date.now(),
-        razorpay_payment_id: "trial_" + Date.now(),
-        razorpay_signature: "free",
-      });
-      setLoading(null);
-      if (ok) router.push("/student/dashboard?payment=trial");
-      return;
-    }
-
-    const finalAmount = getDiscountedPrice(originalAmount);
-
-    // ── 100% free coupon (e.g. GRAICY100) ────────────────────────────────
-    if (finalAmount === 0) {
-      const ok = await writeSubscription({
-        plan: planKey,
-        userId: user.id,
-        isFree: true,
-        coupon: coupon?.code,
-        razorpay_order_id: "free_" + Date.now(),
-        razorpay_payment_id: "free_" + Date.now(),
-        razorpay_signature: "free",
-      });
-      setLoading(null);
-      if (ok) router.push("/student/dashboard?payment=success");
-      return;
-    }
-
-    // ── Paid — open Razorpay modal ────────────────────────────────────────
+  async function handleBuy() {
+    if (!user) { router.push("/auth/signin?redirect=/pricing"); return; }
+    setPaying(true);
+    setError("");
+    setSuccess("");
     try {
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey, userId: user.id, coupon: coupon?.code }),
+        body: JSON.stringify({
+          plan_id: "lifetime",
+          user_id: user.id,
+          coupon_code: couponActive ? coupon.toUpperCase() : undefined,
+        }),
       });
       const orderData = await orderRes.json();
-      if (!orderRes.ok) throw new Error(orderData.error || "Order creation failed");
+      if (!orderRes.ok) { setError(orderData.error || "Failed"); setPaying(false); return; }
+
+      if (orderData.demo_activated) {
+        setSuccess("✅ Access activated! Redirecting...");
+        setTimeout(() => router.push("/student/dashboard"), 1500);
+        setPaying(false);
+        return;
+      }
+
+      const loaded = await loadRazorpay();
+      if (!loaded) { setError("Payment gateway failed"); setPaying(false); return; }
 
       const rzp = new window.Razorpay({
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: orderData.key_id,
         amount: orderData.amount,
         currency: "INR",
         name: "VidyaSaathi",
-        description: planKey,
-        order_id: orderData.orderId,
-        prefill: {
-          name: user.user_metadata?.full_name ?? "",
-          email: user.email ?? "",
-        },
-        theme: { color: "#7c3aed" },
+        description: "Lifetime Access — App + 114 NEET PDFs",
+        order_id: orderData.order_id,
+        prefill: { name: user.user_metadata?.full_name || "", email: user.email || "" },
+        theme: { color: "#f97316" },
+        modal: { ondismiss: () => setPaying(false) },
         handler: async (response: any) => {
-          const ok = await writeSubscription({
-            plan: planKey,
-            userId: user.id,
-            isFree: false,
-            coupon: coupon?.code,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
+          const verifyRes = await fetch("/api/razorpay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...response, user_id: user.id, plan_id: "lifetime" }),
           });
-          setLoading(null);
-          if (ok) router.push("/student/dashboard?payment=success");
+          const vd = await verifyRes.json();
+          if (vd.success) {
+            setSuccess("✅ Payment successful! Lifetime access activated.");
+            setTimeout(() => router.push("/student/dashboard"), 1500);
+          } else {
+            setError("Payment received but activation failed. Contact contact@globalwebsaas.org");
+          }
+          setPaying(false);
         },
-        modal: { ondismiss: () => setLoading(null) },
       });
-
-      rzp.on("payment.failed", (r: any) => {
-        alert(r.error?.description || "Payment failed. Please try again.");
-        setLoading(null);
+      rzp.on("payment.failed", (res: any) => {
+        setError(`Payment failed: ${res.error.description}`);
+        setPaying(false);
       });
-
       rzp.open();
-    } catch (e: any) {
-      alert(e.message || "Something went wrong. Please try again.");
-      setLoading(null);
+    } catch (err: any) {
+      setError(err.message);
+      setPaying(false);
     }
-  };
-
-  const yearlySavings = (monthly: number, yearly: number) =>
-    Math.round(((monthly * 12 - yearly) / (monthly * 12)) * 100);
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 py-16 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-slate-400 text-lg mb-8">Choose the plan that fits your preparation journey</p>
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
 
-        {/* Billing Toggle */}
-        <div className="inline-flex items-center gap-3 bg-slate-800 rounded-full p-1 mb-8">
-          <button onClick={() => setBilling("monthly")}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${billing === "monthly" ? "bg-violet-600 text-white shadow" : "text-slate-400 hover:text-white"}`}>
-            Monthly
-          </button>
-          <button onClick={() => setBilling("yearly")}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${billing === "yearly" ? "bg-violet-600 text-white shadow" : "text-slate-400 hover:text-white"}`}>
-            Yearly
-            <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">Save up to 33%</span>
-          </button>
+      {/* Nav */}
+      <nav className="bg-white/90 backdrop-blur border-b border-orange-100 sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center cursor-pointer"
+              onClick={handleLogoTap}>
+              <span className="text-white font-bold text-xs">V</span>
+            </div>
+            <span className="font-bold text-gray-900">Vidya<span className="text-orange-500">Saathi</span></span>
+          </Link>
+          <Link href="/" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
+            <ArrowLeft className="w-4 h-4"/> Back
+          </Link>
+        </div>
+      </nav>
+
+      <div className="max-w-lg mx-auto px-4 py-10">
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-bold px-4 py-2 rounded-full mb-4">
+            🔥 Launch Offer — Limited Time
+          </div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+            One Price. Everything Included.
+          </h1>
+          <p className="text-gray-500">No monthly fees. No renewals. Pay once, use forever.</p>
         </div>
 
-        {/* Coupon Input */}
-        <div className="max-w-md mx-auto">
-          {!coupon ? (
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        {/* Status messages */}
+        {error && <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm mb-4">{error}</div>}
+        {success && <div className="bg-green-50 border border-green-200 text-green-600 rounded-xl px-4 py-3 text-sm mb-4 font-medium">{success}</div>}
+
+        {/* Main card */}
+        <div className="bg-white rounded-2xl border-2 border-orange-300 shadow-xl p-8 relative">
+
+          {/* Badge */}
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+            <span className="bg-gradient-to-r from-orange-500 to-rose-500 text-white text-xs font-bold px-6 py-2 rounded-full flex items-center gap-1.5 shadow-lg">
+              <Crown className="w-3.5 h-3.5"/> LIFETIME ACCESS
+            </span>
+          </div>
+
+          {/* Price */}
+          <div className="text-center mt-3 mb-6">
+            {couponActive ? (
+              <div className="flex items-baseline justify-center gap-3">
+                <span className="text-5xl font-extrabold text-green-500">FREE</span>
+                <span className="text-gray-400 line-through text-2xl">₹499</span>
+              </div>
+            ) : (
+              <div className="flex items-baseline justify-center gap-3">
+                <span className="text-gray-400 text-xl">₹</span>
+                <span className="text-6xl font-extrabold text-gray-900">499</span>
+                <div className="text-left">
+                  <span className="text-gray-400 line-through text-lg block">₹1,499</span>
+                  <span className="text-green-600 text-sm font-bold">Save 67%</span>
+                </div>
+              </div>
+            )}
+            <p className="text-gray-400 text-sm mt-1">One-time payment · No subscription · Instant activation</p>
+            <p className="text-orange-500 text-xs font-semibold mt-1">🎁 Includes 114 NEET PDFs worth ₹999 — Free</p>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-2.5 mb-7">
+            {FEATURES.map((f) => (
+              <div key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
+                <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-2.5 h-2.5 text-green-600"/>
+                </div>
+                {f}
+              </div>
+            ))}
+          </div>
+
+          {/* Hidden coupon field */}
+          {showCoupon && (
+            <div className="mb-4 p-3 bg-orange-50 rounded-xl border border-orange-200">
+              <p className="text-xs text-orange-600 mb-2 font-medium">Enter access code</p>
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
-                  placeholder="Have a coupon code?"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                  value={coupon}
+                  onChange={(e) => { setCoupon(e.target.value.toUpperCase()); setCouponActive(false); setCouponError(""); }}
+                  placeholder="ACCESS CODE"
+                  className="flex-1 bg-white border border-orange-200 text-gray-900 text-sm px-3 py-1.5 rounded-lg font-mono tracking-widest focus:outline-none focus:border-orange-400"
                 />
+                <button onClick={applyCoupon} className="px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-lg">
+                  Apply
+                </button>
               </div>
-              <button onClick={applyCoupon} disabled={couponLoading || !couponCode.trim()}
-                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
-                {couponLoading ? "..." : "Apply"}
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between bg-green-900/30 border border-green-500/50 rounded-lg px-4 py-2.5">
-              <div className="flex items-center gap-2 text-green-400 text-sm">
-                <Check className="w-4 h-4" />
-                <span className="font-medium">{coupon.code}</span>
-                <span className="text-green-300">
-                  {coupon.type === "percent"    && `${coupon.value}% off applied!`}
-                  {coupon.type === "trial_days" && `${coupon.value}-day free trial!`}
-                  {coupon.type === "full_free"  && "100% free access!"}
-                </span>
-              </div>
-              <button onClick={removeCoupon} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
+              {couponActive && <p className="text-green-600 text-xs mt-1 font-semibold">✅ Code applied!</p>}
+              {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
             </div>
           )}
-          {couponError && <p className="text-red-400 text-sm mt-2">{couponError}</p>}
+
+          {/* CTA Button */}
+          <button
+            onClick={handleBuy}
+            disabled={paying}
+            className="w-full h-14 rounded-xl font-bold text-base text-white bg-gradient-to-r from-orange-500 to-rose-500 hover:opacity-90 transition-all shadow-lg shadow-orange-200 disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {paying ? (
+              <>
+                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Processing...
+              </>
+            ) : (
+              <>
+                <Zap className="w-5 h-5"/>
+                {couponActive ? "Activate Free Access" : "Get Lifetime Access — ₹499"}
+              </>
+            )}
+          </button>
+
+          {!user && (
+            <p className="text-center text-xs text-gray-400 mt-3">
+              <Link href="/auth/signin?redirect=/pricing" className="text-orange-500 font-medium hover:underline">
+                Sign in
+              </Link>{" "}or{" "}
+              <Link href="/auth/signup?redirect=/pricing" className="text-orange-500 font-medium hover:underline">
+                create account
+              </Link>{" "}to continue
+            </p>
+          )}
         </div>
-      </div>
 
-      {/* Plans Grid */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {plans.map((plan) => {
-          const Icon = plan.icon;
-          const originalPrice = billing === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
-          const finalPrice    = originalPrice !== null ? getDiscountedPrice(originalPrice) : null;
-          const isPopular     = plan.badge === "Most Popular";
-          const hasDiscount   = coupon && originalPrice && finalPrice !== originalPrice;
+        {/* Trust badges */}
+        <div className="flex flex-wrap justify-center gap-5 text-xs text-gray-400 mt-6">
+          <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-green-500"/>Secure Razorpay payment</span>
+          <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-400"/>Instant activation</span>
+          <span className="flex items-center gap-1.5"><Star className="w-3.5 h-3.5 text-yellow-400"/>No renewals ever</span>
+        </div>
 
-          return (
-            <div key={plan.id}
-              className={`relative rounded-2xl p-6 flex flex-col border transition-all duration-300 hover:scale-105 ${
-                isPopular
-                  ? "border-violet-500 bg-violet-950/50 shadow-xl shadow-violet-500/20"
-                  : "border-slate-700 bg-slate-900/50"
-              }`}>
-              {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className={`px-4 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${plan.color}`}>
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
-
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${plan.color} flex items-center justify-center mb-4`}>
-                <Icon className="w-6 h-6 text-white" />
-              </div>
-
-              <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-
-              <div className="mb-2">
-                {finalPrice === null ? (
-                  <p className="text-3xl font-bold text-white">Custom</p>
-                ) : finalPrice === 0 && originalPrice === 0 ? (
-                  <p className="text-3xl font-bold text-white">Free</p>
-                ) : (
-                  <>
-                    {hasDiscount && (
-                      <p className="text-sm text-slate-400 line-through">
-                        ₹{originalPrice}/{billing === "monthly" ? "mo" : "yr"}
-                      </p>
-                    )}
-                    <p className="text-3xl font-bold text-white">
-                      {finalPrice === 0 ? "FREE" : `₹${finalPrice}`}
-                      {finalPrice !== 0 && (
-                        <span className="text-sm font-normal text-slate-400">
-                          /{billing === "monthly" ? "mo" : "yr"}
-                        </span>
-                      )}
-                    </p>
-                    {billing === "yearly" && plan.monthlyPrice && !coupon && (
-                      <p className="text-xs text-green-400 mt-1">
-                        Save {yearlySavings(plan.monthlyPrice, plan.yearlyPrice!)}% vs monthly
-                      </p>
-                    )}
-                    {hasDiscount && coupon?.type === "percent" && (
-                      <p className="text-xs text-green-400 mt-1">{coupon.value}% off applied!</p>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <ul className="space-y-2 mb-6 flex-1">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm text-slate-300">
-                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handlePayment(plan)}
-                disabled={loading === plan.id}
-                className={`w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                  isPopular
-                    ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:opacity-90 shadow-lg"
-                    : plan.id === "free"
-                    ? "bg-slate-700 text-white hover:bg-slate-600"
-                    : `bg-gradient-to-r ${plan.color} text-white hover:opacity-90`
-                } disabled:opacity-50 disabled:cursor-not-allowed`}>
-                {loading === plan.id ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Processing...
-                  </span>
-                ) : coupon?.type === "trial_days" && plan.id !== "free" && plan.id !== "institution"
-                  ? `Start ${coupon.value}-Day Free Trial`
-                  : plan.cta}
-              </button>
+        {/* Compare */}
+        <div className="mt-8 bg-orange-50 rounded-2xl p-5 text-center">
+          <p className="text-sm font-semibold text-gray-700 mb-1">Compare the value</p>
+          <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+            <div className="text-center">
+              <p className="text-red-500 font-bold text-lg">₹50,000+</p>
+              <p className="text-xs">Coaching classes/year</p>
             </div>
-          );
-        })}
-      </div>
+            <div className="text-2xl text-gray-300">vs</div>
+            <div className="text-center">
+              <p className="text-green-600 font-bold text-lg">₹499</p>
+              <p className="text-xs">VidyaSaathi lifetime</p>
+            </div>
+          </div>
+        </div>
 
-      <p className="text-center text-slate-500 text-sm mt-12">
-        Secure payments via Razorpay · All plans include 7-day free trial · Cancel anytime
-      </p>
+        <p className="text-center text-xs text-gray-400 mt-6">
+          Questions? Email us at{" "}
+          <a href="mailto:contact@globalwebsaas.org" className="text-orange-500">contact@globalwebsaas.org</a>
+        </p>
+      </div>
     </div>
   );
 }
