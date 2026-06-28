@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Loader2, BookOpen, Zap, FlaskConical, Calculator, Lightbulb, Star, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
-// biology diagrams handled via API
+// biology diagrams handled inline
 import { cn } from "@/utils";
 
 // ── SYLLABUS ─────────────────────────────────────────────────────────────────
@@ -90,118 +90,80 @@ interface MindMapData {
 }
 
 // ── BIOLOGY DIAGRAM ───────────────────────────────────────────────────────────
+// Direct Supabase image map — no API call needed
+const BASE = "https://jrdpxdalwvmcffmfqajk.supabase.co/storage/v1/object/public/biology-diagrams";
+const BIO_IMAGES: Record<string, { url: string; title: string; labels: string[] }> = {
+  "Cell — The Unit of Life":                  { url: BASE+"/Animal_Cell.jpg",                      title: "Animal Cell Structure",         labels: ["Nucleus","Mitochondria","Golgi Apparatus","ER","Cell Membrane","Centrioles"] },
+  "Cell Cycle & Cell Division":               { url: BASE+"/Animal_cell_cycle-en.svg",             title: "Animal Cell Cycle",             labels: ["Prophase","Metaphase","Anaphase","Telophase","Interphase"] },
+  "Structural Organisation in Animals":       { url: BASE+"/Neuron.png",                           title: "Neuron Structure",              labels: ["Dendrites","Cell Body","Axon","Myelin Sheath","Node of Ranvier","Synaptic Knob"] },
+  "Human Health & Disease":                   { url: BASE+"/Antibody.svg.png",                     title: "Antibody Structure",            labels: ["Heavy Chain","Light Chain","Antigen Binding Site","Fc Region"] },
+  "Ecosystem":                                { url: BASE+"/Aquatic_food_web.jpg",                 title: "Aquatic Food Web",              labels: ["Producers","Primary Consumers","Secondary Consumers","Decomposers"] },
+  "Biological Classification":                { url: BASE+"/Biological_classification.png",         title: "Five Kingdom Classification",   labels: ["Monera","Protista","Fungi","Plantae","Animalia"] },
+  "Body Fluids & Circulation":                { url: BASE+"/human_heart.svg.png",                  title: "Human Heart",                   labels: ["Right Atrium","Left Atrium","Right Ventricle","Left Ventricle","Aorta","Tricuspid","Bicuspid"] },
+  "Photosynthesis":                           { url: BASE+"/Chloroplast.png",                      title: "Chloroplast Structure",         labels: ["Outer Membrane","Thylakoid","Grana","Stroma","Stroma Lamellae"] },
+  "Digestion & Absorption":                   { url: BASE+"/Digestive.svg.png",                    title: "Human Digestive System",        labels: ["Mouth","Oesophagus","Stomach","Small Intestine","Liver","Pancreas"] },
+  "Principles of Inheritance":                { url: BASE+"/Punnett_square_mendel_flowers.svg.png",title: "Punnett Square",                labels: ["Dominant","Recessive","F1","F2","3:1 Ratio","Homozygous","Heterozygous"] },
+  "Molecular Basis of Inheritance":           { url: BASE+"/DNA.svg.png",                          title: "DNA Double Helix",              labels: ["Adenine-Thymine","Guanine-Cytosine","Phosphate","Deoxyribose","Hydrogen Bonds"] },
+  "Chemical Coordination":                    { url: BASE+"/endocrine_system.jpg",                 title: "Human Endocrine System",        labels: ["Hypothalamus","Pituitary","Thyroid","Adrenal","Pancreas","Gonads"] },
+  "Neural Control & Coordination":            { url: BASE+"/Three_Main_Layers_of_the_Eye.png",     title: "Human Eye — Layers",            labels: ["Sclera","Choroid","Retina","Cornea","Lens","Iris","Optic Nerve","Fovea"] },
+  "Morphology of Flowering Plants":           { url: BASE+"/Mature_flower.svg.png",                title: "Mature Flower Structure",       labels: ["Sepal","Petal","Stamen","Pistil","Ovary","Stigma","Style"] },
+  "Sexual Reproduction in Flowering Plants":  { url: BASE+"/Mature_flower.svg.png",                title: "Flower — Sexual Reproduction",  labels: ["Stamen","Pistil","Pollen","Ovule","Fertilization","Endosperm"] },
+  "Mineral Nutrition":                        { url: BASE+"/Nitrogen_Cycle.svg.png",               title: "Nitrogen Cycle",                labels: ["Nitrogen Fixation","Nitrification","Denitrification","Ammonification"] },
+  "Transport in Plants":                      { url: BASE+"/Osmosis_diagram.svg.png",              title: "Osmosis Diagram",               labels: ["Hypotonic","Hypertonic","Isotonic","Water Potential","Semi-permeable Membrane"] },
+  "Evolution":                                { url: BASE+"/Phylogenetic.svg.png",                 title: "Phylogenetic Tree",             labels: ["Common Ancestor","Divergence","Speciation","Clade","Branch Point"] },
+  "Anatomy of Flowering Plants":              { url: BASE+"/Plant_cell_structure.png",             title: "Plant Cell Structure",          labels: ["Cell Wall","Chloroplast","Central Vacuole","Nucleus","Plasmodesmata"] },
+  "Biotechnology — Principles & Processes":   { url: BASE+"/Plasmid.svg.png",                      title: "Plasmid / Recombinant DNA",     labels: ["Origin of Replication","Antibiotic Resistance","Restriction Site","Insert Gene"] },
+  "Biotechnology & Its Applications":         { url: BASE+"/plasmid.svg (2).png",                  title: "Recombinant DNA Applications",  labels: ["Gene of Interest","Vector","Host Cell","Selectable Marker"] },
+  "Locomotion & Movement":                    { url: BASE+"/Sarcomere.svg.png",                    title: "Sarcomere Structure",           labels: ["Z-line","A-band","I-band","H-zone","Actin","Myosin","M-line"] },
+  "Breathing & Exchange of Gases":            { url: BASE+"/Respiratory_system.svg.png",           title: "Human Respiratory System",      labels: ["Nasal Cavity","Trachea","Bronchus","Bronchioles","Alveoli","Diaphragm"] },
+  "Organisms & Populations":                  { url: BASE+"/TrophicWeb.jpg",                       title: "Trophic Web",                   labels: ["Producers","Herbivores","Carnivores","Omnivores","Decomposers"] },
+  "Excretory Products & Elimination":         { url: BASE+"/kindey.png.png",                       title: "Human Kidney",                  labels: ["Cortex","Medulla","Renal Pelvis","Ureter","Pyramid","Nephron"] },
+};
+
+function getBioImage(chapter: string) {
+  if (BIO_IMAGES[chapter]) return BIO_IMAGES[chapter];
+  const ch = chapter.toLowerCase();
+  for (const [key, val] of Object.entries(BIO_IMAGES)) {
+    if (ch.includes(key.toLowerCase().split(" ")[0])) return val;
+  }
+  return null;
+}
+
 function BiologyDiagram({ chapter, fallback, color }: {
   chapter: string;
   fallback?: MindMapData["diagram"];
   color: string;
 }) {
   const [imgError, setImgError] = useState(false);
-  const [diagramData, setDiagramData] = useState<{
-    imageUrl?: string;
-    svg?: string;
-    title?: string;
-    description?: string;
-    labels?: string[];
-    neetFacts?: string[];
-    source?: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState("");
+  useEffect(() => { setImgError(false); }, [chapter]);
 
-  useEffect(() => {
-    setImgError(false);
-    setDiagramData(null);
-    setFetched("");
-  }, [chapter]);
+  const img = getBioImage(chapter);
 
-  async function loadDiagram() {
-    if (fetched === chapter) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/diagram", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chapter }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setDiagramData(data);
-        setFetched(chapter);
-      }
-    } catch {}
-    setLoading(false);
-  }
-
-  // Auto-load on mount
-  useEffect(() => {
-    if (chapter && fetched !== chapter) loadDiagram();
-  }, [chapter]);
-
-  if (loading) return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-12 flex flex-col items-center gap-3">
-      <svg className="animate-spin w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-      </svg>
-      <p className="text-emerald-400 text-sm">Loading diagram...</p>
-    </div>
-  );
-
-  // Show Supabase image
-  if (diagramData?.imageUrl && !imgError) return (
+  if (img && !imgError) return (
     <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
-      <p className="text-sm font-semibold text-emerald-700">📊 {diagramData.title || chapter}</p>
+      <p className="text-sm font-semibold text-emerald-700">📊 {img.title}</p>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={diagramData.imageUrl}
-        alt={diagramData.title || chapter}
-        className="w-full max-h-[500px] object-contain rounded-xl bg-white"
+        src={img.url}
+        alt={img.title}
+        className="w-full max-h-[520px] object-contain rounded-xl bg-white"
         onError={() => setImgError(true)}
       />
-      {diagramData.description && (
-        <p className="text-xs text-gray-400 italic text-center">{diagramData.description}</p>
-      )}
-      {diagramData.labels && diagramData.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {diagramData.labels.map((l) => (
-            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">{l}</span>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-1.5">
+        {img.labels.map((l) => (
+          <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">{l}</span>
+        ))}
+      </div>
     </div>
   );
 
-  // Show hand-coded SVG
-  if (diagramData?.svg) return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
-      <p className="text-sm font-semibold text-emerald-700">📊 {chapter}</p>
-      <div className="w-full rounded-xl overflow-hidden bg-white"
-        dangerouslySetInnerHTML={{ __html: diagramData.svg }} />
-      {diagramData.neetFacts && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-          <p className="text-xs font-bold text-orange-600 mb-1">⭐ NEET Key Facts</p>
-          {diagramData.neetFacts.map((f, i) => (
-            <p key={i} className="text-xs text-orange-800">• {f}</p>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // No diagram available
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 text-center">
-      <p className="text-emerald-400/50 text-sm">No diagram available for this chapter yet.</p>
-      {fallback?.labels && (
-        <div className="flex flex-wrap gap-1.5 justify-center mt-3">
-          {fallback.labels.map((l) => (
-            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">{l}</span>
-          ))}
-        </div>
-      )}
+    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 text-center text-emerald-400/50 text-sm">
+      No diagram available for this chapter yet.
     </div>
   );
 }
+
 // ── FORMULA CARD ──────────────────────────────────────────────────────────────
 function FormulaCard({ label, formula, unit }: { label: string; formula: string; unit?: string }) {
   return (
@@ -564,7 +526,7 @@ export default function MindMapPage() {
               </div>
             )}
 
-            {/* Biology Diagram — show always for Biology */}
+            {/* Biology Diagram */}
             {activePanel === "diagram" && isBiology && (
               <BiologyDiagram chapter={mindmap?.chapter ?? chapter} fallback={mindmap?.diagram} color={meta.color} />
             )}
