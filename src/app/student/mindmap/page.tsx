@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Loader2, BookOpen, Zap, FlaskConical, Calculator, Lightbulb, Star, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
-import { findDiagram } from "@/lib/biologyDiagrams";
+// biology diagrams handled via API
 import { cn } from "@/utils";
 
 // ── SYLLABUS ─────────────────────────────────────────────────────────────────
@@ -95,20 +95,28 @@ function BiologyDiagram({ chapter, fallback, color }: {
   fallback?: MindMapData["diagram"];
   color: string;
 }) {
-  const [aiSvg, setAiSvg]         = useState<string>("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
-  const [generated, setGenerated] = useState("");
+  const [imgError, setImgError] = useState(false);
+  const [diagramData, setDiagramData] = useState<{
+    imageUrl?: string;
+    svg?: string;
+    title?: string;
+    description?: string;
+    labels?: string[];
+    neetFacts?: string[];
+    source?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState("");
 
   useEffect(() => {
-    setAiSvg("");
-    setError("");
-    setGenerated("");
+    setImgError(false);
+    setDiagramData(null);
+    setFetched("");
   }, [chapter]);
 
-  async function generateDiagram() {
+  async function loadDiagram() {
+    if (fetched === chapter) return;
     setLoading(true);
-    setError("");
     try {
       const res = await fetch("/api/diagram", {
         method: "POST",
@@ -116,76 +124,84 @@ function BiologyDiagram({ chapter, fallback, color }: {
         body: JSON.stringify({ chapter }),
       });
       const data = await res.json();
-      if (data.svg) {
-        setAiSvg(data.svg);
-        setGenerated(chapter);
-      } else {
-        setError(data.error || "Could not generate diagram");
+      if (res.ok) {
+        setDiagramData(data);
+        setFetched(chapter);
       }
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
+    setLoading(false);
   }
 
-  if (aiSvg && generated === chapter) {
-    return (
-      <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-emerald-700">📊 {chapter} — AI Diagram</p>
-          <button onClick={generateDiagram} disabled={loading} className="text-xs text-emerald-600 hover:text-emerald-700 underline">
-            Regenerate
-          </button>
+  // Auto-load on mount
+  useEffect(() => {
+    if (chapter && fetched !== chapter) loadDiagram();
+  }, [chapter]);
+
+  if (loading) return (
+    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-12 flex flex-col items-center gap-3">
+      <svg className="animate-spin w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+      <p className="text-emerald-400 text-sm">Loading diagram...</p>
+    </div>
+  );
+
+  // Show Supabase image
+  if (diagramData?.imageUrl && !imgError) return (
+    <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
+      <p className="text-sm font-semibold text-emerald-700">📊 {diagramData.title || chapter}</p>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={diagramData.imageUrl}
+        alt={diagramData.title || chapter}
+        className="w-full max-h-[500px] object-contain rounded-xl bg-white"
+        onError={() => setImgError(true)}
+      />
+      {diagramData.description && (
+        <p className="text-xs text-gray-400 italic text-center">{diagramData.description}</p>
+      )}
+      {diagramData.labels && diagramData.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {diagramData.labels.map((l) => (
+            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">{l}</span>
+          ))}
         </div>
-        <div className="w-full rounded-xl overflow-hidden bg-white border border-gray-100"
-          dangerouslySetInnerHTML={{ __html: aiSvg }} />
-        <p className="text-xs text-gray-400 text-center italic">AI-generated NCERT-style diagram · {chapter}</p>
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
 
+  // Show hand-coded SVG
+  if (diagramData?.svg) return (
+    <div className="rounded-2xl border border-emerald-500/20 bg-white p-4 space-y-3">
+      <p className="text-sm font-semibold text-emerald-700">📊 {chapter}</p>
+      <div className="w-full rounded-xl overflow-hidden bg-white"
+        dangerouslySetInnerHTML={{ __html: diagramData.svg }} />
+      {diagramData.neetFacts && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+          <p className="text-xs font-bold text-orange-600 mb-1">⭐ NEET Key Facts</p>
+          {diagramData.neetFacts.map((f, i) => (
+            <p key={i} className="text-xs text-orange-800">• {f}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // No diagram available
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 flex flex-col items-center gap-4">
-      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-        <span className="text-2xl">🔬</span>
-      </div>
-      <div className="text-center">
-        <p className="text-emerald-400 font-semibold text-sm mb-1">AI Diagram — {chapter}</p>
-        <p className="text-emerald-400/50 text-xs">Generate a detailed NCERT-style labeled diagram</p>
-      </div>
-      {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-      <button
-        onClick={generateDiagram}
-        disabled={loading}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-all disabled:opacity-60"
-      >
-        {loading ? (
-          <>
-            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            Generating diagram...
-          </>
-        ) : <>✨ Generate Diagram</>}
-      </button>
-      <p className="text-xs text-emerald-400/30">Takes 5-10 seconds</p>
-      {fallback?.labels && fallback.labels.length > 0 && (
-        <div className="w-full pt-2 border-t border-emerald-500/10">
-          <p className="text-xs text-emerald-400/40 mb-2 text-center">Key parts in this diagram:</p>
-          <div className="flex flex-wrap gap-1.5 justify-center">
-            {fallback.labels.map((l) => (
-              <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">{l}</span>
-            ))}
-          </div>
+    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-8 text-center">
+      <p className="text-emerald-400/50 text-sm">No diagram available for this chapter yet.</p>
+      {fallback?.labels && (
+        <div className="flex flex-wrap gap-1.5 justify-center mt-3">
+          {fallback.labels.map((l) => (
+            <span key={l} className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">{l}</span>
+          ))}
         </div>
       )}
     </div>
   );
 }
-
-
 // ── FORMULA CARD ──────────────────────────────────────────────────────────────
 function FormulaCard({ label, formula, unit }: { label: string; formula: string; unit?: string }) {
   return (
@@ -405,7 +421,7 @@ export default function MindMapPage() {
     "text-green-400 bg-green-500/10 border-green-500/20";
 
   const isBiology = subject === "Biology";
-  const showDiagramTab = isBiology && mindmap;
+  const showDiagramTab = isBiology;
   const showFormulasTab = (subject === "Physics" || subject === "Mathematics") && mindmap && mindmap.keyFormulas.length > 0;
 
   const tabs = [
@@ -548,9 +564,9 @@ export default function MindMapPage() {
               </div>
             )}
 
-            {/* Biology Diagram */}
-            {activePanel === "diagram" && showDiagramTab && (
-              <BiologyDiagram chapter={mindmap.chapter} fallback={mindmap.diagram} color={meta.color} />
+            {/* Biology Diagram — show always for Biology */}
+            {activePanel === "diagram" && isBiology && (
+              <BiologyDiagram chapter={mindmap?.chapter ?? chapter} fallback={mindmap?.diagram} color={meta.color} />
             )}
 
             {/* Mnemonics */}
