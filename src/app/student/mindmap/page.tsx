@@ -121,12 +121,7 @@ const BIO_IMAGES: Record<string, { url: string; title: string; labels: string[] 
 };
 
 function getBioImage(chapter: string) {
-  if (BIO_IMAGES[chapter]) return BIO_IMAGES[chapter];
-  const ch = chapter.toLowerCase();
-  for (const [key, val] of Object.entries(BIO_IMAGES)) {
-    if (ch.includes(key.toLowerCase().split(" ")[0])) return val;
-  }
-  return null;
+  return BIO_IMAGES[chapter] || null;
 }
 
 function BiologyDiagram({ chapter, fallback, color }: {
