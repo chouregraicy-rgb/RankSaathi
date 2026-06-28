@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 
 interface LeadForm { name: string; email: string; phone: string; course: string; }
-type Lang = "en" | "hi";
 
 declare global { interface Window { Razorpay: any; } }
 
@@ -192,11 +191,10 @@ function LeadCaptureForm({ t }: { t: any }) {
 }
 
 export default function LandingPage() {
-  const [lang, setLang] = useState<Lang>("en");
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   const FEATURES = [
-    { icon: "🤖", color: "bg-orange-100", title: "AI Doubt Solver", desc: "Get instant explanations for any NEET question in Hindi or English. Available 24/7 — no waiting for teachers." },
+    { icon: "🤖", color: "bg-orange-100", title: "AI Doubt Solver", desc: "Get instant explanations for any NEET & JEE question in English. Available 24/7 — no waiting for teachers." },
     { icon: "📄", color: "bg-green-100", title: "114 NEET PDFs Included", desc: "Complete Biology, Chemistry & Physics notes for Class 11 & 12. Quick revision, question banks, mind maps — all free." },
     { icon: "📝", color: "bg-blue-100", title: "Full Mock Tests", desc: "NEET & JEE pattern tests with auto-grading, detailed solutions, and rank prediction after every test." },
     { icon: "🧠", color: "bg-purple-100", title: "Interactive Mind Maps", desc: "Visual mind maps for all 38 Biology chapters with NCERT diagrams, mnemonics, and NEET key facts." },
@@ -255,10 +253,6 @@ export default function LandingPage() {
             <a href="#faq" className="hover:text-orange-500 transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setLang(lang === "en" ? "hi" : "en")}
-              className="hidden md:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-all">
-              {lang === "en" ? "🇮🇳 हिंदी" : "🇬🇧 English"}
-            </button>
             <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">Log in</Link>
             <Link href="/auth/signup" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">Start Now →</Link>
           </div>
@@ -388,7 +382,7 @@ export default function LandingPage() {
           <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-10">
               <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-                Everything you need to crack NEET
+                Everything you need to crack NEET & JEE
               </h2>
               <p className="text-gray-500 text-lg">Complete AI-powered prep for NEET & JEE — with NEET PDF study material included free.</p>
             </div>
@@ -432,7 +426,7 @@ export default function LandingPage() {
                 ["Mock Tests with Solutions", "Limited", "✅ Unlimited"],
                 ["Parent Dashboard", "❌", "✅"],
                 ["Performance Analytics", "❌", "✅"],
-                ["Hindi + English Support", "Limited", "✅"],
+                ["English Interface", "Limited", "✅"],
                 ["Access from Phone/Tablet/PC", "❌", "✅"],
                 ["Lifetime Access", "❌", "✅"],
               ].map(([feat, coaching, vs], i) => (
@@ -480,7 +474,7 @@ export default function LandingPage() {
                   "Crossword Puzzles",
                   "Smart Revision Tools",
                   "All Future Updates",
-                  "Hindi + English Support",
+                  "English Interface",
                   "Lifetime Access",
                 ].map(f => (
                   <div key={f} className="flex items-center gap-2 text-sm text-gray-700">
@@ -566,7 +560,7 @@ export default function LandingPage() {
         {/* FINAL CTA */}
         <section className="py-16 bg-gradient-to-r from-orange-500 to-rose-500">
           <div className="max-w-2xl mx-auto px-4 text-center text-white">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Ready to crack NEET?</h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Ready to crack NEET & JEE?</h2>
             <p className="text-orange-100 text-lg mb-6">Get instant access to everything. Get AI Doubt Solver, NEET & JEE Mock Tests, 114 NEET PDFs, Mind Maps & more — all for ₹499 lifetime.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/auth/signup"
