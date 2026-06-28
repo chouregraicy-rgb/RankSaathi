@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useRouter } from "next/navigation";
-import { Lock, Download, BookOpen, Zap, Star, ChevronRight, FileText, Check } from "lucide-react";
+import { Lock, Download, BookOpen, Zap, Star, ChevronRight, Check } from "lucide-react";
 
 declare global { interface Window { Razorpay: any; } }
 
@@ -82,16 +82,7 @@ export default function ResourcesPage() {
       if (!user) { router.push("/auth/signin"); return; }
       setUser(user);
 
-      // Check PDF purchase
-      const { data: pdf } = await supabase
-        .from("pdf_purchases")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .maybeSingle();
-      setHasPDF(!!pdf);
-
-      // Check app subscription
+      // PDFs included with app subscription
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("id")
@@ -99,6 +90,7 @@ export default function ResourcesPage() {
         .eq("status", "active")
         .maybeSingle();
       setHasApp(!!sub);
+      setHasPDF(!!sub); // PDFs auto-unlocked for all paid users
 
       setLoading(false);
     }
@@ -193,68 +185,47 @@ export default function ResourcesPage() {
           </div>
         )}
 
-        {/* Pricing cards — shown only if not purchased */}
+        {/* Upgrade prompt — shown only if not subscribed */}
         {!hasPDF && (
-          <div className="grid md:grid-cols-2 gap-4">
-
-            {/* PDF Only */}
-            <div className="bg-[#111118] border border-amber-500/30 rounded-2xl p-5 space-y-4">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-400"/>
-                <h3 className="text-white font-bold">NEET PDF Pack</h3>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-white">₹299</span>
-                <span className="text-white/40 text-sm line-through ml-2">₹999</span>
-              </div>
-              <ul className="space-y-2">
-                {["All Biology PDFs (Class 11 + 12)", "All Chemistry PDFs (Class 11 + 12)", "All Physics PDFs (Class 11 + 12)", "NEET Question Banks", "Quick Revision Mind Maps", `${TOTAL_FILES} files total — instant download`].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-white/70">
-                    <Check className="w-3.5 h-3.5 text-amber-400 flex-shrink-0"/>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => handlePurchase("pdf_only")}
-                disabled={paying}
-                className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm transition-all"
-              >
-                {paying ? "Processing..." : "Get PDF Pack — ₹299"}
-              </button>
+          <div className="relative bg-gradient-to-br from-[#111118] to-[#0d1a12] border border-emerald-500/30 rounded-2xl p-6 ring-1 ring-emerald-500/10">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-xs font-bold px-5 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                <Star className="w-3 h-3"/> INCLUDED WITH APP — ₹499 LIFETIME
+              </span>
             </div>
-
-            {/* Bundle */}
-            <div className="bg-[#111118] border border-emerald-500/40 rounded-2xl p-5 space-y-4 relative ring-1 ring-emerald-500/20">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-xs font-bold px-4 py-1 rounded-full flex items-center gap-1">
-                  <Star className="w-3 h-3"/> BEST VALUE
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-emerald-400"/>
-                <h3 className="text-white font-bold">App + PDF Bundle</h3>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-white">₹699</span>
-                <span className="text-white/40 text-sm line-through ml-2">₹1,499</span>
-              </div>
-              <ul className="space-y-2">
-                {["Everything in PDF Pack", "VidyaSaathi App — Lifetime", "AI Doubt Solver (unlimited)", "Mock Tests (NEET + JEE)", "Interactive Mind Maps", "Performance Analytics", "Parent Dashboard", "Save ₹99 vs buying separately"].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-white/70">
-                    <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0"/>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => handlePurchase("bundle")}
-                disabled={paying}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 text-white font-semibold text-sm transition-all"
-              >
-                {paying ? "Processing..." : "Get Bundle — ₹699"}
-              </button>
+            <div className="text-center mt-3 mb-5">
+              <p className="text-white font-bold text-lg">Unlock Everything with VidyaSaathi</p>
+              <p className="text-white/50 text-sm mt-1">One payment. All PDFs + Full App. Forever.</p>
             </div>
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              {[
+                "114 NEET PDF files",
+                "Biology, Chemistry, Physics",
+                "Class 11 + Class 12",
+                "Question Banks",
+                "Quick Revision Notes",
+                "AI Doubt Solver",
+                "Mock Tests (NEET + JEE)",
+                "Interactive Mind Maps",
+                "Performance Analytics",
+                "Parent Dashboard",
+                "Lifetime Updates",
+                "No renewals ever",
+              ].map(f => (
+                <div key={f} className="flex items-center gap-2 text-sm text-white/70">
+                  <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0"/>
+                  {f}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => router.push("/pricing")}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-500/20"
+            >
+              <Zap className="w-4 h-4 inline mr-2"/>
+              Get Lifetime Access — ₹499
+            </button>
+            <p className="text-center text-xs text-white/30 mt-2">One-time · No subscription · Instant access</p>
           </div>
         )}
 
@@ -315,18 +286,17 @@ export default function ResourcesPage() {
           ))}
         </div>
 
-        {/* Bottom CTA if not purchased */}
+        {/* Bottom CTA */}
         {!hasPDF && (
-          <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/20 rounded-2xl p-5 text-center space-y-3">
-            <p className="text-white font-semibold">Unlock all {TOTAL_FILES} files instantly</p>
-            <p className="text-white/50 text-sm">One-time payment · No subscription · Download forever</p>
+          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 text-center space-y-3">
+            <p className="text-white font-semibold">📚 {TOTAL_FILES} files waiting for you</p>
+            <p className="text-white/40 text-sm">Get the app at ₹499 and unlock everything instantly</p>
             <button
-              onClick={() => handlePurchase("bundle")}
-              disabled={paying}
+              onClick={() => router.push("/pricing")}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold text-sm"
             >
               <Zap className="w-4 h-4"/>
-              Get Everything — ₹699
+              Get Lifetime Access — ₹499
               <ChevronRight className="w-4 h-4"/>
             </button>
           </div>
