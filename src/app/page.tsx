@@ -198,7 +198,7 @@ export default function LandingPage() {
   const FEATURES = [
     { icon: "🤖", color: "bg-orange-100", title: "AI Doubt Solver", desc: "Get instant explanations for any NEET question in Hindi or English. Available 24/7 — no waiting for teachers." },
     { icon: "📄", color: "bg-green-100", title: "114 NEET PDFs Included", desc: "Complete Biology, Chemistry & Physics notes for Class 11 & 12. Quick revision, question banks, mind maps — all free." },
-    { icon: "📝", color: "bg-blue-100", title: "Full Mock Tests", desc: "NEET pattern tests with auto-grading, detailed solutions, and rank prediction after every test." },
+    { icon: "📝", color: "bg-blue-100", title: "Full Mock Tests", desc: "NEET & JEE pattern tests with auto-grading, detailed solutions, and rank prediction after every test." },
     { icon: "🧠", color: "bg-purple-100", title: "Interactive Mind Maps", desc: "Visual mind maps for all 38 Biology chapters with NCERT diagrams, mnemonics, and NEET key facts." },
     { icon: "👨‍👩‍👧", color: "bg-pink-100", title: "Parent Dashboard", desc: "Real-time study reports, location tracking, and performance updates — parents stay connected." },
     { icon: "📊", color: "bg-amber-100", title: "Performance Analytics", desc: "Chapter-wise accuracy charts, weak topic targeting, and improvement trends to guide your study." },
@@ -216,7 +216,7 @@ export default function LandingPage() {
   const FAQS = [
     { q: "What's included in ₹499 lifetime?", a: "Everything — AI Doubt Solver, 114 NEET PDFs (Biology, Chemistry, Physics Class 11+12), Full Mock Tests, Interactive Mind Maps, Performance Analytics, Parent Dashboard, Community access, and all future updates. No hidden charges, no renewals ever." },
     { q: "Do I get all 114 PDFs immediately?", a: "Yes! Once you pay ₹499, you get instant access to all 114 PDFs via Google Drive — Biology Handbook, Class 11 & 12 complete notes, Question Banks, Quick Revision notes, Mind Map PDFs for all subjects." },
-    { q: "Is there a free trial?", a: "No free trial — but at ₹499 lifetime, it's less than the cost of one coaching class. You get instant access to everything including 114 PDFs, AI tools, and all features forever." },
+    { q: "Is there a free trial?", a: "No free trial — at ₹499 lifetime, it's less than one coaching class for both NEET & JEE students. You get instant access to everything including 114 PDFs, AI tools, and all features forever." },
     { q: "Does it work for JEE too?", a: "Yes! VidyaSaathi covers both NEET and JEE with separate test series, AI-curated content, and subject-wise material for each." },
     { q: "Can parents and student use together?", a: "Parents get their own separate dashboard linked to the student via invite code. Both login separately." },
     { q: "What devices does it work on?", a: "Works on any browser — phone, tablet, laptop. Android app coming soon on Play Store." },
@@ -279,7 +279,7 @@ export default function LandingPage() {
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-bold px-4 py-2 rounded-full mb-5 shadow-sm">
                   <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"/>
-                  India's #1 AI-Powered NEET Prep Platform
+                  India's AI-Powered NEET & JEE Prep Platform
                 </div>
 
                 <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
@@ -290,12 +290,12 @@ export default function LandingPage() {
                 </h1>
 
                 <p className="text-gray-600 text-lg mb-4 leading-relaxed">
-                  AI Doubt Solver + 114 NEET PDFs + Mock Tests + Mind Maps + Parent Dashboard — everything in one app at just <strong className="text-gray-900">₹499 lifetime</strong>.
+                  AI Doubt Solver + Mock Tests (NEET & JEE) + Mind Maps + Parent Dashboard + 114 NEET PDFs — everything in one app at just <strong className="text-gray-900">₹499 lifetime</strong>.
                 </p>
 
                 {/* Value props */}
                 <div className="grid grid-cols-2 gap-2 mb-6">
-                  {["AI Doubt Solver 24/7", "114 NEET PDFs Free", "Mock Tests NEET+JEE", "Parent Dashboard", "Interactive Mind Maps", "Lifetime Access"].map(f => (
+                  {["AI Doubt Solver 24/7", "114 NEET PDFs (Free)", "Mock Tests NEET+JEE", "Parent Dashboard", "Interactive Mind Maps", "Lifetime Access"].map(f => (
                     <div key={f} className="flex items-center gap-2 text-sm text-gray-700">
                       <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -356,7 +356,7 @@ export default function LandingPage() {
                 114 NEET Study Files — <span className="text-green-600">Absolutely Free</span>
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Complete Biology, Chemistry & Physics study material for Class 11 & 12. Normally sold for ₹999 — included free with your app.
+                Complete NEET study material — Biology, Chemistry & Physics for Class 11 & 12. JEE students get full app access with AI tools & mock tests.
               </p>
             </div>
 
@@ -374,7 +374,7 @@ export default function LandingPage() {
 
             <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-2xl p-6 text-center text-white">
               <p className="font-bold text-xl mb-1">Worth ₹999 · Yours for FREE</p>
-              <p className="text-green-100 text-sm mb-4">When you get VidyaSaathi at ₹499 lifetime — all 114 PDFs unlock instantly in your account</p>
+              <p className="text-green-100 text-sm mb-4">NEET students: all 114 PDFs unlock instantly. JEE students: full AI tools, mock tests, mind maps & analytics.</p>
               <Link href="/auth/signup"
                 className="inline-flex items-center gap-2 bg-white text-green-600 font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-green-50 transition-all shadow-lg">
                 Get App + PDFs for ₹499 →
@@ -390,7 +390,7 @@ export default function LandingPage() {
               <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
                 Everything you need to crack NEET
               </h2>
-              <p className="text-gray-500 text-lg">Not just notes. Your complete AI-powered exam partner.</p>
+              <p className="text-gray-500 text-lg">Complete AI-powered prep for NEET & JEE — with NEET PDF study material included free.</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {FEATURES.map((f, i) => (
@@ -567,7 +567,7 @@ export default function LandingPage() {
         <section className="py-16 bg-gradient-to-r from-orange-500 to-rose-500">
           <div className="max-w-2xl mx-auto px-4 text-center text-white">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Ready to crack NEET?</h2>
-            <p className="text-orange-100 text-lg mb-6">Get instant access to everything. Get AI tools + 114 PDFs + everything for ₹499 lifetime.</p>
+            <p className="text-orange-100 text-lg mb-6">Get instant access to everything. Get AI Doubt Solver, NEET & JEE Mock Tests, 114 NEET PDFs, Mind Maps & more — all for ₹499 lifetime.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-orange-50 transition-all shadow-lg">
@@ -594,7 +594,7 @@ export default function LandingPage() {
                 </div>
                 <span className="font-bold text-white text-base">Vidya<span className="text-orange-400">Saathi</span></span>
               </div>
-              <p className="text-sm leading-relaxed">India's AI-powered NEET & JEE preparation platform. Smart study, real results.</p>
+              <p className="text-sm leading-relaxed">India's AI-powered NEET & JEE preparation platform. Smart study, real results. NEET PDF material included free.</p>
               <p className="text-xs mt-2 text-gray-500">A GlobalWebSaaS product</p>
             </div>
             <div>
