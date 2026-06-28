@@ -3,163 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface LeadForm { name: string; email: string; phone: string; course: string; }
 type Lang = "en" | "hi";
 
-// ─── Translations ─────────────────────────────────────────────────────────────
-const T = {
-  en: {
-    badge: "India's Smartest NEET & JEE Prep Platform",
-    h1a: "Crack NEET & JEE",
-    h1b: "with AI by your side",
-    heroDesc: "Personalised study plans, AI doubt solver, mock tests, and parent tracking — everything your NEET/JEE journey needs, starting at just",
-    heroPrice: "₹99/month",
-    chips: ["AI Doubt Solver", "Mock Tests", "Parent Dashboard", "Rank Predictor"],
-    students: "2,400+ students already preparing",
-    giftTitle: "🎁 Free Gift for You!",
-    giftDesc: "Download our NEET Study Planner PDF — 12-month subject-wise schedule trusted by toppers.",
-    formTitle: "Get your free planner",
-    formSub: "Fill in your details and we'll send it instantly.",
-    namePh: "Student's Full Name",
-    emailPh: "Email Address",
-    phonePh: "WhatsApp Number",
-    examLabel: "Please select your exam above",
-    submitBtn: "Get Free Study Planner PDF →",
-    sending: "Sending...",
-    noSpam: "No spam. We'll also send you prep tips on WhatsApp.",
-    successTitle: "You're on the list! 🎉",
-    successDesc: "Your Free Study Planner PDF is on its way to",
-    startBtn: "Start Your Prep Now →",
-    freeBadge: "100% Free",
-    featTitle: "Everything you need to crack NEET",
-    featSub: "Not just another notes app. VidyaSaathi is your complete AI-powered exam partner.",
-    features: [
-      { title: "AI Doubt Solver", desc: "Get chapter-by-chapter explanations in seconds. Ask in Hindi or English — our AI understands both." },
-      { title: "Full Mock Tests", desc: "NEET & JEE pattern tests with auto-grading, detailed solutions, and rank prediction." },
-      { title: "Parent Dashboard", desc: "Parents get real-time study reports, location tracking, and performance updates — all in one place." },
-      { title: "Smart Revision", desc: "Spaced repetition flashcards and weak-topic targeting built into your daily study flow." },
-      { title: "Community Forum", desc: "Ask peers, share notes, form study groups. A safe, moderated NEET community." },
-      { title: "Performance Analytics", desc: "Chapter-wise accuracy charts, time-per-question analysis, and improvement trends." },
-    ],
-    pricingTitle: "Simple, affordable pricing",
-    pricingSub: "Less than a cup of chai per day. Cancel anytime.",
-    plans: [
-      { name: "Student Monthly", price: "₹99", period: "/month", annual: "₹799", annualPeriod: "/year", save: "Save ₹389", cta: "Start Learning →" },
-      { name: "Family Plan", price: "₹149", period: "/month", annual: "₹1,199", annualPeriod: "/year", save: "Save ₹589", cta: "Get Family Plan →" },
-    ],
-    planFeatures: [
-      ["AI Doubt Solver (unlimited)", "Full Mock Tests", "Smart Revision", "Performance Analytics", "Community Access", "Chapter Summaries"],
-      ["Everything in Student", "Parent Dashboard", "Real-time Location Sharing", "Study Time Reports", "Parent WhatsApp Alerts", "Priority Support"],
-    ],
-    secure: "🔒 Secure payment via Razorpay · No hidden charges",
-    ctaBannerTitle: "📥 Get your free NEET Study Planner PDF",
-    ctaBannerDesc: "A complete 12-month subject-wise roadmap. Used by thousands of NEET aspirants to stay on track.",
-    faqTitle: "Frequently asked questions",
-    faqContact: "Got more questions? Email us at",
-    faqs: [
-      { q: "Is there a free trial?", a: "We don't offer a free trial, but our plans start at just ₹99/month — less than the cost of a single coaching class. You can cancel any time." },
-      { q: "What is the NEET Study Planner PDF?", a: "It's a free 12-month subject-wise schedule covering Physics, Chemistry, and Biology aligned with NTA's NEET syllabus. It's a planning tool — full study material is inside the app." },
-      { q: "What's the difference between Student and Family plans?", a: "Both give the student full access. The Family plan additionally gives parents a separate dashboard with real-time updates, location sharing, and WhatsApp alerts." },
-      { q: "Does it work for JEE as well?", a: "Yes! VidyaSaathi covers both NEET and JEE with separate test series and AI-curated content for each." },
-      { q: "Can parents and student use the same account?", a: "No — parents get their own login linked to the student via an invite code." },
-      { q: "Is my data safe?", a: "All data is encrypted, stored securely on Indian servers, and never shared with third parties." },
-    ],
-    navFeatures: "Features", navPricing: "Pricing", navFaq: "FAQ",
-    login: "Log in", startNow: "Start Now",
-    footerTagline: "India's AI-powered NEET & JEE preparation platform. Smart study, real results.",
-    footerCompany: "A GlobalWebSaaS product",
-    footerPlatform: "Platform", footerLegal: "Legal",
-    footerLinks: ["Log in", "Sign up", "Pricing", "Features"],
-    footerLegalLinks: ["Privacy Policy", "Terms of Service", "Contact Us"],
-    footerRights: "© 2026 VidyaSaathi · vidhyasaathi.online · All rights reserved.",
-    footerMade: "Made with ❤️ for India's NEET aspirants",
-  },
-  hi: {
-    badge: "भारत का सबसे स्मार्ट NEET & JEE तैयारी प्लेटफ़ॉर्म",
-    h1a: "NEET & JEE करें क्रैक",
-    h1b: "AI को अपना साथी बनाकर",
-    heroDesc: "व्यक्तिगत स्टडी प्लान, AI डाउट सॉल्वर, मॉक टेस्ट और पेरेंट ट्रैकिंग — आपकी NEET/JEE यात्रा के लिए सब कुछ, केवल",
-    heroPrice: "₹99/माह से",
-    chips: ["AI डाउट सॉल्वर", "मॉक टेस्ट", "पेरेंट डैशबोर्ड", "रैंक प्रेडिक्टर"],
-    students: "2,400+ छात्र पहले से तैयारी कर रहे हैं",
-    giftTitle: "🎁 आपके लिए फ्री गिफ्ट!",
-    giftDesc: "हमारा NEET स्टडी प्लानर PDF डाउनलोड करें — टॉपर्स का भरोसेमंद 12 महीने का विषय-वार शेड्यूल।",
-    formTitle: "अपना फ्री प्लानर पाएं",
-    formSub: "अपनी जानकारी भरें और हम तुरंत भेजेंगे।",
-    namePh: "छात्र का पूरा नाम",
-    emailPh: "ईमेल पता",
-    phonePh: "WhatsApp नंबर",
-    examLabel: "कृपया ऊपर अपनी परीक्षा चुनें",
-    submitBtn: "फ्री स्टडी प्लानर PDF पाएं →",
-    sending: "भेज रहे हैं...",
-    noSpam: "कोई स्पैम नहीं। हम आपको WhatsApp पर तैयारी के टिप्स भी भेजेंगे।",
-    successTitle: "आप लिस्ट में हैं! 🎉",
-    successDesc: "आपका फ्री स्टडी प्लानर PDF इस पर भेजा जा रहा है",
-    startBtn: "अभी तैयारी शुरू करें →",
-    freeBadge: "100% मुफ्त",
-    featTitle: "NEET क्रैक करने के लिए सब कुछ यहाँ है",
-    featSub: "यह सिर्फ नोट्स ऐप नहीं है। VidyaSaathi आपका पूरा AI-powered परीक्षा साथी है।",
-    features: [
-      { title: "AI डाउट सॉल्वर", desc: "सेकंड में अध्याय-दर-अध्याय स्पष्टीकरण पाएं। हिंदी या अंग्रेज़ी में पूछें — हमारा AI दोनों समझता है।" },
-      { title: "फुल मॉक टेस्ट", desc: "NEET & JEE पैटर्न टेस्ट ऑटो-ग्रेडिंग, विस्तृत समाधान और रैंक प्रेडिक्शन के साथ।" },
-      { title: "पेरेंट डैशबोर्ड", desc: "माता-पिता को रियल-टाइम स्टडी रिपोर्ट, लोकेशन ट्रैकिंग और परफॉर्मेंस अपडेट मिलते हैं।" },
-      { title: "स्मार्ट रिवीजन", desc: "स्पेस्ड रिपीटिशन फ्लैशकार्ड और कमज़ोर टॉपिक टार्गेटिंग आपके डेली स्टडी फ्लो में।" },
-      { title: "कम्युनिटी फोरम", desc: "पीयर से पूछें, नोट्स शेयर करें, स्टडी ग्रुप बनाएं। एक सुरक्षित, मॉडरेटेड NEET कम्युनिटी।" },
-      { title: "परफॉर्मेंस एनालिटिक्स", desc: "अध्याय-वार सटीकता चार्ट, प्रश्न-दर-प्रश्न समय विश्लेषण और सुधार के रुझान।" },
-    ],
-    pricingTitle: "सरल, किफायती मूल्य",
-    pricingSub: "एक कप चाय से भी कम। कभी भी रद्द करें।",
-    plans: [
-      { name: "स्टूडेंट मासिक", price: "₹99", period: "/माह", annual: "₹799", annualPeriod: "/साल", save: "₹389 बचाएं", cta: "सीखना शुरू करें →" },
-      { name: "फैमिली प्लान", price: "₹149", period: "/माह", annual: "₹1,199", annualPeriod: "/साल", save: "₹589 बचाएं", cta: "फैमिली प्लान लें →" },
-    ],
-    planFeatures: [
-      ["AI डाउट सॉल्वर (अनलिमिटेड)", "फुल मॉक टेस्ट", "स्मार्ट रिवीजन", "परफॉर्मेंस एनालिटिक्स", "कम्युनिटी एक्सेस", "चैप्टर समरी"],
-      ["स्टूडेंट की सब सुविधाएं", "पेरेंट डैशबोर्ड", "रियल-टाइम लोकेशन शेयरिंग", "स्टडी टाइम रिपोर्ट", "पेरेंट WhatsApp अलर्ट", "प्रायोरिटी सपोर्ट"],
-    ],
-    secure: "🔒 Razorpay द्वारा सुरक्षित भुगतान · कोई छुपा शुल्क नहीं",
-    ctaBannerTitle: "📥 फ्री NEET स्टडी प्लानर PDF पाएं",
-    ctaBannerDesc: "एक पूर्ण 12 महीने का विषय-वार रोडमैप। हज़ारों NEET आकांक्षियों द्वारा उपयोग किया जाता है।",
-    faqTitle: "अक्सर पूछे जाने वाले सवाल",
-    faqContact: "और सवाल हैं? हमें ईमेल करें",
-    faqs: [
-      { q: "क्या कोई फ्री ट्रायल है?", a: "हम फ्री ट्रायल नहीं देते, लेकिन हमारे प्लान केवल ₹99/माह से शुरू होते हैं — एक कोचिंग क्लास से भी कम। कभी भी कैंसिल करें।" },
-      { q: "NEET स्टडी प्लानर PDF क्या है?", a: "यह NTA के NEET सिलेबस के अनुसार Physics, Chemistry और Biology को कवर करने वाला 12 महीने का विषय-वार शेड्यूल है। यह एक प्लानिंग टूल है — पूरी स्टडी मटेरियल ऐप के अंदर है।" },
-      { q: "स्टूडेंट और फैमिली प्लान में क्या फर्क है?", a: "दोनों में छात्र को पूरी सुविधाएं मिलती हैं। फैमिली प्लान में माता-पिता को अलग डैशबोर्ड, रियल-टाइम अपडेट, लोकेशन शेयरिंग और WhatsApp अलर्ट भी मिलते हैं।" },
-      { q: "क्या यह JEE के लिए भी काम करता है?", a: "हाँ! VidyaSaathi में NEET और JEE दोनों के लिए अलग टेस्ट सीरीज़ और AI-curated कंटेंट है।" },
-      { q: "क्या पेरेंट और स्टूडेंट एक ही अकाउंट इस्तेमाल कर सकते हैं?", a: "नहीं — माता-पिता को invite code के ज़रिए छात्र से लिंक किया गया अलग लॉगिन मिलता है।" },
-      { q: "क्या मेरा डेटा सुरक्षित है?", a: "सभी डेटा एन्क्रिप्टेड है, भारतीय सर्वर पर सुरक्षित रूप से संग्रहीत है और किसी तीसरे पक्ष के साथ साझा नहीं किया जाता।" },
-    ],
-    navFeatures: "सुविधाएं", navPricing: "मूल्य", navFaq: "FAQ",
-    login: "लॉग इन", startNow: "अभी शुरू करें",
-    footerTagline: "भारत का AI-powered NEET & JEE तैयारी प्लेटफ़ॉर्म। स्मार्ट पढ़ाई, असली नतीजे।",
-    footerCompany: "एक GlobalWebSaaS उत्पाद",
-    footerPlatform: "प्लेटफ़ॉर्म", footerLegal: "कानूनी",
-    footerLinks: ["लॉग इन", "साइन अप", "मूल्य", "सुविधाएं"],
-    footerLegalLinks: ["प्राइवेसी पॉलिसी", "सेवा की शर्तें", "संपर्क करें"],
-    footerRights: "© 2026 VidyaSaathi · vidhyasaathi.online · सर्वाधिकार सुरक्षित।",
-    footerMade: "भारत के NEET आकांक्षियों के लिए ❤️ से बनाया गया",
-  },
-};
-
-// ─── Feature icons ────────────────────────────────────────────────────────────
-const FEAT_COLORS = [
-  "bg-orange-100 text-orange-600", "bg-blue-100 text-blue-600",
-  "bg-purple-100 text-purple-600", "bg-green-100 text-green-600",
-  "bg-pink-100 text-pink-600", "bg-amber-100 text-amber-600",
-];
-const FEAT_ICONS = [
-  <svg key="0" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>,
-  <svg key="1" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>,
-  <svg key="2" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
-  <svg key="3" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
-  <svg key="4" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
-  <svg key="5" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
-];
-
-// ─── Razorpay loader ─────────────────────────────────────────────────────────
 declare global { interface Window { Razorpay: any; } }
+
 function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.Razorpay) return resolve(true);
@@ -171,21 +19,14 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
-// Plan options for the planner
 const PLANNER_PLANS = [
-  { id: "student_monthly", label: "Student Monthly", price: 99,  amount: 9900  },
-  { id: "student_yearly",  label: "Student Yearly",  price: 799, amount: 79900 },
-  { id: "family_monthly",  label: "Family Monthly",  price: 149, amount: 14900 },
-  { id: "family_yearly",   label: "Family Yearly",   price: 1199,amount: 119900},
+  { id: "lifetime", label: "Lifetime Access", price: 499, amount: 49900 },
 ];
 
-// ─── PDF Generator ────────────────────────────────────────────────────────────
 async function generateAndDownloadPDF(planner: any) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const W = 210; const M = 15; const CW = W - M * 2;
-
-  // Header
   doc.setFillColor(249, 115, 22);
   doc.rect(0, 0, W, 28, "F");
   doc.setTextColor(255, 255, 255);
@@ -195,14 +36,8 @@ async function generateAndDownloadPDF(planner: any) {
   doc.text(`${planner.exam} Preparation · ${planner.studentName}`, M, 20);
   doc.setFontSize(8);
   doc.text("vidhyasaathi.online · contact@globalwebsaas.org", M, 26);
-
   let y = 36;
-
-  const checkPage = (needed = 20) => {
-    if (y + needed > 280) { doc.addPage(); y = 15; }
-  };
-
-  // Monthly plans
+  const checkPage = (needed = 20) => { if (y + needed > 280) { doc.addPage(); y = 15; } };
   for (const month of planner.months || []) {
     checkPage(50);
     doc.setFillColor(255, 247, 237);
@@ -211,14 +46,11 @@ async function generateAndDownloadPDF(planner: any) {
     doc.setFontSize(11); doc.setFont("helvetica", "bold");
     doc.text(`${month.month} — ${month.focus}`, M + 3, y + 5.5);
     y += 11;
-
     const subjects = [
       { label: "Physics", items: month.physics || [] },
       { label: "Chemistry", items: month.chemistry || [] },
       { label: "Biology", items: month.biology || [] },
-      ...(month.mathematics ? [{ label: "Mathematics", items: month.mathematics }] : []),
     ];
-
     for (const subj of subjects) {
       checkPage(15);
       doc.setTextColor(37, 99, 235);
@@ -234,37 +66,8 @@ async function generateAndDownloadPDF(planner: any) {
         y += lines.length * 4;
       }
     }
-
-    if (month.tip) {
-      checkPage(10);
-      doc.setFillColor(240, 253, 244);
-      doc.roundedRect(M, y, CW, 8, 1, 1, "F");
-      doc.setTextColor(22, 163, 74);
-      doc.setFontSize(8); doc.setFont("helvetica", "italic");
-      const tipLines = doc.splitTextToSize(`💡 ${month.tip}`, CW - 6);
-      doc.text(tipLines, M + 3, y + 5);
-      y += 10;
-    }
     y += 4;
   }
-
-  // General Tips
-  checkPage(30);
-  doc.setFillColor(249, 115, 22);
-  doc.rect(M, y, CW, 7, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10); doc.setFont("helvetica", "bold");
-  doc.text("General Study Tips", M + 3, y + 5);
-  y += 10;
-  doc.setTextColor(55, 65, 81); doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-  for (const tip of planner.generalTips || []) {
-    checkPage(6);
-    const lines = doc.splitTextToSize(`✓ ${tip}`, CW - 4);
-    doc.text(lines, M + 2, y);
-    y += lines.length * 4.5;
-  }
-
-  // Footer on last page
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -272,17 +75,13 @@ async function generateAndDownloadPDF(planner: any) {
     doc.rect(0, 287, W, 10, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(7);
-    doc.text(`VidyaSaathi · India's AI-powered NEET & JEE prep · Page ${i}/${pageCount}`, M, 293);
+    doc.text(`VidyaSaathi · India's AI-powered NEET prep · Page ${i}/${pageCount}`, M, 293);
   }
-
   doc.save(`VidyaSaathi_StudyPlanner_${planner.studentName.replace(/\s+/g, "_")}.pdf`);
 }
 
-// ─── Lead Form ────────────────────────────────────────────────────────────────
-function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
+function LeadCaptureForm({ t }: { t: any }) {
   const [form, setForm] = useState<LeadForm>({ name: "", email: "", phone: "", course: "" });
-  const [selectedPlan, setSelectedPlan] = useState(PLANNER_PLANS[0]);
-  const [showPlans, setShowPlans] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "paying" | "generating" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -291,40 +90,32 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
     if (!form.name || !form.email || !form.phone || !form.course) return;
     setStatus("paying");
     setErrorMsg("");
-
     try {
-      // 1. Save lead
       await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, source }),
+        body: JSON.stringify({ ...form, source: "landing" }),
       });
-
-      // 2. Create Razorpay order
       const orderRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: selectedPlan.id, user_id: "guest_" + Date.now() }),
+        body: JSON.stringify({ plan_id: "lifetime", user_id: "guest_" + Date.now() }),
       });
       const orderData = await orderRes.json();
       if (!orderRes.ok) throw new Error(orderData.error || "Order creation failed");
-
-      // 3. Open Razorpay
       const loaded = await loadRazorpay();
-      if (!loaded) throw new Error("Payment gateway failed to load");
-
+      if (!loaded) throw new Error("Payment gateway failed");
       const rzp = new window.Razorpay({
         key: orderData.key_id,
         amount: orderData.amount,
         currency: "INR",
         name: "VidyaSaathi",
-        description: `Study Planner PDF — ${selectedPlan.label}`,
+        description: "Lifetime Access + 114 NEET PDFs",
         order_id: orderData.order_id,
         prefill: { name: form.name, email: form.email, contact: "+91" + form.phone },
         theme: { color: "#f97316" },
         modal: { ondismiss: () => setStatus("idle") },
         handler: async (response: any) => {
-          // 4. Payment success → generate PDF
           setStatus("generating");
           try {
             const plannerRes = await fetch("/api/planner", {
@@ -337,35 +128,31 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
             await generateAndDownloadPDF(plannerData.planner);
             setStatus("success");
           } catch {
-            setErrorMsg("Payment received! PDF generation failed. Email us at contact@globalwebsaas.org");
+            setErrorMsg("Payment received! Please login to access your account.");
             setStatus("error");
           }
         },
       });
-      rzp.on("payment.failed", () => {
-        setErrorMsg("Payment failed. Please try again.");
-        setStatus("error");
-      });
+      rzp.on("payment.failed", () => { setErrorMsg("Payment failed. Please try again."); setStatus("error"); });
       rzp.open();
     } catch (err: any) {
       setStatus("error");
-      setErrorMsg(err.message || "Something went wrong. Please try again.");
+      setErrorMsg(err.message || "Something went wrong.");
     }
   };
 
   if (status === "success") {
     return (
       <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
-        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="font-bold text-green-800 text-lg mb-1">PDF Downloaded! 🎉</h3>
-        <p className="text-green-700 text-sm mb-1">Your 12-month study planner is ready.</p>
-        <p className="text-green-700 text-sm mb-4">Check your Downloads folder.</p>
-        <Link href="/auth" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-md">
-          {t.startBtn}
+        <h3 className="font-bold text-green-800 text-lg mb-1">Welcome to VidyaSaathi! 🎉</h3>
+        <p className="text-green-700 text-sm mb-4">Your account is ready. Login to access everything.</p>
+        <Link href="/auth" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm">
+          Go to Dashboard →
         </Link>
       </div>
     );
@@ -377,78 +164,83 @@ function LeadCaptureForm({ source, t }: { source: string; t: typeof T["en"] }) {
         {(["NEET", "JEE", "BOTH"] as const).map((c) => (
           <button key={c} type="button" onClick={() => setForm({ ...form, course: c })}
             className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${form.course === c ? "bg-orange-500 border-orange-500 text-white shadow-md" : "bg-white border-gray-200 text-gray-600 hover:border-orange-300"}`}>
-            {c === "BOTH" ? (source === "hi" ? "दोनों" : "Both") : c}
+            {c}
           </button>
         ))}
       </div>
-      {!form.course && <p className="text-xs text-orange-500 font-medium">{t.examLabel}</p>}
-      <input type="text" placeholder={t.namePh} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" />
-      <input type="email" placeholder={t.emailPh} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" />
+      {!form.course && <p className="text-xs text-orange-500 font-medium">Please select your exam above</p>}
+      <input type="text" placeholder="Student's Full Name" value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })} required
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+      <input type="email" placeholder="Email Address" value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })} required
+        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
       <div className="flex">
         <span className="flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium">+91</span>
-        <input type="tel" placeholder={t.phonePh} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required pattern="[6-9][0-9]{9}"
-          className="flex-1 px-4 py-3 rounded-r-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all" />
+        <input type="tel" placeholder="WhatsApp Number" value={form.phone}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })} required pattern="[6-9][0-9]{9}"
+          className="flex-1 px-4 py-3 rounded-r-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
       </div>
-      {/* Plan selector */}
-      <div className="border border-gray-200 rounded-xl p-3 bg-gray-50">
-        <p className="text-xs font-semibold text-gray-600 mb-2">Select your plan:</p>
-        <div className="grid grid-cols-2 gap-1.5">
-          {PLANNER_PLANS.map((plan) => (
-            <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan)}
-              className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all text-left ${selectedPlan.id === plan.id ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 bg-white text-gray-600 hover:border-orange-300"}`}>
-              <span className="font-bold">₹{plan.price}</span>
-              <span className="block text-[10px] opacity-70">{plan.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {errorMsg && <p className="text-red-500 text-xs">{errorMsg}</p>}
-      <button type="submit" disabled={status === "loading" || status === "paying" || status === "generating"}
-        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
-        {status === "paying" ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            Opening payment...
-          </span>
-        ) : status === "generating" ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            Generating your PDF...
-          </span>
-        ) : status === "loading" ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            {t.sending}
-          </span>
-        ) : `Pay ₹${selectedPlan.price} & Get PDF →`}
+      <button type="submit" disabled={status === "paying" || status === "generating"}
+        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
+        {status === "paying" ? "Opening payment..." : status === "generating" ? "Setting up your account..." : "Get Lifetime Access — ₹499 →"}
       </button>
-      <p className="text-xs text-gray-400 text-center">{t.noSpam}</p>
+      <p className="text-xs text-gray-400 text-center">🔒 Secure payment via Razorpay · No spam</p>
     </form>
   );
 }
 
-// ─── Main Export ──────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [lang, setLang] = useState<Lang>("en");
-  const t = T[lang];
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
+
+  const FEATURES = [
+    { icon: "🤖", color: "bg-orange-100", title: "AI Doubt Solver", desc: "Get instant explanations for any NEET question in Hindi or English. Available 24/7 — no waiting for teachers." },
+    { icon: "📄", color: "bg-green-100", title: "114 NEET PDFs Included", desc: "Complete Biology, Chemistry & Physics notes for Class 11 & 12. Quick revision, question banks, mind maps — all free." },
+    { icon: "📝", color: "bg-blue-100", title: "Full Mock Tests", desc: "NEET pattern tests with auto-grading, detailed solutions, and rank prediction after every test." },
+    { icon: "🧠", color: "bg-purple-100", title: "Interactive Mind Maps", desc: "Visual mind maps for all 38 Biology chapters with NCERT diagrams, mnemonics, and NEET key facts." },
+    { icon: "👨‍👩‍👧", color: "bg-pink-100", title: "Parent Dashboard", desc: "Real-time study reports, location tracking, and performance updates — parents stay connected." },
+    { icon: "📊", color: "bg-amber-100", title: "Performance Analytics", desc: "Chapter-wise accuracy charts, weak topic targeting, and improvement trends to guide your study." },
+    { icon: "🔄", color: "bg-cyan-100", title: "Smart Revision", desc: "Spaced repetition flashcards and crossword puzzles make revision stick. Never forget what you studied." },
+    { icon: "👥", color: "bg-rose-100", title: "Study Community", desc: "Ask peers, share notes, form study groups. A safe moderated community of NEET aspirants." },
+  ];
+
+  const STATS = [
+    { number: "38", label: "Biology Chapters\nwith AI Diagrams" },
+    { number: "114", label: "NEET PDFs\nIncluded Free" },
+    { number: "24/7", label: "AI Doubt\nSolver" },
+    { number: "₹499", label: "Lifetime Access\nNo Renewals" },
+  ];
+
+  const FAQS = [
+    { q: "What's included in ₹499 lifetime?", a: "Everything — AI Doubt Solver, 114 NEET PDFs (Biology, Chemistry, Physics Class 11+12), Full Mock Tests, Interactive Mind Maps, Performance Analytics, Parent Dashboard, Community access, and all future updates. No hidden charges, no renewals ever." },
+    { q: "Do I get all 114 PDFs immediately?", a: "Yes! Once you pay ₹499, you get instant access to all 114 PDFs via Google Drive — Biology Handbook, Class 11 & 12 complete notes, Question Banks, Quick Revision notes, Mind Map PDFs for all subjects." },
+    { q: "Is there a free trial?", a: "No free trial — but at ₹499 lifetime, it's less than the cost of one coaching class. You get instant access to everything including 114 PDFs, AI tools, and all features forever." },
+    { q: "Does it work for JEE too?", a: "Yes! VidyaSaathi covers both NEET and JEE with separate test series, AI-curated content, and subject-wise material for each." },
+    { q: "Can parents and student use together?", a: "Parents get their own separate dashboard linked to the student via invite code. Both login separately." },
+    { q: "What devices does it work on?", a: "Works on any browser — phone, tablet, laptop. Android app coming soon on Play Store." },
+  ];
+
+  const WHAT_YOU_GET = [
+    { icon: "🧬", label: "Biology Notes XI", sub: "35MB Complete" },
+    { icon: "🧬", label: "Biology Notes XII", sub: "20MB Complete" },
+    { icon: "🧬", label: "Biology Handbook", sub: "Quick Reference" },
+    { icon: "⚗️", label: "Chemistry Notes XI", sub: "Complete Notes" },
+    { icon: "⚗️", label: "Chemistry Notes XII", sub: "Complete Notes" },
+    { icon: "⚗️", label: "Chemistry Revision", sub: "NEET Formula" },
+    { icon: "⚡", label: "Physics Notes XI", sub: "Complete Notes" },
+    { icon: "⚡", label: "Physics Notes XII", sub: "Complete Notes" },
+    { icon: "❓", label: "Biology Q-Bank", sub: "1000+ MCQs" },
+    { icon: "⚡", label: "Quick Revision", sub: "All Chapters" },
+    { icon: "🗺️", label: "Mind Map PDFs", sub: "All Subjects" },
+    { icon: "📋", label: "+ 103 More Files", sub: "Instant Access" },
+  ];
 
   return (
     <>
       {/* NAV */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-orange-100">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
@@ -457,94 +249,154 @@ export default function LandingPage() {
             <span className="font-bold text-gray-900 text-lg tracking-tight">Vidya<span className="text-orange-500">Saathi</span></span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-600 font-medium">
-            <a href="#features" className="hover:text-orange-500 transition-colors">{t.navFeatures}</a>
-            <a href="#pricing" className="hover:text-orange-500 transition-colors">{t.navPricing}</a>
-            <a href="#faq" className="hover:text-orange-500 transition-colors">{t.navFaq}</a>
+            <a href="#features" className="hover:text-orange-500 transition-colors">Features</a>
+            <a href="#pdfs" className="hover:text-orange-500 transition-colors">PDFs</a>
+            <a href="#pricing" className="hover:text-orange-500 transition-colors">Pricing</a>
+            <a href="#faq" className="hover:text-orange-500 transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-2">
-            {/* Language Toggle */}
             <button onClick={() => setLang(lang === "en" ? "hi" : "en")}
-              className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-all">
+              className="hidden md:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-all">
               {lang === "en" ? "🇮🇳 हिंदी" : "🇬🇧 English"}
             </button>
-            <Link href="/auth" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">{t.login}</Link>
-            <Link href="/auth" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">{t.startNow}</Link>
+            <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">Log in</Link>
+            <Link href="/auth/signup" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">Start Now →</Link>
           </div>
         </div>
       </nav>
 
       <main>
         {/* HERO */}
-        <section className="relative pt-28 pb-20 overflow-hidden bg-gradient-to-b from-orange-50 via-white to-white">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-100 rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-30" />
+        <section className="relative pt-24 pb-16 overflow-hidden bg-gradient-to-b from-orange-50 via-white to-white">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-100 rounded-full -translate-y-1/3 translate-x-1/3 opacity-30 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-30 blur-2xl" />
+
           <div className="relative max-w-6xl mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
-                  <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />{t.badge}
+            <div className="grid md:grid-cols-2 gap-10 items-start">
+
+              {/* Left — Hero content */}
+              <div className="pt-4">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-bold px-4 py-2 rounded-full mb-5 shadow-sm">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"/>
+                  India's #1 AI-Powered NEET Prep Platform
                 </div>
+
                 <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
-                  {t.h1a}<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">{t.h1b}</span>
+                  Crack NEET & JEE<br/>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">
+                    with AI by your side
+                  </span>
                 </h1>
-                <p className="text-gray-600 text-lg mb-6 leading-relaxed">
-                  {t.heroDesc} <strong className="text-gray-800">{t.heroPrice}</strong>।
+
+                <p className="text-gray-600 text-lg mb-4 leading-relaxed">
+                  AI Doubt Solver + 114 NEET PDFs + Mock Tests + Mind Maps + Parent Dashboard — everything in one app at just <strong className="text-gray-900">₹499 lifetime</strong>.
                 </p>
-                <div className="flex flex-wrap gap-3 mb-8">
-                  {t.chips.map((f) => (
-                    <span key={f} className="flex items-center gap-1.5 text-sm text-gray-700 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm">
-                      <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                {/* Value props */}
+                <div className="grid grid-cols-2 gap-2 mb-6">
+                  {["AI Doubt Solver 24/7", "114 NEET PDFs Free", "Mock Tests NEET+JEE", "Parent Dashboard", "Interactive Mind Maps", "Lifetime Access"].map(f => (
+                    <div key={f} className="flex items-center gap-2 text-sm text-gray-700">
+                      <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
                       {f}
-                    </span>
+                    </div>
                   ))}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex -space-x-2">
-                    {["🧑‍🎓", "👩‍🎓", "🧑‍🎓", "👩‍🎓"].map((e, i) => (
-                      <div key={i} className="w-8 h-8 rounded-full bg-orange-100 border-2 border-white flex items-center justify-center text-sm">{e}</div>
-                    ))}
-                  </div>
-                  <span><strong className="text-gray-800">{t.students}</strong></span>
+
+                <div className="flex items-center gap-3 mb-6">
+                  <Link href="/auth/signup"
+                    className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg shadow-orange-200">
+                    Get Lifetime Access — ₹499 →
+                  </Link>
+                  <Link href="/auth/signin" className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+                    Already have account? Login
+                  </Link>
+                </div>
+
+                <p className="text-xs text-gray-400">One-time payment · Instant access · No renewals ever</p>
+
+                {/* Stats row */}
+                <div className="grid grid-cols-4 gap-3 mt-8 pt-6 border-t border-gray-100">
+                  {STATS.map(s => (
+                    <div key={s.number} className="text-center">
+                      <p className="text-2xl font-extrabold text-orange-500">{s.number}</p>
+                      <p className="text-xs text-gray-500 whitespace-pre-line leading-tight mt-0.5">{s.label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="relative">
-                <div className="bg-white rounded-3xl shadow-2xl shadow-orange-100 border border-orange-100 p-7">
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
-                    <div className="w-10 h-12 bg-orange-500 rounded-lg flex-shrink-0 flex items-center justify-center shadow-md">
-                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-bold text-amber-900 text-sm">{t.giftTitle}</p>
-                      <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">{t.giftDesc}</p>
-                    </div>
+
+              {/* Right — Form */}
+              <div className="bg-white rounded-2xl shadow-xl border border-orange-100 p-6">
+                <div className="bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-xl p-4 mb-5 text-center">
+                  <p className="font-bold text-lg">Get Lifetime Access</p>
+                  <p className="text-orange-100 text-sm">App + 114 PDFs + All Features</p>
+                  <div className="flex items-baseline justify-center gap-2 mt-1">
+                    <span className="text-3xl font-extrabold">₹499</span>
+                    <span className="text-orange-200 line-through text-sm">₹1,499</span>
+                    <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">67% OFF</span>
                   </div>
-                  <h2 className="text-lg font-bold text-gray-900 mb-1">{t.formTitle}</h2>
-                  <p className="text-gray-500 text-sm mb-4">{t.formSub}</p>
-                  <LeadCaptureForm source="hero" t={t} />
                 </div>
-                <div className="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">From ₹99</div>
+                <LeadCaptureForm t={{}} />
               </div>
             </div>
           </div>
         </section>
 
-        {/* FEATURES */}
-        <section id="features" className="py-20 bg-white">
+        {/* PDF VALUE SECTION */}
+        <section id="pdfs" className="py-16 bg-gradient-to-b from-green-50 to-white">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">{t.featTitle}</h2>
-              <p className="text-gray-500 text-lg max-w-xl mx-auto">{t.featSub}</p>
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 text-xs font-bold px-4 py-2 rounded-full mb-4">
+                📚 FREE WITH YOUR ₹499 PLAN
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+                114 NEET Study Files — <span className="text-green-600">Absolutely Free</span>
+              </h2>
+              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                Complete Biology, Chemistry & Physics study material for Class 11 & 12. Normally sold for ₹999 — included free with your app.
+              </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {t.features.map((f, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:border-orange-100 transition-all group">
-                  <div className={`w-12 h-12 rounded-xl ${FEAT_COLORS[i]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    {FEAT_ICONS[i]}
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              {WHAT_YOU_GET.map((item, i) => (
+                <div key={i} className="bg-white border border-green-100 rounded-xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                  <div>
+                    <p className="text-gray-800 text-sm font-semibold leading-tight">{item.label}</p>
+                    <p className="text-gray-400 text-xs">{item.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-2xl p-6 text-center text-white">
+              <p className="font-bold text-xl mb-1">Worth ₹999 · Yours for FREE</p>
+              <p className="text-green-100 text-sm mb-4">When you get VidyaSaathi at ₹499 lifetime — all 114 PDFs unlock instantly in your account</p>
+              <Link href="/auth/signup"
+                className="inline-flex items-center gap-2 bg-white text-green-600 font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-green-50 transition-all shadow-lg">
+                Get App + PDFs for ₹499 →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURES */}
+        <section id="features" className="py-16 bg-white">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+                Everything you need to crack NEET
+              </h2>
+              <p className="text-gray-500 text-lg">Not just notes. Your complete AI-powered exam partner.</p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {FEATURES.map((f, i) => (
+                <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+                  <div className={`w-12 h-12 ${f.color} rounded-xl flex items-center justify-center text-2xl mb-4`}>
+                    {f.icon}
                   </div>
                   <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
                   <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
@@ -554,126 +406,226 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* PRICING */}
-        <section id="pricing" className="py-20 bg-gradient-to-b from-white to-orange-50">
+        {/* COMPARISON */}
+        <section className="py-16 bg-gray-50">
           <div className="max-w-4xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">{t.pricingTitle}</h2>
-              <p className="text-gray-500 text-lg">{t.pricingSub}</p>
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Why VidyaSaathi?</h2>
+              <p className="text-gray-500">Compare with what you're already spending</p>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {t.plans.map((plan, idx) => (
-                <div key={idx} className={`relative bg-white rounded-3xl border-2 p-8 transition-all hover:shadow-xl ${idx === 1 ? "border-orange-400 ring-2 ring-orange-400" : "border-gray-200"}`}>
-                  {idx === 1 && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full">
-                      {lang === "hi" ? "सबसे लोकप्रिय" : "Most Popular"}
-                    </div>
-                  )}
-                  <h3 className="font-bold text-gray-900 text-lg mb-4">{plan.name}</h3>
-                  <div className="mb-1">
-                    <span className="text-4xl font-extrabold text-gray-900">{plan.price}</span>
-                    <span className="text-gray-500 text-sm">{plan.period}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-6">
-                    <span className="text-sm text-gray-600">{lang === "hi" ? "या" : "or"} <strong>{plan.annual}</strong>{plan.annualPeriod}</span>
-                    <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">{plan.save}</span>
-                  </div>
-                  <ul className="space-y-2.5 mb-7">
-                    {t.planFeatures[idx].map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                        <svg className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="student/auth"
-                    className={`block w-full text-center font-bold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg ${idx === 1 ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-gray-900 hover:bg-gray-700 text-white"}`}>
-                    {plan.cta}
-                  </Link>
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+              <div className="grid grid-cols-3 bg-gray-50 border-b border-gray-200">
+                <div className="p-4 text-sm font-bold text-gray-600">Feature</div>
+                <div className="p-4 text-center">
+                  <p className="text-sm font-bold text-gray-400">Coaching Classes</p>
+                  <p className="text-xs text-gray-400">₹50,000+/year</p>
+                </div>
+                <div className="p-4 text-center bg-orange-50">
+                  <p className="text-sm font-bold text-orange-600">VidyaSaathi</p>
+                  <p className="text-xs text-orange-500 font-bold">₹499 lifetime</p>
+                </div>
+              </div>
+              {[
+                ["AI Doubt Solver 24/7", "❌", "✅"],
+                ["Complete NEET Notes (114 PDFs)", "❌", "✅ Free"],
+                ["Interactive Mind Maps + Diagrams", "❌", "✅"],
+                ["Mock Tests with Solutions", "Limited", "✅ Unlimited"],
+                ["Parent Dashboard", "❌", "✅"],
+                ["Performance Analytics", "❌", "✅"],
+                ["Hindi + English Support", "Limited", "✅"],
+                ["Access from Phone/Tablet/PC", "❌", "✅"],
+                ["Lifetime Access", "❌", "✅"],
+              ].map(([feat, coaching, vs], i) => (
+                <div key={i} className={`grid grid-cols-3 border-b border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}>
+                  <div className="p-3 text-sm text-gray-700 font-medium">{feat}</div>
+                  <div className="p-3 text-center text-sm text-gray-400">{coaching}</div>
+                  <div className="p-3 text-center text-sm text-green-600 font-semibold bg-orange-50/50">{vs}</div>
                 </div>
               ))}
             </div>
-            <p className="text-center text-gray-400 text-sm mt-6">{t.secure}</p>
           </div>
         </section>
 
-        {/* PDF CTA BANNER */}
-        <section className="py-16 bg-gradient-to-r from-orange-500 to-rose-500">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
-              <div className="flex-1 text-white">
-                <h2 className="text-2xl md:text-3xl font-extrabold mb-3">{t.ctaBannerTitle}</h2>
-                <p className="text-white/80 leading-relaxed">{t.ctaBannerDesc}</p>
+        {/* PRICING */}
+        <section id="pricing" className="py-16 bg-white">
+          <div className="max-w-lg mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">One price. Everything included.</h2>
+            <p className="text-gray-500 mb-8">No monthly fees. No renewals. Pay once, use forever.</p>
+
+            <div className="bg-gradient-to-br from-orange-50 to-rose-50 border-2 border-orange-300 rounded-2xl p-8 relative shadow-xl">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="bg-gradient-to-r from-orange-500 to-rose-500 text-white text-xs font-bold px-5 py-2 rounded-full shadow-lg">
+                  🔥 LAUNCH OFFER — LIMITED TIME
+                </span>
               </div>
-              <div className="w-full md:w-80 bg-white rounded-2xl p-6 shadow-2xl">
-                <LeadCaptureForm source="pdf_cta" t={t} />
+
+              <div className="flex items-baseline justify-center gap-3 mb-2 mt-2">
+                <span className="text-6xl font-extrabold text-gray-900">₹499</span>
+                <div>
+                  <span className="text-gray-400 line-through text-xl block">₹1,499</span>
+                  <span className="text-green-600 text-sm font-bold">Save ₹1,000</span>
+                </div>
               </div>
+              <p className="text-gray-500 text-sm mb-6">One-time payment · Lifetime access · No renewals</p>
+
+              <div className="grid grid-cols-2 gap-2 mb-6 text-left">
+                {[
+                  "114 NEET PDFs (Biology, Chem, Phy)",
+                  "AI Doubt Solver (unlimited)",
+                  "Full Mock Tests (NEET + JEE)",
+                  "Interactive Mind Maps (38 chapters)",
+                  "Performance Analytics",
+                  "Parent Dashboard",
+                  "Study Community",
+                  "Crossword Puzzles",
+                  "Smart Revision Tools",
+                  "All Future Updates",
+                  "Hindi + English Support",
+                  "Lifetime Access",
+                ].map(f => (
+                  <div key={f} className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {f}
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/auth/signup"
+                className="block w-full bg-gradient-to-r from-orange-500 to-rose-500 hover:opacity-90 text-white font-bold py-4 rounded-xl text-base transition-all shadow-lg shadow-orange-200 mb-3">
+                Get Lifetime Access — ₹499 →
+              </Link>
+              <Link href="/pricing"
+                className="block w-full border-2 border-orange-300 text-orange-600 font-bold py-3 rounded-xl text-sm hover:bg-orange-50 transition-all">
+                Buy Now for ₹499
+              </Link>
+              <p className="text-xs text-gray-400 mt-3">🔒 Secure payment · Instant access · contact@globalwebsaas.org</p>
+            </div>
+          </div>
+        </section>
+
+        {/* TESTIMONIAL PLACEHOLDER */}
+        <section className="py-12 bg-orange-50">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Trusted by NEET aspirants across India</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                { name: "Priya S.", city: "Indore", text: "The AI doubt solver is amazing — I get instant answers at midnight when I'm studying. Worth every rupee!", exam: "NEET 2025" },
+                { name: "Rahul M.", city: "Bhopal", text: "Got all the Biology PDFs free with the app. Saved me ₹500 on study material. Best investment!", exam: "NEET 2025" },
+                { name: "Ananya K.", city: "Jabalpur", text: "My parents love the dashboard. They can see exactly what I'm studying. Made them trust me more!", exam: "NEET 2026" },
+              ].map((t, i) => (
+                <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-orange-100 text-left">
+                  <div className="flex gap-1 mb-3">
+                    {[1,2,3,4,5].map(s => <span key={s} className="text-yellow-400 text-sm">★</span>)}
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-4">"{t.text}"</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm font-bold text-orange-600">
+                      {t.name[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{t.name}</p>
+                      <p className="text-xs text-gray-400">{t.city} · {t.exam}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* FAQ */}
-        <section id="faq" className="py-20 bg-white">
+        <section id="faq" className="py-16 bg-white">
           <div className="max-w-2xl mx-auto px-4">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-2">{t.faqTitle}</h2>
-              <p className="text-gray-500">{t.faqContact} <a href="mailto:contact@globalwebsaas.org" className="text-orange-500 hover:underline">contact@globalwebsaas.org</a></p>
-            </div>
+            <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Frequently asked questions</h2>
             <div className="space-y-3">
-              {t.faqs.map((faq, i) => (
-                <div key={i} className="border border-gray-200 rounded-2xl overflow-hidden">
-                  <button className="w-full px-5 py-4 flex items-center justify-between text-left text-gray-900 font-medium text-sm hover:bg-gray-50 transition-colors"
-                    onClick={() => setFaqOpen(faqOpen === i ? null : i)}>
-                    <span>{faq.q}</span>
-                    <svg className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${faqOpen === i ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {FAQS.map((faq, i) => (
+                <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <button onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                    className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors">
+                    <span className="font-semibold text-gray-900 text-sm">{faq.q}</span>
+                    <svg className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${faqOpen === i ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {faqOpen === i && <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed">{faq.a}</div>}
+                  {faqOpen === i && (
+                    <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+                      {faq.a}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+            <p className="text-center text-sm text-gray-500 mt-6">
+              More questions? Email us at <a href="mailto:contact@globalwebsaas.org" className="text-orange-500 font-medium">contact@globalwebsaas.org</a>
+            </p>
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="py-16 bg-gradient-to-r from-orange-500 to-rose-500">
+          <div className="max-w-2xl mx-auto px-4 text-center text-white">
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Ready to crack NEET?</h2>
+            <p className="text-orange-100 text-lg mb-6">Get instant access to everything. Get AI tools + 114 PDFs + everything for ₹499 lifetime.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/auth/signup"
+                className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-orange-50 transition-all shadow-lg">
+                Get Lifetime Access — ₹499 →
+              </Link>
+              <Link href="/pricing"
+                className="inline-flex items-center justify-center gap-2 border-2 border-white/50 text-white font-bold px-8 py-3.5 rounded-xl text-sm hover:border-white transition-all">
+                Buy Now ₹499
+              </Link>
+            </div>
+            <p className="text-orange-200 text-xs mt-4">Instant access · No renewals · Lifetime updates</p>
           </div>
         </section>
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-gray-950 text-gray-400 py-12">
+      <footer className="bg-gray-900 text-gray-400 py-10">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div className="md:col-span-2">
+            <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
                   <span className="text-white font-bold text-xs">V</span>
                 </div>
-                <span className="font-bold text-white text-base">VidyaSaathi</span>
+                <span className="font-bold text-white text-base">Vidya<span className="text-orange-400">Saathi</span></span>
               </div>
-              <p className="text-sm leading-relaxed max-w-xs">{t.footerTagline}</p>
-              <p className="text-xs mt-3 text-gray-600">{t.footerCompany} · contact@globalwebsaas.org</p>
+              <p className="text-sm leading-relaxed">India's AI-powered NEET & JEE preparation platform. Smart study, real results.</p>
+              <p className="text-xs mt-2 text-gray-500">A GlobalWebSaaS product</p>
             </div>
             <div>
-              <h4 className="text-white font-semibold text-sm mb-3">{t.footerPlatform}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/auth" className="hover:text-white transition-colors">{t.footerLinks[0]}</Link></li>
-                <li><Link href="/auth" className="hover:text-white transition-colors">{t.footerLinks[1]}</Link></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">{t.footerLinks[2]}</a></li>
-                <li><a href="#features" className="hover:text-white transition-colors">{t.footerLinks[3]}</a></li>
-              </ul>
+              <p className="font-semibold text-white mb-3 text-sm">Platform</p>
+              <div className="space-y-2 text-sm">
+                <Link href="/auth/signin" className="block hover:text-orange-400 transition-colors">Log in</Link>
+                <Link href="/auth/signup" className="block hover:text-orange-400 transition-colors">Sign up</Link>
+                <Link href="/pricing" className="block hover:text-orange-400 transition-colors">Pricing</Link>
+                <Link href="/student/resources" className="block hover:text-orange-400 transition-colors">Study Resources</Link>
+              </div>
             </div>
             <div>
-              <h4 className="text-white font-semibold text-sm mb-3">{t.footerLegal}</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/privacy" className="hover:text-white transition-colors">{t.footerLegalLinks[0]}</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition-colors">{t.footerLegalLinks[1]}</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors">{t.footerLegalLinks[2]}</Link></li>
-              </ul>
+              <p className="font-semibold text-white mb-3 text-sm">Legal</p>
+              <div className="space-y-2 text-sm">
+                <Link href="/privacy" className="block hover:text-orange-400 transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="block hover:text-orange-400 transition-colors">Terms of Service</Link>
+                <a href="mailto:contact@globalwebsaas.org" className="block hover:text-orange-400 transition-colors">Contact Us</a>
+              </div>
+            </div>
+            <div>
+              <p className="font-semibold text-white mb-3 text-sm">Contact</p>
+              <div className="space-y-2 text-sm">
+                <p>📧 contact@globalwebsaas.org</p>
+                <p>🌐 vidhyasaathi.online</p>
+                <p>📍 Indore, Madhya Pradesh</p>
+              </div>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
-            <p>{t.footerRights}</p>
-            <p>{t.footerMade}</p>
+          <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-2">
+            <p className="text-xs">© 2026 VidyaSaathi · vidhyasaathi.online · All rights reserved.</p>
+            <p className="text-xs">Made with ❤️ for India's NEET aspirants</p>
           </div>
         </div>
       </footer>
