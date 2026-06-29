@@ -53,19 +53,11 @@ const SETTINGS_HREF: Partial<Record<UserRole, string>> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  student_monthly: "Student Monthly",
-  student_yearly:  "Student Yearly",
-  family_monthly:  "Family Monthly",
-  family_yearly:   "Family Yearly",
-  free:            "Free Plan",
+  lifetime: "Lifetime ✨",
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  student_monthly: "bg-violet-500/20 text-violet-400",
-  student_yearly:  "bg-violet-500/20 text-violet-400",
-  family_monthly:  "bg-blue-500/20 text-blue-400",
-  family_yearly:   "bg-blue-500/20 text-blue-400",
-  free:            "bg-slate-500/20 text-slate-400",
+  lifetime: "bg-emerald-500/20 text-emerald-400",
 };
 
 interface SidebarProps {
@@ -103,10 +95,10 @@ export function Sidebar({ role }: SidebarProps) {
         if (data?.status === "active" && expiry && new Date(expiry) > new Date()) {
           setPlanId(data.plan_id);
         } else {
-          setPlanId("free");
+          setPlanId(null);
         }
       } catch {
-        setPlanId("free");
+        setPlanId(null);
       }
     });
   }, [role]);
@@ -119,7 +111,7 @@ export function Sidebar({ role }: SidebarProps) {
   }
 
   const planLabel = planId ? (PLAN_LABELS[planId] ?? planId) : null;
-  const planColor = planId ? (PLAN_COLORS[planId] ?? PLAN_COLORS.free) : null;
+  const planColor = planId ? (PLAN_COLORS[planId] ?? "bg-orange-500/20 text-orange-400") : null;
 
   const SidebarContent = (
     <div className="flex flex-col h-full">
@@ -214,13 +206,17 @@ export function Sidebar({ role }: SidebarProps) {
               <p className="text-xs font-medium truncate">{user.full_name}</p>
               <p className="text-[10px] text-muted-foreground truncate">{user.email ?? user.phone}</p>
               {/* Plan badge */}
-              {planLabel && (
+              {planLabel ? (
                 <span className={cn(
                   "inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full",
                   planColor
                 )}>
                   {planLabel}
                 </span>
+              ) : (
+                <a href="/pricing" className="inline-block mt-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 transition-colors">
+                  Get Access ₹499
+                </a>
               )}
             </div>
           </div>
