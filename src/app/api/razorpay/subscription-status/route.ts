@@ -1,3 +1,4 @@
+// src/app/api/razorpay/subscription-status/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -7,33 +8,42 @@ const supabase = createClient(
 );
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const user_id = searchParams.get("user_id");
+  const userId = req.nextUrl.searchParams.get("user_id");
+  if (!userId) return NextResponse.json({ subscribed: false, status: "none" });
 
-  if (!user_id) return NextResponse.json({ error: "user_id required" }, { status: 400 });
+  try {
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .maybeSingle();
 
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("*")
-    .eq("user_id", user_id)
-    .single();
+    if (!sub) {
+      return NextResponse.json({ subscribed: false, status: "none" });
+    }
 
-  if (!sub) return NextResponse.json({ subscribed: false, status: "none" });
+    const now = new Date();
+    const expiresAt = new Date(sub.expires_at);
+    const isActive = expiresAt > now;
 
-  const now = new Date();
-  const periodEnd = sub.current_period_end ? new Date(sub.current_period_end) : null;
+    if (!isActive) {
+      return NextResponse.json({ subscribed: false, status: "expired" });
+    }
 
-  if (sub.status === "active" && periodEnd && periodEnd > now) {
-    const daysLeft = Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const isLifetime = daysLeft > 3000;
+
     return NextResponse.json({
       subscribed: true,
       status: "active",
       plan_id: sub.plan_id,
-      plan_type: sub.plan_type,
-      current_period_end: sub.current_period_end,
-      days_left: daysLeft,
+      plan_type: sub.plan_id?.includes("family") ? "family" : "student",
+      days_left: isLifetime ? 99999 : daysLeft,
+      current_period_end: sub.expires_at,
     });
+  } catch (err: any) {
+    console.error("[subscription-status]", err);
+    return NextResponse.json({ subscribed: false, status: "none" });
   }
-
-  return NextResponse.json({ subscribed: false, status: "expired", plan_id: sub.plan_id });
 }
