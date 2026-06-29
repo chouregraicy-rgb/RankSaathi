@@ -1,13 +1,4 @@
-/**
- * POST /api/payment/verify
- *
- * Verifies Razorpay HMAC signature, then upserts into `subscriptions`.
- * Skips HMAC for 100%-off coupon orders (order_id starts with "free_").
- *
- * Column names match your actual DB:
- *   user_id | plan_id | payment_id | order_id | amount | status | started_at | expires_at
- */
-
+// src/app/api/razorpay/verify/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
@@ -17,87 +8,77 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const PLAN_CONFIG: Record<string, { label: string; durationDays: number; priceINR: number }> = {
-  lifetime:        { label: "Lifetime Access",  durationDays: 36500, priceINR: 399  },
-  student_monthly: { label: "Student Monthly",  durationDays: 30,  priceINR: 99   },
-  student_yearly:  { label: "Student Yearly",   durationDays: 365, priceINR: 799  },
-  family_monthly:  { label: "Family Monthly",   durationDays: 30,  priceINR: 149  },
-  family_yearly:   { label: "Family Yearly",    durationDays: 365, priceINR: 1199 },
+const PLAN_CONFIG: Record<string, { label: string; durationDays: number; priceINR: number; type: "app" | "pdf" | "bundle" }> = {
+  lifetime:        { label: "Lifetime Access",   durationDays: 36500, priceINR: 499, type: "app"    },
+  pdf_only:        { label: "NEET PDF Pack",      durationDays: 36500, priceINR: 299, type: "pdf"    },
+  bundle:          { label: "App + PDF Bundle",   durationDays: 36500, priceINR: 699, type: "bundle" },
+  student_monthly: { label: "Student Monthly",    durationDays: 30,    priceINR: 99,  type: "app"    },
+  student_yearly:  { label: "Student Yearly",     durationDays: 365,   priceINR: 799, type: "app"    },
+  family_monthly:  { label: "Family Monthly",     durationDays: 30,    priceINR: 149, type: "app"    },
+  family_yearly:   { label: "Family Yearly",      durationDays: 365,   priceINR: 1199,type: "app"    },
 };
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      plan,
-      userId,
-      isFree,
-    } = body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, user_id, isFree } = body;
 
-    // ── Validate required fields ──────────────────────────────────────────────
-    if (!razorpay_order_id || !razorpay_payment_id || !plan || !userId) {
+    if (!razorpay_order_id || !razorpay_payment_id || !plan_id || !user_id) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    const planConfig = PLAN_CONFIG[plan];
-    if (!planConfig) {
-      return NextResponse.json({ error: `Unknown plan: ${plan}` }, { status: 400 });
-    }
 
-    // ── Verify HMAC (skip for free/coupon orders) ─────────────────────────────
+    const planConfig = PLAN_CONFIG[plan_id];
+    if (!planConfig) return NextResponse.json({ error: `Unknown plan: ${plan_id}` }, { status: 400 });
+
+    // Verify HMAC
     const isFreeOrder = isFree === true || String(razorpay_order_id).startsWith("free_");
-
     if (!isFreeOrder) {
-      if (!razorpay_signature) {
-        return NextResponse.json({ error: "Missing signature" }, { status: 400 });
-      }
-      const expectedSig = crypto
+      if (!razorpay_signature) return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+      const expected = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest("hex");
-
-      if (expectedSig !== razorpay_signature) {
-        console.warn("[payment/verify] Signature mismatch for user", userId);
+      if (expected !== razorpay_signature) {
         return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
       }
     }
 
-    // ── Calculate expiry ──────────────────────────────────────────────────────
     const now = new Date();
     const expiresAt = new Date(now);
     expiresAt.setDate(expiresAt.getDate() + planConfig.durationDays);
 
-    // ── Upsert subscription (YOUR actual column names) ────────────────────────
-    const { error: upsertErr } = await supabase
-      .from("subscriptions")
-      .upsert(
-        {
-          user_id:    userId,
-          plan_id:    plan,
-          payment_id: isFreeOrder ? null : razorpay_payment_id,
-          order_id:   isFreeOrder ? null : razorpay_order_id,
-          amount:     isFreeOrder ? 0 : planConfig.priceINR,
-          status:     "active",
-          started_at: now.toISOString(),
-          expires_at: expiresAt.toISOString(),
-        },
-        { onConflict: "user_id" }
-      );
-
-    if (upsertErr) {
-      console.error("[payment/verify] DB upsert error:", upsertErr);
-      return NextResponse.json({ error: upsertErr.message }, { status: 500 });
+    // Activate app subscription if needed
+    if (planConfig.type === "app" || planConfig.type === "bundle") {
+      const { error: subErr } = await supabase.from("subscriptions").upsert({
+        user_id,
+        plan_id,
+        payment_id: isFreeOrder ? null : razorpay_payment_id,
+        order_id:   isFreeOrder ? null : razorpay_order_id,
+        amount:     isFreeOrder ? 0 : planConfig.priceINR,
+        status:     "active",
+        started_at: now.toISOString(),
+        expires_at: expiresAt.toISOString(),
+      }, { onConflict: "user_id" });
+      if (subErr) console.error("Sub upsert error:", subErr);
     }
 
-    return NextResponse.json({
-      success:   true,
-      planLabel: planConfig.label,
-      expiresAt: expiresAt.toISOString(),
-    });
+    // Activate PDF access if needed
+    if (planConfig.type === "pdf" || planConfig.type === "bundle") {
+      const { error: pdfErr } = await supabase.from("pdf_purchases").upsert({
+        user_id,
+        plan_id,
+        payment_id: isFreeOrder ? null : razorpay_payment_id,
+        order_id:   isFreeOrder ? null : razorpay_order_id,
+        amount:     isFreeOrder ? 0 : planConfig.priceINR,
+        status:     "active",
+        created_at: now.toISOString(),
+      }, { onConflict: "user_id" });
+      if (pdfErr) console.error("PDF upsert error:", pdfErr);
+    }
+
+    return NextResponse.json({ success: true, planLabel: planConfig.label, expiresAt: expiresAt.toISOString() });
   } catch (err: any) {
-    console.error("[payment/verify] Error:", err);
+    console.error("[verify] Error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
