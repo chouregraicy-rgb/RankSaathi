@@ -74,7 +74,12 @@ export default function PricingPage() {
   }
 
   async function handleBuy() {
-    if (!user) { router.push("/auth/signin?redirect=/pricing"); return; }
+    if (!user) {
+      // Save intent and redirect to auth
+      sessionStorage.setItem("vs_post_auth", "/pricing");
+      router.push("/auth");
+      return;
+    }
     setPaying(true);
     setError("");
     setSuccess("");

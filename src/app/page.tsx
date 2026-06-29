@@ -22,14 +22,11 @@ function LeadCaptureForm({ t }: { t: any }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, source: "landing" }),
       }).catch(() => {});
-      // Redirect to auth with email pre-filled → after signup they land on /pricing
-      const params = new URLSearchParams({
-        email: form.email,
-        name: form.name,
-        redirect: "/pricing",
-      });
-      window.location.href = `/auth?${params.toString()}`;
-    } catch (err: any) {
+      // Store in sessionStorage so pricing page can use it
+      sessionStorage.setItem("vs_lead", JSON.stringify(form));
+      // Go directly to pricing page
+      window.location.href = "/pricing";
+    } catch {
       setStatus("error");
       setErrorMsg("Something went wrong. Please try again.");
     }
@@ -43,10 +40,10 @@ function LeadCaptureForm({ t }: { t: any }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="font-bold text-green-800 text-lg mb-1">Welcome to VidyaSaathi! 🎉</h3>
-        <p className="text-green-700 text-sm mb-4">Your account is ready. Login to access everything.</p>
-        <Link href="/auth" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm">
-          Go to Dashboard →
+        <h3 className="font-bold text-green-800 text-lg mb-1">Taking you to checkout! 🎉</h3>
+        <p className="text-green-700 text-sm mb-4">Complete your ₹499 payment to unlock everything.</p>
+        <Link href="/pricing" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm">
+          Go to Checkout →
         </Link>
       </div>
     );
