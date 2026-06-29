@@ -77,7 +77,7 @@ export default function PricingPage() {
     if (!user) {
       // Save intent and redirect to auth
       sessionStorage.setItem("vs_post_auth", "/pricing");
-      router.push("/auth");
+      router.push("/auth?redirect=/pricing");
       return;
     }
     setPaying(true);

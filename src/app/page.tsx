@@ -25,7 +25,7 @@ function LeadCaptureForm({ t }: { t: any }) {
       // Store in sessionStorage so pricing page can use it
       sessionStorage.setItem("vs_lead", JSON.stringify(form));
       // Go directly to pricing page
-      window.location.href = "/pricing";
+      window.location.href = "/auth?redirect=/pricing";
     } catch {
       setStatus("error");
       setErrorMsg("Something went wrong. Please try again.");
