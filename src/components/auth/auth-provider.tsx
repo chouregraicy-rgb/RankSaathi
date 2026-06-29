@@ -1,12 +1,14 @@
 // src/components/auth/auth-provider.tsx
 "use client";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setLoading, reset } = useAuthStore();
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     // Get initial session
@@ -28,9 +30,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Listen for auth changes — only update store, NO redirect here
-    // Redirects are handled by the login page itself
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const u = session.user;
         setUser({
@@ -42,6 +43,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           phone:      u.phone ?? null,
           created_at: u.created_at,
         });
+
+        // Handle post-auth redirect on SIGNED_IN event
+        if (event === "SIGNED_IN") {
+          try {
+            const redirect = sessionStorage.getItem("vs_post_auth");
+            if (redirect) {
+              sessionStorage.removeItem("vs_post_auth");
+              router.push(redirect);
+              return;
+            }
+          } catch {}
+          // Default redirect based on role
+          const role = (u.user_metadata?.role as string) ?? "student";
+          if (role === "parent") {
+            router.push("/parent/dashboard");
+          } else {
+            router.push("/student/dashboard");
+          }
+        }
       } else {
         reset();
       }
