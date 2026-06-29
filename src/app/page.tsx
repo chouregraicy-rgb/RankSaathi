@@ -5,138 +5,33 @@ import Link from "next/link";
 
 interface LeadForm { name: string; email: string; phone: string; course: string; }
 
-declare global { interface Window { Razorpay: any; } }
-
-function loadRazorpay(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (window.Razorpay) return resolve(true);
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.onload = () => resolve(true);
-    s.onerror = () => resolve(false);
-    document.body.appendChild(s);
-  });
-}
-
-const PLANNER_PLANS = [
-  { id: "lifetime", label: "Lifetime Access", price: 499, amount: 49900 },
-];
-
-async function generateAndDownloadPDF(planner: any) {
-  const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const W = 210; const M = 15; const CW = W - M * 2;
-  doc.setFillColor(249, 115, 22);
-  doc.rect(0, 0, W, 28, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18); doc.setFont("helvetica", "bold");
-  doc.text("VidyaSaathi Study Planner", M, 12);
-  doc.setFontSize(10); doc.setFont("helvetica", "normal");
-  doc.text(`${planner.exam} Preparation · ${planner.studentName}`, M, 20);
-  doc.setFontSize(8);
-  doc.text("vidhyasaathi.online · contact@globalwebsaas.org", M, 26);
-  let y = 36;
-  const checkPage = (needed = 20) => { if (y + needed > 280) { doc.addPage(); y = 15; } };
-  for (const month of planner.months || []) {
-    checkPage(50);
-    doc.setFillColor(255, 247, 237);
-    doc.roundedRect(M, y, CW, 8, 2, 2, "F");
-    doc.setTextColor(194, 65, 12);
-    doc.setFontSize(11); doc.setFont("helvetica", "bold");
-    doc.text(`${month.month} — ${month.focus}`, M + 3, y + 5.5);
-    y += 11;
-    const subjects = [
-      { label: "Physics", items: month.physics || [] },
-      { label: "Chemistry", items: month.chemistry || [] },
-      { label: "Biology", items: month.biology || [] },
-    ];
-    for (const subj of subjects) {
-      checkPage(15);
-      doc.setTextColor(37, 99, 235);
-      doc.setFontSize(9); doc.setFont("helvetica", "bold");
-      doc.text(subj.label + ":", M + 2, y);
-      y += 4;
-      doc.setTextColor(55, 65, 81);
-      doc.setFont("helvetica", "normal"); doc.setFontSize(8);
-      for (const item of subj.items.slice(0, 4)) {
-        checkPage(5);
-        const lines = doc.splitTextToSize(`• ${item}`, CW - 8);
-        doc.text(lines, M + 5, y);
-        y += lines.length * 4;
-      }
-    }
-    y += 4;
-  }
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFillColor(249, 115, 22);
-    doc.rect(0, 287, W, 10, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(7);
-    doc.text(`VidyaSaathi · India's AI-powered NEET prep · Page ${i}/${pageCount}`, M, 293);
-  }
-  doc.save(`VidyaSaathi_StudyPlanner_${planner.studentName.replace(/\s+/g, "_")}.pdf`);
-}
-
 function LeadCaptureForm({ t }: { t: any }) {
   const [form, setForm] = useState<LeadForm>({ name: "", email: "", phone: "", course: "" });
-  const [status, setStatus] = useState<"idle" | "loading" | "paying" | "generating" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.phone || !form.course) return;
-    setStatus("paying");
+    setStatus("loading");
     setErrorMsg("");
     try {
+      // Save lead
       await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, source: "landing" }),
+      }).catch(() => {});
+      // Redirect to auth with email pre-filled → after signup they land on /pricing
+      const params = new URLSearchParams({
+        email: form.email,
+        name: form.name,
+        redirect: "/pricing",
       });
-      const orderRes = await fetch("/api/razorpay/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan_id: "lifetime", user_id: "guest_" + Date.now() }),
-      });
-      const orderData = await orderRes.json();
-      if (!orderRes.ok) throw new Error(orderData.error || "Order creation failed");
-      const loaded = await loadRazorpay();
-      if (!loaded) throw new Error("Payment gateway failed");
-      const rzp = new window.Razorpay({
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: "INR",
-        name: "VidyaSaathi",
-        description: "Lifetime Access + 114 NEET PDFs",
-        order_id: orderData.order_id,
-        prefill: { name: form.name, email: form.email, contact: "+91" + form.phone },
-        theme: { color: "#f97316" },
-        modal: { ondismiss: () => setStatus("idle") },
-        handler: async (response: any) => {
-          setStatus("generating");
-          try {
-            const plannerRes = await fetch("/api/planner", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: form.name, exam: form.course, email: form.email }),
-            });
-            const plannerData = await plannerRes.json();
-            if (!plannerRes.ok) throw new Error(plannerData.error);
-            await generateAndDownloadPDF(plannerData.planner);
-            setStatus("success");
-          } catch {
-            setErrorMsg("Payment received! Please login to access your account.");
-            setStatus("error");
-          }
-        },
-      });
-      rzp.on("payment.failed", () => { setErrorMsg("Payment failed. Please try again."); setStatus("error"); });
-      rzp.open();
+      window.location.href = `/auth?${params.toString()}`;
     } catch (err: any) {
       setStatus("error");
-      setErrorMsg(err.message || "Something went wrong.");
+      setErrorMsg("Something went wrong. Please try again.");
     }
   };
 
@@ -181,9 +76,9 @@ function LeadCaptureForm({ t }: { t: any }) {
           className="flex-1 px-4 py-3 rounded-r-xl border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
       </div>
       {errorMsg && <p className="text-red-500 text-xs">{errorMsg}</p>}
-      <button type="submit" disabled={status === "paying" || status === "generating"}
+      <button type="submit" disabled={status === "loading"}
         className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md">
-        {status === "paying" ? "Opening payment..." : status === "generating" ? "Setting up your account..." : "Get Lifetime Access — ₹499 →"}
+        {status === "loading" ? "Redirecting..." : "Get Lifetime Access — ₹499 →"}
       </button>
       <p className="text-xs text-gray-400 text-center">🔒 Secure payment via Razorpay · No spam</p>
     </form>
@@ -253,8 +148,8 @@ export default function LandingPage() {
             <a href="#faq" className="hover:text-orange-500 transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/auth/signin" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">Log in</Link>
-            <Link href="/auth/signup" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">Start Now →</Link>
+            <Link href="/auth" className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">Log in</Link>
+            <Link href="/auth" className="text-sm bg-orange-500 hover:bg-orange-600 text-white font-semibold px-4 py-1.5 rounded-lg transition-all shadow-sm">Start Now →</Link>
           </div>
         </div>
       </nav>
@@ -300,12 +195,12 @@ export default function LandingPage() {
                 </div>
 
                 <div className="flex items-center gap-3 mb-6">
-                  <Link href="/auth/signup"
+                  <Link href="/auth"
                     className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg shadow-orange-200">
                     Get Lifetime Access — ₹499 →
                   </Link>
-                  <Link href="/auth/signin" className="text-sm text-gray-500 hover:text-gray-700 font-medium">
-                    Already have account? Login
+                  <Link href="/auth" className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+                    Already have account? <span className="text-orange-500 font-medium">Log in</span>
                   </Link>
                 </div>
 
@@ -369,7 +264,7 @@ export default function LandingPage() {
             <div className="bg-gradient-to-r from-green-600 to-emerald-500 rounded-2xl p-6 text-center text-white">
               <p className="font-bold text-xl mb-1">Worth ₹999 · Yours for FREE</p>
               <p className="text-green-100 text-sm mb-4">NEET students: all 114 PDFs unlock instantly. JEE students: full AI tools, mock tests, mind maps & analytics.</p>
-              <Link href="/auth/signup"
+              <Link href="/auth"
                 className="inline-flex items-center gap-2 bg-white text-green-600 font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-green-50 transition-all shadow-lg">
                 Get App + PDFs for ₹499 →
               </Link>
@@ -486,7 +381,7 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <Link href="/auth/signup"
+              <Link href="/auth"
                 className="block w-full bg-gradient-to-r from-orange-500 to-rose-500 hover:opacity-90 text-white font-bold py-4 rounded-xl text-base transition-all shadow-lg shadow-orange-200 mb-3">
                 Get Lifetime Access — ₹499 →
               </Link>
@@ -563,7 +458,7 @@ export default function LandingPage() {
             <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Ready to crack NEET & JEE?</h2>
             <p className="text-orange-100 text-lg mb-6">Get instant access to everything. Get AI Doubt Solver, NEET & JEE Mock Tests, 114 NEET PDFs, Mind Maps & more — all for ₹499 lifetime.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/auth/signup"
+              <Link href="/auth"
                 className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 font-bold px-8 py-3.5 rounded-xl text-sm hover:bg-orange-50 transition-all shadow-lg">
                 Get Lifetime Access — ₹499 →
               </Link>
@@ -594,8 +489,8 @@ export default function LandingPage() {
             <div>
               <p className="font-semibold text-white mb-3 text-sm">Platform</p>
               <div className="space-y-2 text-sm">
-                <Link href="/auth/signin" className="block hover:text-orange-400 transition-colors">Log in</Link>
-                <Link href="/auth/signup" className="block hover:text-orange-400 transition-colors">Sign up</Link>
+                <Link href="/auth" className="block hover:text-orange-400 transition-colors">Log in</Link>
+                <Link href="/auth" className="block hover:text-orange-400 transition-colors">Sign up</Link>
                 <Link href="/pricing" className="block hover:text-orange-400 transition-colors">Pricing</Link>
                 <Link href="/student/resources" className="block hover:text-orange-400 transition-colors">Study Resources</Link>
               </div>
