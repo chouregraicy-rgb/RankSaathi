@@ -29,6 +29,16 @@ function BatteryIcon({ level }: { level: number | null }) {
   );
 }
 
+// ── Time-based greeting ───────────────────────────────────
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 5)  return "Good night 🌙";
+  if (hour < 12) return "Good morning 👋";
+  if (hour < 17) return "Good afternoon ☀️";
+  if (hour < 21) return "Good evening 🌆";
+  return "Good night 🌙";
+}
+
 // ── Empty State Card ──────────────────────────────────────
 function EmptyCard({ title, icon: Icon }: { title: string; icon: React.ElementType }) {
   return (
@@ -223,7 +233,7 @@ export default function StudentDashboard() {
             <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-white" />
           </div>
           <div className="relative">
-            <p className="text-brand-100 text-sm font-medium">Good morning 👋</p>
+            <p className="text-brand-100 text-sm font-medium">{getGreeting()}</p>
             <h2 className="font-display font-bold text-2xl mt-0.5">{firstName}</h2>
             {student?.exam_type && student.exam_type.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">

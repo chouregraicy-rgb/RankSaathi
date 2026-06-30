@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { Toaster } from "@/components/ui/toaster";
-import { Bell, Search, X, BookOpen, Zap, Play, BarChart2, Calendar, Users, Puzzle } from "lucide-react";
+import { Bell, Search, X, BookOpen, Zap, Play, BarChart2, Calendar, Users, Puzzle, Lock } from "lucide-react";
 import type { UserRole } from "@/types";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +34,17 @@ const NOTIFICATIONS = [
   { id: 4, title: "Parent Viewed Report", body: "Your parent checked your weekly report", time: "Yesterday", unread: false },
 ];
 
+// ── Routes accessible without an active subscription ──
+// Everything else under each role is paywalled by default — new pages are
+// locked automatically unless explicitly added here.
+const FREE_ROUTES: Partial<Record<UserRole, string[]>> = {
+  student: [
+    "/student/dashboard",
+    "/student/resources",   // has its own internal lock/unlock UI for PDFs
+    "/student/settings",
+  ],
+};
+
 export function DashboardLayout({ children, role, title }: DashboardLayoutProps) {
   const [searchOpen, setSearchOpen]   = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +52,36 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
 
   const { setUser, setLoading } = useAuthStore();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // ── Subscription gate ──────────────────────────────────────
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [hasAccess, setHasAccess]         = useState(false);
+
+  const isFreeRoute = role !== "student" || (FREE_ROUTES[role] ?? []).some(p => pathname?.startsWith(p));
+
+  useEffect(() => {
+    if (isFreeRoute) { setAccessChecked(true); setHasAccess(true); return; }
+    setAccessChecked(false);
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user: authUser } }) => {
+      if (!authUser) { setHasAccess(false); setAccessChecked(true); return; }
+      try {
+        const { data } = await supabase
+          .from("subscriptions")
+          .select("status, expires_at")
+          .eq("user_id", authUser.id)
+          .maybeSingle();
+        const active = data?.status === "active" && data?.expires_at && new Date(data.expires_at) > new Date();
+        setHasAccess(!!active);
+      } catch {
+        setHasAccess(false);
+      } finally {
+        setAccessChecked(true);
+      }
+    });
+  }, [pathname, isFreeRoute]);
 
   // ── Hydrate auth store with user profile from public.users ──
   useEffect(() => {
@@ -169,7 +211,30 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
         </header>
 
         <main className="p-4 lg:p-6 min-h-[calc(100vh-var(--header-height))]">
-          {children}
+          {!accessChecked ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : !hasAccess ? (
+            <div className="max-w-md mx-auto mt-16 text-center space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-500/10 flex items-center justify-center">
+                <Lock className="w-7 h-7 text-orange-500" />
+              </div>
+              <h2 className="font-display font-bold text-xl">This is a paid feature</h2>
+              <p className="text-muted-foreground text-sm">
+                Get lifetime access for ₹499 to unlock this and everything else — AI Doubt Solver, mock tests, mind maps, community, and 114 NEET PDFs.
+              </p>
+              <button
+                onClick={() => router.push("/pricing")}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 text-white font-semibold text-sm"
+              >
+                <Zap className="w-4 h-4" />
+                Get Lifetime Access — ₹499
+              </button>
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
 
