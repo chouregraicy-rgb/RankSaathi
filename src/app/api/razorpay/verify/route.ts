@@ -21,26 +21,26 @@ const PLAN_CONFIG: Record<string, { label: string; durationDays: number; priceIN
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, user_id, isFree } = body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, user_id } = body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !plan_id || !user_id) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !plan_id || !user_id) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const planConfig = PLAN_CONFIG[plan_id];
     if (!planConfig) return NextResponse.json({ error: `Unknown plan: ${plan_id}` }, { status: 400 });
 
-    // Verify HMAC
-    const isFreeOrder = isFree === true || String(razorpay_order_id).startsWith("free_");
-    if (!isFreeOrder) {
-      if (!razorpay_signature) return NextResponse.json({ error: "Missing signature" }, { status: 400 });
-      const expected = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest("hex");
-      if (expected !== razorpay_signature) {
-        return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
-      }
+    // Verify HMAC — no exceptions. Free/coupon activations never reach this
+    // route at all; they're handled and written to the DB server-side in
+    // create-order/route.ts at the moment a valid 100%-off coupon is
+    // confirmed. This route only ever activates a REAL paid Razorpay order.
+    const expected = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+    if (expected !== razorpay_signature) {
+      console.warn("[verify] Signature mismatch for user", user_id);
+      return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
     }
 
     const now = new Date();
@@ -52,9 +52,9 @@ export async function POST(req: NextRequest) {
       const { error: subErr } = await supabase.from("subscriptions").upsert({
         user_id,
         plan_id,
-        payment_id: isFreeOrder ? null : razorpay_payment_id,
-        order_id:   isFreeOrder ? null : razorpay_order_id,
-        amount:     isFreeOrder ? 0 : planConfig.priceINR,
+        payment_id: razorpay_payment_id,
+        order_id:   razorpay_order_id,
+        amount:     planConfig.priceINR,
         status:     "active",
         started_at: now.toISOString(),
         expires_at: expiresAt.toISOString(),
@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
       const { error: pdfErr } = await supabase.from("pdf_purchases").upsert({
         user_id,
         plan_id,
-        payment_id: isFreeOrder ? null : razorpay_payment_id,
-        order_id:   isFreeOrder ? null : razorpay_order_id,
-        amount:     isFreeOrder ? 0 : planConfig.priceINR,
+        payment_id: razorpay_payment_id,
+        order_id:   razorpay_order_id,
+        amount:     planConfig.priceINR,
         status:     "active",
         created_at: now.toISOString(),
       }, { onConflict: "user_id" });

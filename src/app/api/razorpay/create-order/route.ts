@@ -42,11 +42,35 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (coupon) {
-        const discount = coupon.discount_percent || 0;
+        const discount = coupon.discount_value || 0;
         finalAmount = Math.round(finalAmount * (1 - discount / 100));
 
         if (finalAmount === 0) {
-          // Free order — activate directly
+          // 100%-off coupon, validated server-side above — activate the
+          // subscription directly here using the trusted service-role
+          // connection. This is the ONLY place a free subscription can be
+          // created; verify/route.ts no longer accepts a client-asserted
+          // "isFree" flag, so this path cannot be spoofed from the client.
+          const now = new Date();
+          const expiresAt = new Date(now);
+          expiresAt.setDate(expiresAt.getDate() + 36500); // lifetime
+
+          const { error: subErr } = await supabase.from("subscriptions").upsert({
+            user_id,
+            plan_id,
+            payment_id: null,
+            order_id:   `coupon_${coupon_code.toUpperCase()}_${Date.now()}`,
+            amount:     0,
+            status:     "active",
+            started_at: now.toISOString(),
+            expires_at: expiresAt.toISOString(),
+          }, { onConflict: "user_id" });
+
+          if (subErr) {
+            console.error("[create-order] Coupon activation error:", subErr);
+            return NextResponse.json({ error: "Could not activate access. Contact support." }, { status: 500 });
+          }
+
           return NextResponse.json({ demo_activated: true, plan_name: plan.name });
         }
       }
