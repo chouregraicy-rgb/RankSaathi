@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, Brain,
   BarChart3, Calendar, Bell, Settings, LogOut,
   ChevronLeft, Users, FileQuestion,
-  ClipboardList, Menu, X, MessageCircle, Trophy, Puzzle, GitBranch
+  ClipboardList, Menu, X, MessageCircle, Trophy, Puzzle, GitBranch, FolderDown
 } from "lucide-react";
 import { cn } from "@/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -26,6 +26,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { href: "/student/schedule",   label: "Schedule",     icon: Calendar },
     { href: "/student/tests",      label: "Tests",        icon: ClipboardList },
     { href: "/student/revision",   label: "Revision",     icon: BookOpen },
+    { href: "/student/resources",  label: "Resources",    icon: FolderDown },
     { href: "/student/doubts",     label: "Doubt Solver", icon: Brain },
     { href: "/student/community",  label: "Community",    icon: MessageCircle },
     { href: "/student/ranking",    label: "My Ranking",   icon: Trophy },
