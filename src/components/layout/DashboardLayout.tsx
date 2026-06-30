@@ -26,13 +26,10 @@ const SEARCH_LINKS = [
   { label: "Crossword", href: "/student/crossword", icon: Puzzle, desc: "AI-generated crossword puzzles" },
 ];
 
-// ── Static demo notifications ──
-const NOTIFICATIONS = [
-  { id: 1, title: "Test Reminder",        body: "Physics Mock Test starts in 30 min",   time: "Just now",   unread: true  },
-  { id: 2, title: "Streak at Risk!",      body: "Study at least 1h today to keep streak", time: "1h ago",   unread: true  },
-  { id: 3, title: "New PYQ Added",        body: "NEET 2024 Biology questions are live",  time: "3h ago",    unread: false },
-  { id: 4, title: "Parent Viewed Report", body: "Your parent checked your weekly report", time: "Yesterday", unread: false },
-];
+// Real notifications are not yet wired to a backend table — showing none
+// is more honest than fabricated demo content. Wire this to a real
+// `notifications` table when that feature is built.
+const NOTIFICATIONS: { id: number; title: string; body: string; time: string; unread: boolean }[] = [];
 
 // ── Routes accessible without an active subscription ──
 // Everything else under each role is paywalled by default — new pages are
