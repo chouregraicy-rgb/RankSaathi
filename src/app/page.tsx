@@ -234,19 +234,19 @@ export default function LandingPage() {
 
       <main>
         {/* HERO */}
-        <section className="relative pt-24 pb-16 overflow-hidden bg-gradient-to-b from-orange-50 via-white to-white">
+        <section className="relative pt-20 md:pt-24 pb-12 md:pb-16 overflow-hidden bg-gradient-to-b from-orange-50 via-white to-white">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-100 rounded-full -translate-y-1/3 translate-x-1/3 opacity-30 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-30 blur-2xl" />
 
           <div className="relative max-w-6xl mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-10 items-start">
+            <div className="grid md:grid-cols-2 gap-6 md:gap-10 items-start">
               <div className="pt-4">
                 <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 text-xs font-bold px-4 py-2 rounded-full mb-5 shadow-sm">
                   <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"/>
                   India's AI-Powered NEET & JEE Prep Platform
                 </div>
 
-                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+                <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
                   Crack NEET & JEE<br/>
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">
                     with AI by your side
@@ -258,16 +258,16 @@ export default function LandingPage() {
                 </p>
 
                 {/* Social proof bar */}
-                <div className="flex items-center gap-3 mb-5 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
-                  <div className="flex -space-x-2">
+                <div className="flex items-center gap-2 md:gap-3 mb-5 bg-green-50 border border-green-200 rounded-xl px-3 md:px-4 py-2.5 flex-wrap">
+                  <div className="flex -space-x-2 flex-shrink-0">
                     {["PS", "RM", "AK", "KP", "SY"].map((a, i) => (
-                      <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-rose-400 border-2 border-white flex items-center justify-center text-white text-[9px] font-bold">
+                      <div key={i} className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-gradient-to-br from-orange-400 to-rose-400 border-2 border-white flex items-center justify-center text-white text-[8px] md:text-[9px] font-bold">
                         {a}
                       </div>
                     ))}
                   </div>
-                  <p className="text-sm text-green-700 font-medium">
-                    <strong>{studentCount}+ students</strong> already enrolled this month
+                  <p className="text-xs md:text-sm text-green-700 font-medium">
+                    <strong>247+ students</strong> already enrolled this month
                   </p>
                 </div>
 
@@ -294,7 +294,7 @@ export default function LandingPage() {
 
                 <p className="text-xs text-gray-400">One-time payment · Instant access · No renewals ever</p>
 
-                <div className="grid grid-cols-4 gap-3 mt-8 pt-6 border-t border-gray-100">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8 pt-6 border-t border-gray-100">
                   {STATS.map(s => (
                     <div key={s.number} className="text-center">
                       <p className="text-2xl font-extrabold text-orange-500">{s.number}</p>
@@ -324,7 +324,7 @@ export default function LandingPage() {
         {/* TRUST BADGES */}
         <section className="py-6 bg-white border-y border-gray-100">
           <div className="max-w-4xl mx-auto px-4">
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 font-medium">
+            <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs md:text-sm text-gray-500 font-medium">
               <span className="flex items-center gap-2">🔒 Razorpay Secured</span>
               <span className="flex items-center gap-2">⚡ Instant Activation</span>
               <span className="flex items-center gap-2">♾️ Lifetime Access</span>
@@ -342,7 +342,7 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 text-xs font-bold px-4 py-2 rounded-full mb-4">
                 📚 FREE WITH YOUR ₹499 PLAN
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+              <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3">
                 114 NEET Study Files — <span className="text-green-600">Absolutely Free</span>
               </h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -375,14 +375,14 @@ export default function LandingPage() {
         <section id="features" className="py-16 bg-white">
           <div className="max-w-6xl mx-auto px-4">
             <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+              <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3">
                 Everything you need to crack NEET & JEE
               </h2>
               <p className="text-gray-500 text-lg">Complete AI-powered prep — with NEET PDF study material included free.</p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
               {FEATURES.map((f, i) => (
-                <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+                <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
                   <div className={`w-12 h-12 ${f.color} rounded-xl flex items-center justify-center text-2xl mb-4`}>
                     {f.icon}
                   </div>
@@ -401,14 +401,14 @@ export default function LandingPage() {
               <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 text-xs font-bold px-4 py-2 rounded-full mb-4">
                 ⭐ REAL STUDENT REVIEWS
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+              <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3">
                 What NEET & JEE aspirants say
               </h2>
               <p className="text-gray-500">From students across India who are using VidyaSaathi right now</p>
             </div>
 
             {/* Auto-rotating testimonials */}
-            <div className="grid md:grid-cols-3 gap-5 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6">
               {visibleTestimonials.map((t, i) => (
                 <div key={`${testimonialIdx}-${i}`}
                   className="bg-white rounded-2xl p-6 shadow-sm border border-orange-100 flex flex-col">
@@ -467,7 +467,7 @@ export default function LandingPage() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white">
               <div>
                 <div className="text-2xl mb-2">🎁</div>
-                <h3 className="text-2xl font-extrabold mb-2">Refer & Earn ₹50 per friend</h3>
+                <h3 className="text-xl md:text-2xl font-extrabold mb-2">Refer & Earn ₹50 per friend</h3>
                 <p className="text-orange-100 text-sm max-w-md">
                   Every paid student gets a unique referral code. Share it with your batch. Your friend pays ₹449 (₹50 off). You earn ₹50 directly to your UPI. No limits on how many friends you can refer.
                 </p>
@@ -482,22 +482,22 @@ export default function LandingPage() {
         </section>
 
         {/* COMPARISON */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-12 md:py-16 bg-gray-50">
           <div className="max-w-4xl mx-auto px-4">
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Why VidyaSaathi?</h2>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">Why VidyaSaathi?</h2>
               <p className="text-gray-500">Compare with what you're already spending</p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
               <div className="grid grid-cols-3 bg-gray-50 border-b border-gray-200">
-                <div className="p-4 text-sm font-bold text-gray-600">Feature</div>
-                <div className="p-4 text-center">
-                  <p className="text-sm font-bold text-gray-400">Coaching Classes</p>
-                  <p className="text-xs text-gray-400">₹50,000+/year</p>
+                <div className="p-2 md:p-4 text-xs md:text-sm font-bold text-gray-600">Feature</div>
+                <div className="p-2 md:p-4 text-center">
+                  <p className="text-xs md:text-sm font-bold text-gray-400">Coaching</p>
+                  <p className="text-[10px] md:text-xs text-gray-400">₹50k+/yr</p>
                 </div>
-                <div className="p-4 text-center bg-orange-50">
-                  <p className="text-sm font-bold text-orange-600">VidyaSaathi</p>
-                  <p className="text-xs text-orange-500 font-bold">₹499 lifetime</p>
+                <div className="p-2 md:p-4 text-center bg-orange-50">
+                  <p className="text-xs md:text-sm font-bold text-orange-600">VidyaSaathi</p>
+                  <p className="text-[10px] md:text-xs text-orange-500 font-bold">₹499 lifetime</p>
                 </div>
               </div>
               {[
@@ -512,9 +512,9 @@ export default function LandingPage() {
                 ["Lifetime Access", "❌", "✅"],
               ].map(([feat, coaching, vs], i) => (
                 <div key={i} className={`grid grid-cols-3 border-b border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}`}>
-                  <div className="p-3 text-sm text-gray-700 font-medium">{feat}</div>
-                  <div className="p-3 text-center text-sm text-gray-400">{coaching}</div>
-                  <div className="p-3 text-center text-sm text-green-600 font-semibold bg-orange-50/50">{vs}</div>
+                  <div className="p-2 md:p-3 text-xs md:text-sm text-gray-700 font-medium leading-tight">{feat}</div>
+                  <div className="p-2 md:p-3 text-center text-xs md:text-sm text-gray-400">{coaching}</div>
+                  <div className="p-2 md:p-3 text-center text-xs md:text-sm text-green-600 font-semibold bg-orange-50/50">{vs}</div>
                 </div>
               ))}
             </div>
@@ -524,7 +524,7 @@ export default function LandingPage() {
         {/* PRICING */}
         <section id="pricing" className="py-16 bg-white">
           <div className="max-w-lg mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">One price. Everything included.</h2>
+            <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3">One price. Everything included.</h2>
             <p className="text-gray-500 mb-8">No monthly fees. No renewals. Pay once, use forever.</p>
 
             <div className="bg-gradient-to-br from-orange-50 to-rose-50 border-2 border-orange-300 rounded-2xl p-8 relative shadow-xl">
@@ -543,7 +543,7 @@ export default function LandingPage() {
               </div>
               <p className="text-gray-500 text-sm mb-6">One-time payment · Lifetime access · No renewals</p>
 
-              <div className="grid grid-cols-2 gap-2 mb-6 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 text-left">
                 {[
                   "114 NEET PDFs (Bio, Chem, Phy)",
                   "AI Doubt Solver (unlimited)",
@@ -583,7 +583,7 @@ export default function LandingPage() {
         {/* FAQ */}
         <section id="faq" className="py-16 bg-gray-50">
           <div className="max-w-2xl mx-auto px-4">
-            <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Frequently asked questions</h2>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 text-center mb-8">Frequently asked questions</h2>
             <div className="space-y-3">
               {FAQS.map((faq, i) => (
                 <div key={i} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
@@ -611,7 +611,7 @@ export default function LandingPage() {
         {/* FINAL CTA */}
         <section className="py-16 bg-gradient-to-r from-orange-500 to-rose-500">
           <div className="max-w-2xl mx-auto px-4 text-center text-white">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-3">Ready to crack NEET & JEE?</h2>
+            <h2 className="text-2xl md:text-4xl font-extrabold mb-3">Ready to crack NEET & JEE?</h2>
             <p className="text-orange-100 text-lg mb-6">
               Join {studentCount}+ students already using VidyaSaathi. AI Doubt Solver, NEET & JEE Mock Tests, 114 NEET PDFs, Mind Maps & more — ₹499 lifetime.
             </p>
@@ -633,7 +633,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="bg-gray-900 text-gray-400 py-10">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center">
