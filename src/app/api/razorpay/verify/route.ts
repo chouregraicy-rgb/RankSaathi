@@ -22,7 +22,8 @@ const PLAN_CONFIG: Record<string, { label: string; durationDays: number; priceIN
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, user_id } = body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature,
+            plan_id, user_id, referrer_user_id, referral_code } = body;
 
     // Pull fbp/fbc cookies and browser signals for better attribution
     const clientIp  = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? undefined;
@@ -82,6 +83,35 @@ export async function POST(req: NextRequest) {
         created_at: now.toISOString(),
       }, { onConflict: "user_id" });
       if (pdfErr) console.error("PDF upsert error:", pdfErr);
+    }
+
+    // ── Record referral and trigger payout ──────────────────────────────
+    if (referrer_user_id && referral_code) {
+      try {
+        const { data: ref, error: refErr } = await supabase
+          .from("referrals")
+          .insert({
+            referrer_user_id,
+            referee_user_id: user_id,
+            referral_code:   referral_code.toUpperCase(),
+            discount_given:  50,
+            reward_amount:   50,
+            status:          "pending_payout",
+          })
+          .select("id")
+          .single();
+
+        if (!refErr && ref) {
+          // Fire payout (non-blocking — doesn't affect payment response)
+          fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://vidhyasaathi.online"}/api/referral/payout`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ referral_id: ref.id, referrer_user_id }),
+          }).catch(e => console.error("[verify] Payout trigger error:", e));
+        }
+      } catch (refErr) {
+        console.error("[verify] Referral recording error (non-fatal):", refErr);
+      }
     }
 
     // ── Fire Meta CAPI Purchase event (server-side, can't be blocked) ──

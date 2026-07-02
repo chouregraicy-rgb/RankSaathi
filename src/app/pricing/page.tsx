@@ -48,6 +48,9 @@ export default function PricingPage() {
   const [showCoupon, setShowCoupon] = useState(false);
   const [couponActive, setCouponActive] = useState(false);
   const [couponError, setCouponError] = useState("");
+  const [referralCode, setReferralCode]     = useState("");
+  const [referralMsg, setReferralMsg]       = useState<{ valid: boolean; message: string } | null>(null);
+  const [referrerUserId, setReferrerUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -90,9 +93,10 @@ export default function PricingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan_id: "lifetime",
-          user_id: user.id,
-          coupon_code: couponActive ? coupon.toUpperCase() : undefined,
+          plan_id:       "lifetime",
+          user_id:       user.id,
+          coupon_code:   couponActive ? coupon.toUpperCase() : undefined,
+          referral_code: referralMsg?.valid ? referralCode.toUpperCase() : undefined,
         }),
       });
       const orderData = await orderRes.json();
@@ -100,7 +104,6 @@ export default function PricingPage() {
 
       if (orderData.demo_activated) {
         setSuccess("✅ Access activated! Redirecting...");
-        // Fire purchase events for coupon/demo activations too
         try { gaPurchase(`coupon_${Date.now()}`, 0); } catch {}
         setTimeout(() => router.push("/student/dashboard"), 1500);
         setPaying(false);
@@ -110,7 +113,6 @@ export default function PricingPage() {
       const loaded = await loadRazorpay();
       if (!loaded) { setError("Payment gateway failed"); setPaying(false); return; }
 
-      // Fire checkout initiation events
       try { pixelInitiateCheckout(); } catch {}
       try { gaInitiateCheckout(); } catch {}
 
@@ -128,13 +130,18 @@ export default function PricingPage() {
           const verifyRes = await fetch("/api/razorpay/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, user_id: user.id, plan_id: "lifetime" }),
+            body: JSON.stringify({
+              ...response,
+              user_id:          user.id,
+              plan_id:          "lifetime",
+              referrer_user_id: orderData.referrer_user_id ?? null,
+              referral_code:    orderData.referral_code ?? null,
+            }),
           });
           const vd = await verifyRes.json();
           if (vd.success) {
-            // Fire purchase events client-side (server-side CAPI fires in verify/route.ts)
-            try { pixelPurchase(499); } catch {}
-            try { gaPurchase(response.razorpay_order_id, 499); } catch {}
+            try { pixelPurchase(orderData.amount / 100); } catch {}
+            try { gaPurchase(response.razorpay_order_id, orderData.amount / 100); } catch {}
             setSuccess("✅ Payment successful! Lifetime access activated.");
             setTimeout(() => router.push("/student/dashboard"), 1500);
           } else {
@@ -251,6 +258,47 @@ export default function PricingPage() {
               </div>
               {couponActive && <p className="text-green-600 text-xs mt-1 font-semibold">✅ Code applied!</p>}
               {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
+            </div>
+          )}
+
+          {/* Referral code field — always visible */}
+          {!couponActive && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
+              <p className="text-xs text-blue-600 mb-2 font-medium">🎁 Have a friend's referral code? Save ₹50</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => {
+                    setReferralCode(e.target.value.toUpperCase());
+                    setReferralMsg(null);
+                    setReferrerUserId(null);
+                  }}
+                  placeholder="REFERRAL CODE"
+                  className="flex-1 bg-white border border-blue-200 text-gray-900 text-sm px-3 py-1.5 rounded-lg font-mono tracking-widest focus:outline-none focus:border-blue-400"
+                />
+                <button
+                  onClick={async () => {
+                    if (!referralCode || !user) return;
+                    const res = await fetch("/api/referral/validate", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ referral_code: referralCode, user_id: user.id }),
+                    });
+                    const data = await res.json();
+                    setReferralMsg({ valid: data.valid, message: data.valid ? data.message : data.error });
+                    if (data.valid) setReferrerUserId(data.referrer_user_id);
+                  }}
+                  className="px-3 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg"
+                >
+                  Apply
+                </button>
+              </div>
+              {referralMsg && (
+                <p className={`text-xs mt-1 font-semibold ${referralMsg.valid ? "text-green-600" : "text-red-500"}`}>
+                  {referralMsg.message}
+                </p>
+              )}
             </div>
           )}
 

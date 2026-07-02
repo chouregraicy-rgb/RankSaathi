@@ -25,13 +25,14 @@ const PLANS: Record<string, { name: string; amountPaise: number }> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan_id, user_id, coupon_code } = await req.json();
+    const { plan_id, user_id, coupon_code, referral_code } = await req.json();
     if (!plan_id || !user_id) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
     const plan = PLANS[plan_id];
     if (!plan) return NextResponse.json({ error: `Unknown plan: ${plan_id}` }, { status: 400 });
 
     let finalAmount = plan.amountPaise;
+    let referrerUserId: string | null = null;
 
     // Apply coupon if provided
     if (coupon_code) {
@@ -46,14 +47,9 @@ export async function POST(req: NextRequest) {
         finalAmount = Math.round(finalAmount * (1 - discount / 100));
 
         if (finalAmount === 0) {
-          // 100%-off coupon, validated server-side above — activate the
-          // subscription directly here using the trusted service-role
-          // connection. This is the ONLY place a free subscription can be
-          // created; verify/route.ts no longer accepts a client-asserted
-          // "isFree" flag, so this path cannot be spoofed from the client.
           const now = new Date();
           const expiresAt = new Date(now);
-          expiresAt.setDate(expiresAt.getDate() + 36500); // lifetime
+          expiresAt.setDate(expiresAt.getDate() + 36500);
 
           const { error: subErr } = await supabase.from("subscriptions").upsert({
             user_id,
@@ -76,6 +72,41 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Apply referral code if provided (₹50 flat discount, server-validated)
+    if (referral_code && !coupon_code) {
+      const validateRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL?.replace("supabase.co", "supabase.co") ?? ""}/functions/v1/referral-validate`, {
+        method: "POST",
+      }).catch(() => null);
+
+      // Inline validation (avoid network hop to self)
+      const code = referral_code.toUpperCase().trim();
+      const { data: student } = await supabase
+        .from("students")
+        .select("user_id")
+        .eq("invite_code", code)
+        .maybeSingle();
+
+      if (student && student.user_id !== user_id) {
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("status")
+          .eq("user_id", student.user_id)
+          .eq("status", "active")
+          .maybeSingle();
+
+        const { data: existingRef } = await supabase
+          .from("referrals")
+          .select("id")
+          .eq("referee_user_id", user_id)
+          .maybeSingle();
+
+        if (sub && !existingRef) {
+          finalAmount = Math.max(0, finalAmount - 5000); // ₹50 off
+          referrerUserId = student.user_id;
+        }
+      }
+    }
+
     const order = await razorpay.orders.create({
       amount:   finalAmount,
       currency: "INR",
@@ -83,11 +114,14 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      order_id:  order.id,
-      amount:    order.amount,
-      currency:  order.currency,
-      key_id:    process.env.RAZORPAY_KEY_ID,
-      plan_name: plan.name,
+      order_id:          order.id,
+      amount:            order.amount,
+      currency:          order.currency,
+      key_id:            process.env.RAZORPAY_KEY_ID,
+      plan_name:         plan.name,
+      referrer_user_id:  referrerUserId,
+      referral_code:     referrerUserId ? referral_code?.toUpperCase() : null,
+      referral_discount: referrerUserId ? 50 : 0,
     });
   } catch (err: any) {
     console.error("[create-order] Error:", err);

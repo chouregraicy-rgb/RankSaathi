@@ -37,8 +37,9 @@ const NOTIFICATIONS: { id: number; title: string; body: string; time: string; un
 const FREE_ROUTES: Partial<Record<UserRole, string[]>> = {
   student: [
     "/student/dashboard",
-    "/student/resources",   // has its own internal lock/unlock UI for PDFs
+    "/student/resources",
     "/student/settings",
+    "/student/referral",  // referral page visible to all logged-in students
   ],
 };
 

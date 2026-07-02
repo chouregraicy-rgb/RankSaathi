@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import {
   User, Bell, Sun, Moon, Smartphone,
   Save, GraduationCap, CheckCircle2,
-  Link2, Copy, RefreshCw, Share2, Users,
+  Link2, Copy, RefreshCw, Share2, Users, IndianRupee,
 } from "lucide-react";
 import { cn } from "@/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +29,9 @@ export default function SettingsPage() {
   const [inviteCode, setInviteCode]   = useState("--------");
   const [loadingCode, setLoadingCode] = useState(false);
   const [copied, setCopied]           = useState(false);
+  const [upiId, setUpiId]             = useState("");
+  const [upiSaved, setUpiSaved]       = useState(false);
+  const [upiError, setUpiError]       = useState("");
 
   const [notifications, setNotifications] = useState({
     dailyReminder: true,
@@ -74,6 +77,14 @@ export default function SettingsPage() {
           email:    profile.email ?? "",
         }));
       }
+
+      // Load UPI ID from students table
+      const { data: student } = await supabase
+        .from("students")
+        .select("upi_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (student?.upi_id) setUpiId(student.upi_id);
     };
     init();
   }, []);
@@ -129,6 +140,24 @@ export default function SettingsPage() {
     }
   }
 
+  async function saveUpi() {
+    if (!userId || !upiId.trim()) return;
+    setUpiError("");
+    // Basic UPI format validation: something@something
+    if (!/^[\w.\-]+@[\w.\-]+$/.test(upiId.trim())) {
+      setUpiError("Enter a valid UPI ID (e.g. yourname@upi or 9876543210@paytm)");
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("students")
+      .update({ upi_id: upiId.trim().toLowerCase() })
+      .eq("user_id", userId);
+    if (error) { setUpiError("Could not save. Try again."); return; }
+    setUpiSaved(true);
+    setTimeout(() => setUpiSaved(false), 3000);
+  }
+
   function handleSave() {
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -168,6 +197,40 @@ export default function SettingsPage() {
                 <Label className="text-xs">Coaching Centre (optional)</Label>
                 <Input value={profile.coachingName} onChange={(e) => setProfile({ ...profile, coachingName: e.target.value })} placeholder="Allen, FIITJEE, etc." />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Exam Preferences */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <IndianRupee className="h-4 w-4 text-brand-500" />
+              <CardTitle className="text-base font-display">Payout Details</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Add your UPI ID to receive ₹50 referral rewards automatically when a friend you referred purchases VidyaSaathi.
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs">UPI ID</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={upiId}
+                  onChange={(e) => { setUpiId(e.target.value); setUpiError(""); setUpiSaved(false); }}
+                  placeholder="yourname@upi  or  9876543210@paytm"
+                  className="font-mono text-sm"
+                />
+                <Button onClick={saveUpi} size="sm" className="px-4 shrink-0">
+                  {upiSaved ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Saved</> : "Save"}
+                </Button>
+              </div>
+              {upiError && <p className="text-xs text-red-500">{upiError}</p>}
+              {upiSaved && <p className="text-xs text-green-600">✅ UPI ID saved — referral payouts will go here.</p>}
+            </div>
+            <div className="bg-muted/50 rounded-lg px-3 py-2 text-xs text-muted-foreground">
+              Accepted formats: <span className="font-mono">name@upi</span>, <span className="font-mono">number@paytm</span>, <span className="font-mono">number@ybl</span>, <span className="font-mono">name@okaxis</span>
             </div>
           </CardContent>
         </Card>
