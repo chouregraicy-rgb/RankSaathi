@@ -1,8 +1,10 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
 import "@/styles/globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import MetaPixel from "@/components/MetaPixel";
 
 export const metadata: Metadata = {
   title: {
@@ -43,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="min-h-screen antialiased">
+        <Suspense fallback={null}>
+          <MetaPixel />
+        </Suspense>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

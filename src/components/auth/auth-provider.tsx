@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
+import { pixelLead } from "@/components/MetaPixel";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setLoading, reset } = useAuthStore();
@@ -46,6 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Handle post-auth redirect on SIGNED_IN event
         if (event === "SIGNED_IN") {
+          // Fire Meta Pixel Lead event on every new signup/login
+          // (helps Meta's algorithm find more people likely to sign up)
+          try { pixelLead(u.email); } catch {}
+
           try {
             const redirect = sessionStorage.getItem("vs_post_auth");
             if (redirect) {

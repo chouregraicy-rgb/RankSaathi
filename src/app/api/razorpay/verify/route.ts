@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
+import { capiPurchase } from "@/lib/metaCapi";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +23,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan_id, user_id } = body;
+
+    // Pull fbp/fbc cookies and browser signals for better attribution
+    const clientIp  = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? undefined;
+    const userAgent = req.headers.get("user-agent") ?? undefined;
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const fbp = cookieHeader.match(/_fbp=([^;]+)/)?.[1];
+    const fbc = cookieHeader.match(/_fbc=([^;]+)/)?.[1];
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !plan_id || !user_id) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -74,6 +82,29 @@ export async function POST(req: NextRequest) {
         created_at: now.toISOString(),
       }, { onConflict: "user_id" });
       if (pdfErr) console.error("PDF upsert error:", pdfErr);
+    }
+
+    // ── Fire Meta CAPI Purchase event (server-side, can't be blocked) ──
+    // Fetch the user's email for hashed matching — CAPI requires it for
+    // reliable attribution. This is the most important signal Meta uses to
+    // find more buyers like this one.
+    try {
+      const { data: authUser } = await supabase.auth.admin.getUserById(user_id);
+      const email = authUser?.user?.email;
+      if (email) {
+        await capiPurchase({
+          email,
+          amountINR: planConfig.priceINR,
+          orderId:   razorpay_order_id,
+          clientIp,
+          userAgent,
+          fbp,
+          fbc,
+        });
+      }
+    } catch (capiErr) {
+      // Never fail the payment response because of a CAPI error
+      console.error("[verify] CAPI error (non-fatal):", capiErr);
     }
 
     return NextResponse.json({ success: true, planLabel: planConfig.label, expiresAt: expiresAt.toISOString() });
