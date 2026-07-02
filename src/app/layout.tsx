@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import "@/styles/globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import MetaPixel from "@/components/MetaPixel";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 export const metadata: Metadata = {
   title: {
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <Suspense fallback={null}>
           <MetaPixel />
+          <GoogleAnalytics />
         </Suspense>
         <ThemeProvider
           attribute="class"

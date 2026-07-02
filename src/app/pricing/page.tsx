@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Zap, Shield, Star, Crown, ArrowLeft } from "lucide-react";
+import { pixelPurchase, pixelInitiateCheckout } from "@/components/MetaPixel";
+import { gaPurchase, gaInitiateCheckout } from "@/components/GoogleAnalytics";
 
 declare global { interface Window { Razorpay: any; } }
 
@@ -98,6 +100,8 @@ export default function PricingPage() {
 
       if (orderData.demo_activated) {
         setSuccess("✅ Access activated! Redirecting...");
+        // Fire purchase events for coupon/demo activations too
+        try { gaPurchase(`coupon_${Date.now()}`, 0); } catch {}
         setTimeout(() => router.push("/student/dashboard"), 1500);
         setPaying(false);
         return;
@@ -105,6 +109,10 @@ export default function PricingPage() {
 
       const loaded = await loadRazorpay();
       if (!loaded) { setError("Payment gateway failed"); setPaying(false); return; }
+
+      // Fire checkout initiation events
+      try { pixelInitiateCheckout(); } catch {}
+      try { gaInitiateCheckout(); } catch {}
 
       const rzp = new window.Razorpay({
         key: orderData.key_id,
@@ -124,6 +132,9 @@ export default function PricingPage() {
           });
           const vd = await verifyRes.json();
           if (vd.success) {
+            // Fire purchase events client-side (server-side CAPI fires in verify/route.ts)
+            try { pixelPurchase(499); } catch {}
+            try { gaPurchase(response.razorpay_order_id, 499); } catch {}
             setSuccess("✅ Payment successful! Lifetime access activated.");
             setTimeout(() => router.push("/student/dashboard"), 1500);
           } else {
