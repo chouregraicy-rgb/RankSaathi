@@ -66,14 +66,34 @@ async function callOpenRouter(
 export async function solveDoubt(
   questionText: string,
   subject?: string,
-  imageBase64?: string // base64 image from student upload
+  imageBase64?: string,
+  language: "en-IN" | "hi-IN" = "en-IN"
 ): Promise<{
   stepwise: string;
   simplified: string;
   relatedConcepts: string[];
   similarQuestions: string[];
 }> {
-  const systemPrompt = `You are VidyaSaathi's expert AI tutor specialising in NEET UG, JEE Main and JEE Advanced.
+  const isHindi = language === "hi-IN";
+
+  const systemPrompt = isHindi
+    ? `आप VidyaSaathi के विशेषज्ञ AI शिक्षक हैं जो NEET UG, JEE Main और JEE Advanced में माहिर हैं।
+जब कोई छात्र प्रश्न पूछे:
+1. चरण-दर-चरण स्पष्ट रूप से हल करें
+2. सरल हिंदी में समझाएं जो कक्षा 11/12 का छात्र आसानी से समझ सके
+3. 3-5 संबंधित अवधारणाएं बताएं जिन्हें दोहराना चाहिए
+4. 2-3 इसी तरह के प्रश्न सुझाएं
+
+सभी उत्तर हिंदी में दें। तकनीकी/वैज्ञानिक शब्द (जैसे Photosynthesis, Newton's Law) अंग्रेजी में रख सकते हैं।
+
+हमेशा इस exact JSON format में उत्तर दें (कोई markdown fence नहीं):
+{
+  "stepwise": "...",
+  "simplified": "...",
+  "relatedConcepts": ["अवधारणा1","अवधारणा2"],
+  "similarQuestions": ["प्रश्न1","प्रश्न2"]
+}`
+    : `You are VidyaSaathi's expert AI tutor specialising in NEET UG, JEE Main and JEE Advanced.
 When a student asks a question:
 1. Solve it step-by-step clearly
 2. Give a simplified plain-language explanation

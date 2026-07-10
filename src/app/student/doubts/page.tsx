@@ -91,6 +91,7 @@ export default function DoubtSolverPage() {
           question: question.trim() || "Solve this problem",
           subject: subject || undefined,
           imageBase64,
+          language: voiceLang,   // ← send selected language so AI responds in Hindi/English
         }),
       });
       if (!response.ok) throw new Error("AI service unavailable");
