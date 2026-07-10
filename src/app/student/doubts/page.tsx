@@ -23,6 +23,8 @@ import { TTSPlayer } from "@/components/doubt/TTSPlayer";
 import { LanguageToggle } from "@/components/doubt/LanguageToggle";
 // Phase 2: Whiteboard
 import { WhiteboardPanel } from "@/components/doubt/WhiteboardPanel";
+// Phase 3: Avatar
+import { TutorAvatar, type AvatarState } from "@/components/doubt/TutorAvatar";
 
 interface DoubtResult {
   stepwise: string;
@@ -47,6 +49,9 @@ export default function DoubtSolverPage() {
   const [voiceLang, setVoiceLang]           = useState<VoiceLanguage>("en-IN");
   const [interimText, setInterimText]       = useState("");
   const [isSpeaking, setIsSpeaking]         = useState(false);
+
+  // Phase 3: derive avatar state from existing state flags
+  const avatarState: AvatarState = isLoading ? "thinking" : isSpeaking ? "speaking" : "idle";
 
   function handleTranscript(text: string) {
     setInterimText("");
@@ -254,26 +259,29 @@ export default function DoubtSolverPage() {
                   </div>
                   <TTSPlayer text={result.stepwise} language={voiceLang} onSpeakingChange={setIsSpeaking} />
                 </div>
-                {isSpeaking && (
-                  <div className="mt-2 flex items-center gap-2 text-xs text-orange-600 bg-orange-50 dark:bg-orange-950/20 rounded-lg px-3 py-2 border border-orange-200 dark:border-orange-800">
-                    <span className="flex gap-[3px] items-end h-3">
-                      {[1,3,2,4,2].map((h, i) => (
-                        <span key={i} className="w-[3px] rounded-full bg-orange-500 inline-block"
-                          style={{ height: `${h * 3}px`, animation: `soundBar 0.8s ${i * 0.12}s ease-in-out infinite alternate` }} />
-                      ))}
-                    </span>
-                    <span className="font-medium">AI Tutor is speaking...</span>
-                    <style>{`@keyframes soundBar { from { transform: scaleY(0.4); } to { transform: scaleY(1.2); } }`}</style>
-                  </div>
-                )}
               </CardHeader>
               <CardContent className="p-0 sm:p-2">
-                <WhiteboardPanel
-                  content={result.stepwise}
-                  subject={subject || undefined}
-                  isVisible={!!result}
-                  className="rounded-xl"
-                />
+                {/* Avatar + Whiteboard side-by-side on desktop, stacked on mobile */}
+                <div className="flex flex-col md:flex-row gap-4 items-start">
+
+                  {/* Avatar — centered on mobile, left-aligned on desktop */}
+                  <div className="flex justify-center md:justify-start w-full md:w-auto md:pt-4 md:pl-2">
+                    <TutorAvatar
+                      state={avatarState}
+                      subject={subject || undefined}
+                    />
+                  </div>
+
+                  {/* Whiteboard — takes remaining width */}
+                  <div className="flex-1 min-w-0">
+                    <WhiteboardPanel
+                      content={result.stepwise}
+                      subject={subject || undefined}
+                      isVisible={!!result}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
