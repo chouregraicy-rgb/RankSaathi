@@ -21,6 +21,8 @@ import type { Subject } from "@/types";
 import { VoiceInput, type VoiceLanguage } from "@/components/doubt/VoiceInput";
 import { TTSPlayer } from "@/components/doubt/TTSPlayer";
 import { LanguageToggle } from "@/components/doubt/LanguageToggle";
+// Phase 2: Whiteboard
+import { WhiteboardPanel } from "@/components/doubt/WhiteboardPanel";
 
 interface DoubtResult {
   stepwise: string;
@@ -265,12 +267,13 @@ export default function DoubtSolverPage() {
                   </div>
                 )}
               </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans bg-muted/50 p-4 rounded-lg">
-                    {result.stepwise}
-                  </pre>
-                </div>
+              <CardContent className="p-0 sm:p-2">
+                <WhiteboardPanel
+                  content={result.stepwise}
+                  subject={subject || undefined}
+                  isVisible={!!result}
+                  className="rounded-xl"
+                />
               </CardContent>
             </Card>
 
