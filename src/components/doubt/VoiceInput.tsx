@@ -8,16 +8,13 @@
 // without changing the props interface.
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Mic, MicOff, Square } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { cn } from "@/utils";
 
-// ── Type shim (Web Speech API is not in TypeScript's default lib) ────────
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
-}
+// ── Web Speech API type shim ─────────────────────────────────────────────
+// TypeScript's default lib doesn't include these — use `any` to avoid errors.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySpeechRecognition = any;
 
 export type VoiceLanguage = "en-IN" | "hi-IN";
 
@@ -41,13 +38,13 @@ export function VoiceInput({
   const [supported, setSupported] = useState(false);
   const [state, setState] = useState<ListeningState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<AnySpeechRecognition | null>(null);
 
   // Check browser support on mount
   useEffect(() => {
-    const SpeechRecognitionAPI =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    setSupported(!!SpeechRecognitionAPI);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    setSupported(!!(w.SpeechRecognition || w.webkitSpeechRecognition));
   }, []);
 
   const stopListening = useCallback(() => {
@@ -57,20 +54,21 @@ export function VoiceInput({
 
   const startListening = useCallback(() => {
     setErrorMsg(null);
-    const SpeechRecognitionAPI =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const SpeechRecognitionAPI = w.SpeechRecognition || w.webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) return;
 
-    const recognition = new SpeechRecognitionAPI();
+    const recognition: AnySpeechRecognition = new SpeechRecognitionAPI();
     recognition.lang = language;
-    recognition.continuous = false;      // stop after one sentence
-    recognition.interimResults = true;   // show live partial results
+    recognition.continuous = false;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => setState("listening");
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let interim = "";
       let final = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -85,13 +83,13 @@ export function VoiceInput({
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       const msgMap: Record<string, string> = {
-        "no-speech":          "No speech detected. Please try again.",
-        "audio-capture":      "Microphone not found. Check permissions.",
-        "not-allowed":        "Microphone access denied. Allow it in browser settings.",
-        "network":            "Network error. Check your connection.",
-        "aborted":            "",  // user stopped — no error to show
+        "no-speech":     "No speech detected. Please try again.",
+        "audio-capture": "Microphone not found. Check permissions.",
+        "not-allowed":   "Microphone access denied. Allow it in browser settings.",
+        "network":       "Network error. Check your connection.",
+        "aborted":       "",
       };
       const msg = msgMap[event.error] ?? `Voice error: ${event.error}`;
       if (msg) setErrorMsg(msg);
