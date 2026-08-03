@@ -390,7 +390,7 @@ export default function CommunityPage() {
 
     return (
       <DashboardLayout role="student" title={community.name}>
-        <div className="max-w-4xl space-y-4">
+        <div className="max-w-4xl mx-auto space-y-4">
 
           {/* Header */}
           <div className="flex items-center gap-3">
@@ -425,7 +425,7 @@ export default function CommunityPage() {
 
             {/* ── CHAT ── */}
             <TabsContent value="chat" className="mt-3">
-              <div className="bg-card rounded-xl border overflow-hidden flex flex-col" style={{ height: "60vh" }}>
+              <div className="bg-card rounded-xl border overflow-hidden flex flex-col" style={{ height: "50vh" }}>
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {loadingMessages ? (

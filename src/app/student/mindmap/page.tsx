@@ -141,7 +141,7 @@ function BiologyDiagram({ chapter, fallback, color }: {
       <img
         src={img.url}
         alt={img.title}
-        className="w-full max-h-[520px] object-contain rounded-xl bg-white"
+        className="w-full max-h-[300px] md:max-h-[520px] object-contain rounded-xl bg-white"
         onError={() => setImgError(true)}
       />
       <div className="flex flex-wrap gap-1.5">
@@ -241,7 +241,7 @@ function MindMapCanvas({ data, color }: { data: MindMapNode; color: string }) {
   });
 
   return (
-    <div className="relative w-full h-[520px] bg-[#0a0a12] rounded-2xl border border-white/5 overflow-hidden select-none">
+    <div className="relative w-full h-[320px] md:h-[520px] bg-[#0a0a12] rounded-2xl border border-white/5 overflow-hidden select-none">
       {/* Controls */}
       <div className="absolute top-3 right-3 z-10 flex gap-2">
         <button onClick={() => setZoom(z => Math.min(z + 0.2, 2.5))} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors">

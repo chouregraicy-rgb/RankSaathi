@@ -112,7 +112,7 @@ export default function ReferralPage() {
         </div>
 
         {/* Share buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={shareWhatsApp}
             className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition-all"
@@ -130,7 +130,7 @@ export default function ReferralPage() {
         </div>
 
         {/* Earnings summary */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           <div className="rounded-xl border border-border bg-card p-4 text-center">
             <Users className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
             <p className="font-bold text-2xl">{referrals.length}</p>

@@ -331,7 +331,7 @@ export default function RevisionPage() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Left: Chapter list */}
           <div className="space-y-3">
@@ -348,7 +348,7 @@ export default function RevisionPage() {
             <input type="text" placeholder="Search chapters..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
 
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin pr-1">
+            <div className="space-y-3 max-h-[45vh] md:max-h-[60vh] overflow-y-auto scrollbar-thin pr-1">
               {filteredUnits?.map((unit) => (
                 <div key={unit.name}>
                   <p className="text-xs font-semibold text-muted-foreground mb-1.5 px-1 sticky top-0 bg-background py-1">{unit.name}</p>

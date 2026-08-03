@@ -139,9 +139,9 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
       <div className="lg:pl-[var(--sidebar-width)]">
         {/* ── Header ── */}
         <header className="sticky top-0 z-20 h-[var(--header-height)] bg-background/80 backdrop-blur-lg border-b border-border flex items-center justify-between px-4 lg:px-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 lg:hidden" />
-            {title && <h1 className="font-display font-bold text-lg">{title}</h1>}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-9 flex-shrink-0 lg:hidden" />
+            {title && <h1 className="font-display font-bold text-base md:text-lg truncate">{title}</h1>}
           </div>
 
           <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export function DashboardLayout({ children, role, title }: DashboardLayoutProps)
           </div>
         </header>
 
-        <main className="p-4 lg:p-6 min-h-[calc(100vh-var(--header-height))]">
+        <main className="p-3 md:p-4 lg:p-6 min-h-[calc(100vh-var(--header-height))]">
           {!accessChecked ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />

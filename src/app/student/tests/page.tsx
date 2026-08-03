@@ -409,7 +409,7 @@ export default function TestsPage() {
       <div className="space-y-5 max-w-5xl">
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <div className="bg-card rounded-xl border p-4 text-center">
             <p className="text-2xl font-display font-bold text-brand-600">{CHAPTER_TESTS.length}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Chapter Tests</p>
